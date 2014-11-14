@@ -1,0 +1,56 @@
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+import scala.virtualization.lms.epfl.test14.Schema
+class staged0 extends ((Unit)=>(Unit)) {
+def apply(x0:Unit): Unit = {
+println("rangeFromNames(\"Edna\",\"Bert\"):")
+val x672 = Schema.db.people.flatMap { x119 => 
+val x671 = Schema.db.people.flatMap { x470 => 
+val x670 = Schema.db.people.flatMap { x650 => 
+val x120 = x119.name
+val x121 = x120 == "Edna"
+val x473 = x470.name
+val x474 = x473 == "Bert"
+val x124 = x119.age
+val x654 = x650.age
+val x655 = x124 <= x654
+val x476 = x470.age
+val x656 = x654 < x476
+val x658 = if (x655 == true) {
+
+x656
+} else false
+
+val x665 = if (x474 == true) {
+
+x658
+} else false
+
+val x668 = if (x121 == true) {
+
+x665
+} else false
+
+val x669 = if (x668) {
+val x661 = x650.name
+val x660 = new Schema.Record { val name = x661 }
+val x662 = List[Object with scala.virtualization.lms.epfl.test14.TestQueries$$anonfun$testQueries2$1$$anon$1@23c7feea.type#scala.virtualization.lms.epfl.test14.Staged$Record](x660)
+x662
+} else {
+val x21 = List[AnyRef{val name: java.lang.String;val age: Int;}]()
+x21
+}
+x669
+}
+x670
+}
+x671
+}
+println(x672)
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/
+

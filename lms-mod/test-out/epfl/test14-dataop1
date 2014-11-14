@@ -1,0 +1,91 @@
+ISDONE= true
+Non reflect symbol NewVar(Const(0)) encountered during lowering.
+Non reflect symbol LoadData(table_field1.dat) encountered during lowering.
+register replacement for Sym(4)
+Non reflect symbol LoadData(table_field2.dat) encountered during lowering.
+Non reflect symbol While(Block(Sym(11)),Block(Sym(18))) encountered during lowering.
+Non reflect symbol Reify(Const(0),Summary(true,false,false,false,false,List(),List(),List(),List()),List(Sym(5), Sym(19))) encountered during lowering.
+ISDONE= false
+----------------
+
+-
+
+-
+Sym(4) -> <function0>
+-
+----------------
+----------------
+
+-
+Sym(4) -> <function0>
+-
+
+-
+----------------
+Couldn't find subst for Sym(5). Registered subst are:
+statement: TP(Sym(5),Reflect(NewVar(Const(0)),Summary(false,false,false,false,true,List(),List(),List(),List()),List())) with curSubst = Sym(4) -> <function0>
+Couldn't find subst for Const(0). Registered subst are:
+Couldn't find subst for Sym(1). Registered subst are:Sym(5) -> Sym(21)
+statement: TP(Sym(1),LoadData(table_field1.dat)) with curSubst = Sym(4) -> <function0>
+error: don't know how to mirror LoadData(table_field1.dat)
+Couldn't find subst for Sym(4). Registered subst are:Sym(5) -> Sym(21)
+statement: TP(Sym(4),ArrayLength(Sym(1))) with curSubst = Sym(4) -> <function0>
+install replacement for Sym(4)
+Couldn't find subst for Sym(1). Registered subst are:Sym(5) -> Sym(21)
+Sym(23)
+Couldn't find subst for Sym(2). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+statement: TP(Sym(2),LoadData(table_field2.dat)) with curSubst = Sym(4) -> <function0>
+error: don't know how to mirror LoadData(table_field2.dat)
+Couldn't find subst for Sym(19). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+statement: TP(Sym(19),Reflect(While(Block(Sym(11)),Block(Sym(18))),Summary(true,false,false,false,false,List(Sym(5)),List(Sym(5)),List(Sym(5)),List()),List(Sym(5)))) with curSubst = Sym(4) -> <function0>
+error: don't know how to mirror While(Block(Sym(11)),Block(Sym(18)))
+Couldn't find subst for Sym(20). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+statement: TP(Sym(20),Reify(Const(0),Summary(true,false,false,false,false,List(),List(),List(),List()),List(Sym(5), Sym(19)))) with curSubst = Sym(4) -> <function0>
+Couldn't find subst for Const(0). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+
+
+
+-------- FOUND TRANSFORMER FROM Sym(5) TO Sym(21)---
+
+
+
+Couldn't find subst for Sym(19). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+Couldn't find subst for Const(0). Registered subst are:Sym(5) -> Sym(21)
+Sym(4) -> Sym(22)
+Sym(20) -> Sym(24)
+ISDONE= true
+/* FILE: main.c */
+int main(int);
+/*****************************************
+  Emitting C Generated Code                  
+*******************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <glib.h>
+#include <sys/time.h>
+int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1) {
+	long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
+	result->tv_sec = diff / 1000000;
+	result->tv_usec = diff % 1000000;
+	return (diff<0);
+}
+
+/********************* DATA STRUCTURES ***********************/
+
+/************************ FUNCTIONS **************************/
+
+/************************ MAIN BODY **************************/
+int main(int x0) {
+int x21 = 0;
+return 0;
+}
+
+/*****************************************
+  End of C Generated Code                  
+*******************************************/

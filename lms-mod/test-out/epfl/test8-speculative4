@@ -1,0 +1,18 @@
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+class Test extends ((Int)=>(Unit)) {
+def apply(x0:Int): Unit = {
+while ({ // List(Sym(18))
+// dummy placeholder for previous iteration: List(Sym(11)) = Sym(3) / List()
+false
+}) {
+// dummy placeholder for previous iteration: List(Sym(13)) = Sym(2) / List()
+println("booooring!")
+}
+println("done")
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/

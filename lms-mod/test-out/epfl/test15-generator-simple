@@ -1,0 +1,51 @@
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+class test1 extends ((Int, Int)=>(Int)) {
+def apply(x0:Int, x1:Int): Int = {
+var x3 = 0
+val x2 = x0 < x1
+if (x2) {
+var x5 : Int = x0
+while (x5 < x1) {
+x3 = x5
+
+x5 = x5 + 1
+}
+
+} else {
+()
+}
+val x11 = x3
+x11
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+class test2 extends ((Int, Int)=>(Int)) {
+def apply(x13:Int, x14:Int): Int = {
+var x16 = 0
+val x15 = x13 < x14
+if (x15) {
+var x18 : Int = x13
+while (x18 < x14) {
+val x19 = x18 * 2
+x16 = x19
+
+x18 = x18 + 1
+}
+
+} else {
+()
+}
+val x25 = x16
+x25
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/

@@ -1,0 +1,86 @@
+ISDONE= true
+Non reflect symbol NewVar(Const(0)) encountered during lowering.
+Non reflect symbol LoadData(table.dat) encountered during lowering.
+register replacement for Sym(2)
+Non reflect symbol While(Block(Sym(37)),Block(Sym(47))) encountered during lowering.
+Non reflect symbol Reify(Const(0),Summary(true,false,false,false,false,List(),List(),List(),List()),List(Sym(3), Sym(48))) encountered during lowering.
+ISDONE= false
+----------------
+
+-
+
+-
+Sym(2) -> <function0>
+-
+----------------
+----------------
+
+-
+Sym(2) -> <function0>
+-
+
+-
+----------------
+Couldn't find subst for Sym(3). Registered subst are:
+statement: TP(Sym(3),Reflect(NewVar(Const(0)),Summary(false,false,false,false,true,List(),List(),List(),List()),List())) with curSubst = Sym(2) -> <function0>
+Couldn't find subst for Const(0). Registered subst are:
+Couldn't find subst for Sym(1). Registered subst are:Sym(3) -> Sym(50)
+statement: TP(Sym(1),LoadData(table.dat)) with curSubst = Sym(2) -> <function0>
+error: don't know how to mirror LoadData(table.dat)
+Couldn't find subst for Sym(2). Registered subst are:Sym(3) -> Sym(50)
+statement: TP(Sym(2),ArrayLength(Sym(1))) with curSubst = Sym(2) -> <function0>
+install replacement for Sym(2)
+Couldn't find subst for Sym(1). Registered subst are:Sym(3) -> Sym(50)
+Sym(52)
+Couldn't find subst for Sym(48). Registered subst are:Sym(3) -> Sym(50)
+Sym(2) -> Sym(51)
+statement: TP(Sym(48),Reflect(While(Block(Sym(37)),Block(Sym(47))),Summary(true,false,false,false,false,List(Sym(3)),List(Sym(3)),List(Sym(3)),List()),List(Sym(3)))) with curSubst = Sym(2) -> <function0>
+error: don't know how to mirror While(Block(Sym(37)),Block(Sym(47)))
+Couldn't find subst for Sym(49). Registered subst are:Sym(3) -> Sym(50)
+Sym(2) -> Sym(51)
+statement: TP(Sym(49),Reify(Const(0),Summary(true,false,false,false,false,List(),List(),List(),List()),List(Sym(3), Sym(48)))) with curSubst = Sym(2) -> <function0>
+Couldn't find subst for Const(0). Registered subst are:Sym(3) -> Sym(50)
+Sym(2) -> Sym(51)
+
+
+
+-------- FOUND TRANSFORMER FROM Sym(3) TO Sym(50)---
+
+
+
+Couldn't find subst for Sym(48). Registered subst are:Sym(3) -> Sym(50)
+Sym(2) -> Sym(51)
+Couldn't find subst for Const(0). Registered subst are:Sym(3) -> Sym(50)
+Sym(2) -> Sym(51)
+Sym(49) -> Sym(53)
+ISDONE= true
+/* FILE: main.c */
+int main(int);
+/*****************************************
+  Emitting C Generated Code                  
+*******************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <glib.h>
+#include <sys/time.h>
+int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1) {
+	long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
+	result->tv_sec = diff / 1000000;
+	result->tv_usec = diff % 1000000;
+	return (diff<0);
+}
+
+/********************* DATA STRUCTURES ***********************/
+
+/************************ FUNCTIONS **************************/
+
+/************************ MAIN BODY **************************/
+int main(int x0) {
+int x50 = 0;
+return 0;
+}
+
+/*****************************************
+  End of C Generated Code                  
+*******************************************/

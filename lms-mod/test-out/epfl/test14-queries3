@@ -1,0 +1,68 @@
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+import scala.virtualization.lms.epfl.test14.Schema
+class staged1 extends ((Unit)=>(Unit)) {
+def apply(x0:Unit): Unit = {
+println("expertise(\"abstract\"):")
+val x869 = Schema.org.departments.flatMap { x795 => 
+val x861 = Schema.org.employees.flatMap { x829 => 
+val x797 = x795.dpt
+val x830 = x829.dpt
+val x831 = x797 == x830
+val x853 = Schema.org.tasks.flatMap { x843 => 
+val x833 = x829.emp
+val x844 = x843.emp
+val x845 = x833 == x844
+val x846 = x843.tsk
+val x847 = x846 == "abstract"
+val x849 = if (x845 == true) {
+
+x847
+} else false
+
+val x852 = if (x849) {
+val x718 = new Schema.Record { val ignore = () }
+val x747 = List[Object with scala.virtualization.lms.epfl.test14.TestQueries$$anonfun$testQueries3$1$$anon$2@1e92ecbd.type#scala.virtualization.lms.epfl.test14.Staged$Record](x718)
+x747
+} else {
+val x21 = List[AnyRef{val name: java.lang.String;val age: Int;}]()
+x21
+}
+x852
+}
+val x854 = x853.isEmpty
+val x857 = if (x831 == true) {
+
+x854
+} else false
+
+val x860 = if (x857) {
+val x718 = new Schema.Record { val ignore = () }
+val x747 = List[Object with scala.virtualization.lms.epfl.test14.TestQueries$$anonfun$testQueries3$1$$anon$2@1e92ecbd.type#scala.virtualization.lms.epfl.test14.Staged$Record](x718)
+x747
+} else {
+val x21 = List[AnyRef{val name: java.lang.String;val age: Int;}]()
+x21
+}
+x860
+}
+val x862 = x861.isEmpty
+val x868 = if (x862) {
+val x797 = x795.dpt
+val x866 = new Schema.Record { val dpt = x797 }
+val x867 = List[Object with scala.virtualization.lms.epfl.test14.TestQueries$$anonfun$testQueries3$1$$anon$2@1e92ecbd.type#scala.virtualization.lms.epfl.test14.Staged$Record](x866)
+x867
+} else {
+val x21 = List[AnyRef{val name: java.lang.String;val age: Int;}]()
+x21
+}
+x868
+}
+println(x869)
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/
+

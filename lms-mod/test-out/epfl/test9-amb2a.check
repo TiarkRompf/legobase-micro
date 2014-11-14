@@ -1,0 +1,922 @@
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+class Test extends ((Int)=>(Unit)) {
+def apply(x0:Int): Unit = {
+val x1 = 1 != 1
+if (x1) {
+if (x1) {
+println("found:")
+println(1)
+println(1)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x10 = 1 != 2
+if (x1) {
+if (x10) {
+println("found:")
+println(1)
+println(1)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x19 = 1 != 3
+if (x1) {
+if (x19) {
+println("found:")
+println(1)
+println(1)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x28 = 1 != 4
+if (x1) {
+if (x28) {
+println("found:")
+println(1)
+println(1)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x37 = 2 != 1
+if (x10) {
+if (x37) {
+println("found:")
+println(1)
+println(2)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x46 = 2 != 2
+if (x10) {
+if (x46) {
+println("found:")
+println(1)
+println(2)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x55 = 2 != 3
+if (x10) {
+if (x55) {
+println("found:")
+println(1)
+println(2)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x64 = 2 != 4
+if (x10) {
+if (x64) {
+println("found:")
+println(1)
+println(2)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x73 = 3 != 1
+if (x19) {
+if (x73) {
+println("found:")
+println(1)
+println(3)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x82 = 3 != 2
+if (x19) {
+if (x82) {
+println("found:")
+println(1)
+println(3)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x91 = 3 != 3
+if (x19) {
+if (x91) {
+println("found:")
+println(1)
+println(3)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x100 = 3 != 4
+if (x19) {
+if (x100) {
+println("found:")
+println(1)
+println(3)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x109 = 4 != 1
+if (x28) {
+if (x109) {
+println("found:")
+println(1)
+println(4)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x118 = 4 != 2
+if (x28) {
+if (x118) {
+println("found:")
+println(1)
+println(4)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x127 = 4 != 3
+if (x28) {
+if (x127) {
+println("found:")
+println(1)
+println(4)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+val x136 = 4 != 4
+if (x28) {
+if (x136) {
+println("found:")
+println(1)
+println(4)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x37) {
+if (x1) {
+println("found:")
+println(2)
+println(1)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x37) {
+if (x10) {
+println("found:")
+println(2)
+println(1)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x37) {
+if (x19) {
+println("found:")
+println(2)
+println(1)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x37) {
+if (x28) {
+println("found:")
+println(2)
+println(1)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x46) {
+if (x37) {
+println("found:")
+println(2)
+println(2)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x46) {
+if (x46) {
+println("found:")
+println(2)
+println(2)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x46) {
+if (x55) {
+println("found:")
+println(2)
+println(2)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x46) {
+if (x64) {
+println("found:")
+println(2)
+println(2)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x55) {
+if (x73) {
+println("found:")
+println(2)
+println(3)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x55) {
+if (x82) {
+println("found:")
+println(2)
+println(3)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x55) {
+if (x91) {
+println("found:")
+println(2)
+println(3)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x55) {
+if (x100) {
+println("found:")
+println(2)
+println(3)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x64) {
+if (x109) {
+println("found:")
+println(2)
+println(4)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x64) {
+if (x118) {
+println("found:")
+println(2)
+println(4)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x64) {
+if (x127) {
+println("found:")
+println(2)
+println(4)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x64) {
+if (x136) {
+println("found:")
+println(2)
+println(4)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x73) {
+if (x1) {
+println("found:")
+println(3)
+println(1)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x73) {
+if (x10) {
+println("found:")
+println(3)
+println(1)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x73) {
+if (x19) {
+println("found:")
+println(3)
+println(1)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x73) {
+if (x28) {
+println("found:")
+println(3)
+println(1)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x82) {
+if (x37) {
+println("found:")
+println(3)
+println(2)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x82) {
+if (x46) {
+println("found:")
+println(3)
+println(2)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x82) {
+if (x55) {
+println("found:")
+println(3)
+println(2)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x82) {
+if (x64) {
+println("found:")
+println(3)
+println(2)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x91) {
+if (x73) {
+println("found:")
+println(3)
+println(3)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x91) {
+if (x82) {
+println("found:")
+println(3)
+println(3)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x91) {
+if (x91) {
+println("found:")
+println(3)
+println(3)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x91) {
+if (x100) {
+println("found:")
+println(3)
+println(3)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x100) {
+if (x109) {
+println("found:")
+println(3)
+println(4)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x100) {
+if (x118) {
+println("found:")
+println(3)
+println(4)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x100) {
+if (x127) {
+println("found:")
+println(3)
+println(4)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x100) {
+if (x136) {
+println("found:")
+println(3)
+println(4)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x109) {
+if (x1) {
+println("found:")
+println(4)
+println(1)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x109) {
+if (x10) {
+println("found:")
+println(4)
+println(1)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x109) {
+if (x19) {
+println("found:")
+println(4)
+println(1)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x109) {
+if (x28) {
+println("found:")
+println(4)
+println(1)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x118) {
+if (x37) {
+println("found:")
+println(4)
+println(2)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x118) {
+if (x46) {
+println("found:")
+println(4)
+println(2)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x118) {
+if (x55) {
+println("found:")
+println(4)
+println(2)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x118) {
+if (x64) {
+println("found:")
+println(4)
+println(2)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x127) {
+if (x73) {
+println("found:")
+println(4)
+println(3)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x127) {
+if (x82) {
+println("found:")
+println(4)
+println(3)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x127) {
+if (x91) {
+println("found:")
+println(4)
+println(3)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x127) {
+if (x100) {
+println("found:")
+println(4)
+println(3)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x136) {
+if (x109) {
+println("found:")
+println(4)
+println(4)
+println(1)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x136) {
+if (x118) {
+println("found:")
+println(4)
+println(4)
+println(2)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x136) {
+if (x127) {
+println("found:")
+println(4)
+println(4)
+println(3)
+
+} else {
+()
+}
+
+} else {
+()
+}
+if (x136) {
+if (x136) {
+println("found:")
+println(4)
+println(4)
+println(4)
+
+} else {
+()
+}
+
+} else {
+()
+}
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/

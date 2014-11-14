@@ -1,0 +1,43 @@
+wtableneg: List()
+partitions: List(TTP(List(Sym(4), Sym(5)),List(SimpleLoop(Const(100),Sym(1),ArrayElem(Block(Sym(1)))), SimpleLoop(Const(100),Sym(1),ArrayElem(Block(Sym(2))))),SimpleFatLoop(Const(100),Sym(1),List(ArrayElem(Block(Sym(1))), ArrayElem(Block(Sym(2)))))))
+considering TP(Sym(19),ArrayIndex(Sym(5),Sym(17)))
+try once more ...
+wtableneg: List()
+partitions: List(TTP(List(Sym(4), Sym(5)),List(SimpleLoop(Const(100),Sym(1),ArrayElem(Block(Sym(1)))), SimpleLoop(Const(100),Sym(1),ArrayElem(Block(Sym(2))))),SimpleFatLoop(Const(100),Sym(1),List(ArrayElem(Block(Sym(1))), ArrayElem(Block(Sym(2)))))))
+no changes, we're done
+wtableneg: List()
+partitions: List(TTP(List(Sym(23)),List(SimpleLoop(Const(100),Sym(17),ArrayElem(Block(Sym(21))))),SimpleFatLoop(Const(100),Sym(17),List(ArrayElem(Block(Sym(21)))))))
+no changes, we're done
+/*****************************************
+  Emitting Generated Code                  
+*******************************************/
+class Test extends ((Int)=>(Unit)) {
+def apply(x0:Int): Unit = {
+var x4 = new Array[Int](100)
+var x5 = new Array[Double](100)
+for (x1 <- 0 until 100) {
+val x2 = 0.0-x1
+x4(x1) = x1
+x5(x1) = x2
+}
+var x13 = x4
+var x14 = x5
+val x16 = x0 > 7
+val x26 = if (x16) {
+var x23 = new Array[Double](100)
+for (x17 <- 0 until 100) {
+val x19 = x5.apply(x17)
+val x21 = 0.0-x19
+x23(x17) = x21
+}
+x23
+} else {
+x5
+}
+val x27 = new { val re = x4; val im = x26 }
+println(x27)
+}
+}
+/*****************************************
+  End of Generated Code                  
+*******************************************/
