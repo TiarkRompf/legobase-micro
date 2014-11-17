@@ -78,7 +78,8 @@ trait CGenDate extends CGenBase with CNestedCodegen {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-	case DtGetYear(x) =>
+    case NewDate(x) => stream.println("long " + quote(sym) + " = " + quote(x) + "; // date")
+  	case DtGetYear(x) =>
 		emitValDef(sym, quote(x) + "/10000")
     case gd@GetDateAsString(x) =>  
 		emitValDef(sym, getMemoryAllocString("9", "char"))

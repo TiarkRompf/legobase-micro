@@ -79,7 +79,6 @@ trait Queries extends GenericQuery {
                 po
         }
     }
-
     def Q2 = {
         val partTable     = loadPart1()
         val partsuppTable = loadPartsupp1()
@@ -153,7 +152,7 @@ trait Queries extends GenericQuery {
                     val P_MFGR    = ""
                 })((t, currAgg) => {
                     var res = currAgg
-                    if (t.PS_SUPPLYCOST <= currAgg.PS_SUPPLYCOST) res = t// else currAgg
+                    if (t.PS_SUPPLYCOST < currAgg.PS_SUPPLYCOST) res = t// else currAgg
                     res
                 }))(x => new Record {
                     val key = x.key
@@ -175,7 +174,9 @@ trait Queries extends GenericQuery {
                 var j = 0
                 val po = PrintOp(so)(e => {
                     val kv = e.wnd
-                    printf("%.2f|%s|%s|%d|%s|%s|%s|%s\n",kv.S_ACCTBAL,kv.S_NAME,kv.N_NAME,kv.P_PARTKEY,kv.P_MFGR,kv.S_ADDRESS,kv.S_PHONE,kv.S_COMMENT)
+                    printf("%.2f|%.*s|%.*s|%d|%.*s|%.*s|%.*s|%.*s\n",
+                        kv.S_ACCTBAL,kv.S_NAME.length,kv.S_NAME,kv.N_NAME.length,kv.N_NAME,kv.P_PARTKEY,kv.P_MFGR.length,kv.P_MFGR,
+                        kv.S_ADDRESS.length,kv.S_ADDRESS,kv.S_PHONE.length,kv.S_PHONE,kv.S_COMMENT.length,kv.S_COMMENT)
                     j+=1
                 }, () => j < 100)
                 po
@@ -200,7 +201,7 @@ trait Queries extends GenericQuery {
                 })(zero1)((t, currAgg) => new Record { 
                     val _0 = { currAgg._0 + t[Double]("L_EXTENDEDPRICE") * (1.0-t[Double]("L_DISCOUNT"))}
                 })
-                val sortOp = SortOp(aggOp)((kv1,kv2) => {
+                /*val sortOp = SortOp(aggOp)((kv1,kv2) => {
                     val agg1 = kv1.aggs._0; val agg2 = kv2.aggs._0
                     if (agg1 < agg2) 1
                     else if (agg1 > agg2) -1 
@@ -211,12 +212,12 @@ trait Queries extends GenericQuery {
                         else if (k1 > k2) 1
                         else 0
                     }
-                })
+                })*/
                 // SORT IS A BIG BOTTLENECK HERE: RESULT IS BIG, BUT WE ONLY TAKE THE TOP 10 ROWS BELOW
-                //val sortOp = aggOp
-                var i = 0
+                val sortOp = aggOp
+                var i = 0                
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%d|%.4f|%s|%d\n",kv.key.L_ORDERKEY,kv.aggs._0,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_SHIPPRIORITY)
+                    printf("%d|%.4f|%.*s|%d\n",kv.key.L_ORDERKEY,kv.aggs._0,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_SHIPPRIORITY)
                     i+=1
                 }, () => i < 10)
                 po
@@ -239,7 +240,7 @@ trait Queries extends GenericQuery {
                     val k1 = kv1.key; val k2 = kv2.key
                     k1 compareTo k2
                 })
-                val po = PrintOp(sortOp)(kv => printf("%s|%.0f\n",kv.key,kv.aggs._0))
+                val po = PrintOp(sortOp)(kv => printf("%.*s|%.0f\n",kv.key.length,kv.key,kv.aggs._0))
                 po
         }
     }
@@ -314,7 +315,7 @@ trait Queries extends GenericQuery {
                     else 0
                 })
                 PrintOp(sortOp) { kv =>
-                    printf("%s|%.4f\n",kv.key,kv.aggs._0)
+                    printf("%.*s|%.4f\n",kv.key.length,kv.key,kv.aggs._0)
                 }
 /*
 original plan:
@@ -399,7 +400,7 @@ struct SUPPLIERRecord_REGIONRecord_NATIONRecord_CUSTOMERRecord_ORDERSRecord_LINE
                     (t, currAgg) => new Record { val _0 = currAgg._0 + t.right.L_EXTENDEDPRICE * (1.0 - t.right.L_DISCOUNT) }
                 )
                 PrintOp(aggOp) { kv =>
-                    printf("%s|%.4f\n",(kv.key),kv.aggs._0)
+                    printf("%.*s|%.4f\n",kv.key.length,kv.key,kv.aggs._0)
                 }
 /*
 
@@ -458,7 +459,7 @@ new plan:
                     (t, currAgg) => new Record { val _0 = currAgg._0 + t.right.L_EXTENDEDPRICE * (1.0 - t.right.L_DISCOUNT) }
                 )
                 PrintOp(aggOp) { kv =>
-                    printf("%s|%.4f\n",(kv.key),kv.aggs._0)
+                    printf("%.*s|%.4f\n",kv.key.length,kv.key,kv.aggs._0)
                 }
         }
     }
@@ -524,7 +525,9 @@ new plan:
                         }
                     }
                 })
-                val po = PrintOp(so)(kv => printf("%s|%s|%d|%.4f\n",(kv.key.SUPP_NATION),(kv.key.CUST_NATION),kv.key.L_YEAR,kv.aggs._0))
+                val po = PrintOp(so)(kv => printf("%.*s|%.*s|%d|%.4f\n",
+                    kv.key.SUPP_NATION.length,kv.key.SUPP_NATION,kv.key.CUST_NATION.length,kv.key.CUST_NATION,
+                    kv.key.L_YEAR,kv.aggs._0))
                 po
         }
     }
@@ -619,7 +622,7 @@ new plan:
                         else 0
                     } else r
                 })
-                val po = PrintOp(sortOp)(kv => printf("%s|%d|%.4f\n",(kv.key.NATION),kv.key.O_YEAR,kv.aggs._0))
+                val po = PrintOp(sortOp)(kv => printf("%.*s|%d|%.4f\n",kv.key.NATION.length,kv.key.NATION,kv.key.O_YEAR,kv.aggs._0))
                 po
         }
     }
@@ -657,9 +660,10 @@ new plan:
                 // LIMIT 20 -- SORT BOTTLENECK?
                 var j = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%d|%s|%.4f|%.2f|%s|%s|%s|%s\n",kv.key.C_CUSTKEY,(kv.key.C_NAME),kv.aggs._0,
-                                kv.key.C_ACCTBAL,(kv.key.N_NAME),(kv.key.C_ADDRESS),(kv.key.C_PHONE),
-                                (kv.key.C_COMMENT))
+                    printf("%d|%.*s|%.4f|%.2f|%.*s|%.*s|%.*s|%.*s\n",kv.key.C_CUSTKEY,kv.key.C_NAME.length,(kv.key.C_NAME),kv.aggs._0,
+                                kv.key.C_ACCTBAL,kv.key.N_NAME.length,(kv.key.N_NAME),kv.key.C_ADDRESS.length,(kv.key.C_ADDRESS),
+                                kv.key.C_PHONE.length,(kv.key.C_PHONE),
+                                kv.key.C_COMMENT.length,(kv.key.C_COMMENT))
                     j+=1
                 }, () => j < 20)
                 po
@@ -718,7 +722,7 @@ new plan:
                     }
                 )
                 val sortOp = SortOp(aggOp)((x,y) => x.key compareTo y.key)
-                val po = PrintOp(sortOp)(kv => printf("%s|%.0f|%.0f\n",(kv.key),kv.aggs._0,kv.aggs._1))
+                val po = PrintOp(sortOp)(kv => printf("%.*s|%.0f|%.0f\n",kv.key.length,(kv.key),kv.aggs._0,kv.aggs._1))
                 po
         }
     }
@@ -803,7 +807,9 @@ new plan:
                 // Calcuate result
                 val scanSupplier = ScanOp2(supplierTable)
                 val jo = MapCatOp(HashJoinOp2(scanSupplier, nl)((x,y) => x.S_SUPPKEY == y.key)(x => x.S_SUPPKEY)(x => x.key))
-                val po = PrintOp(jo)(kv => printf("%d|%s|%s|%s|%.4f\n", kv.f.S_SUPPKEY,(kv.f.S_NAME),(kv.f.S_ADDRESS),(kv.f.S_PHONE),kv.f.aggs.f._0:Rep[Double]))
+                val po = PrintOp(jo)(kv => printf("%d|%.*s|%.*s|%.*s|%.4f\n", kv.f.S_SUPPKEY,
+                    kv.f.S_NAME.length,(kv.f.S_NAME),kv.f.S_ADDRESS.length,(kv.f.S_ADDRESS),kv.f.S_PHONE.length,(kv.f.S_PHONE),
+                    kv.f.aggs.f._0:Rep[Double]))
                 po
         }
     }
@@ -853,7 +859,9 @@ new plan:
                         res
                     }
                 })
-                val po = PrintOp(sortOp)(x => printf("%s|%s|%d|%.0f\n",(x.key.P_BRAND),(x.key.P_TYPE),x.key.P_SIZE,x.aggs._0))
+                val po = PrintOp(sortOp)(x => printf("%.*s|%.*s|%d|%.0f\n",
+                    x.key.P_BRAND.length,(x.key.P_BRAND),x.key.P_TYPE.length,(x.key.P_TYPE),
+                    x.key.P_SIZE,x.aggs._0))
                 po
         }
     }
@@ -921,7 +929,9 @@ new plan:
                 // LIMIT 100 -- SORT BOTTLENECK?
                 var j = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%s|%d|%d|%s|%.2f|%.2f\n",(kv.key.C_NAME),kv.key.C_CUSTKEY,kv.key.O_ORDERKEY,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_TOTALPRICE,kv.aggs._0)
+                    printf("%.*s|%d|%d|%.*s|%.2f|%.2f\n",
+                        kv.key.C_NAME.length,(kv.key.C_NAME),
+                        kv.key.C_CUSTKEY,kv.key.O_ORDERKEY,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_TOTALPRICE,kv.aggs._0)
                     j+=1
                 }, () => j < 100)
                 po
@@ -1006,7 +1016,8 @@ new plan:
                 val scanNation = SelectOp(ScanOp2(nationTable))(x => x.N_NAME == jordan)
                 val jo4 = MapCatOp(HashJoinOp2(scanNation, jo3)((x,y) => x.N_NATIONKEY == y.f.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.f.S_NATIONKEY))
                 val sortOp = SortOp(jo4)((x,y) => x[LegoString]("S_NAME") compareTo y.f.S_NAME)
-                val po = PrintOp(sortOp)(kv => printf("%s|%s\n",(kv[LegoString]("S_NAME")),(kv.f.S_ADDRESS)))
+                val po = PrintOp(sortOp)(kv => printf("%.*s|%.*s\n",
+                    kv[LegoString]("S_NAME").length,(kv[LegoString]("S_NAME")),kv.f.S_ADDRESS.length,(kv.f.S_ADDRESS)))
                 po
         }
     }
@@ -1039,7 +1050,7 @@ new plan:
                 // LIMIT 100 -- SORT BOTTLENECK?
                 var i = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%s|%.0f\n",(kv.key),kv.aggs)
+                    printf("%.*s|%.0f\n",kv.key.length,(kv.key),kv.aggs)
                     i+=1
                 }, () => i < 100)
                 po
@@ -1094,10 +1105,9 @@ new plan:
                     if (res == 0) res = x.key._1 - y.key._1
                     res
                 })
-                val po = PrintOp(sortOp)(kv => printf("%s|%.0f|%.2f\n",(kv.key._0,kv.key._1),kv.aggs._1,kv.aggs._0))
+                val po = PrintOp(sortOp)(kv => printf("%c%c|%.0f|%.2f\n",kv.key._0,kv.key._1,kv.aggs._1,kv.aggs._0))
                 po
         }
     }
-
 
 }

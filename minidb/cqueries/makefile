@@ -6,7 +6,7 @@ CFLAGS=-g
 
  FILES=$(wildcard *.c)
 # FILES=Q1.c Q5.c
-# FILES=Q2.c
+# FILES=Q1.c Q2.c Q3.c
 
 default: compile
 

@@ -16,33 +16,49 @@ int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval 
 }
 
 /********************* DATA STRUCTURES ***********************/
-struct Anon1406772883;
-struct Anon567626277;
-struct Anon920667905;
-struct Anon168903330;
-struct Anon1296044246;
-struct Anon1866483359;
-struct Anon920667905Anon811555534;
-struct Anon1023322325;
-struct Anon855148991;
-struct Anon920667905Anon811555534Anon168903330;
-struct Anon1465150758;
-struct Anon2134411685;
-struct Anon1812879556;
-struct Anon0;
-struct Anon15765642;
-struct Anon811555534;
-struct Anon102935935;
-struct Anon1268892766;
-struct Anon327816002;
-struct Anon2131537536;
-struct Anon2052879266;
-struct Anon722854457;
-struct Anon1732223439;
-struct Anon625264174;
-struct Anon1395358962;
-struct Anon1555625313;
-struct Anon704530870;
+
+      #include <sys/mman.h>
+      #include <sys/stat.h>
+      #ifndef MAP_FILE
+      #define MAP_FILE MAP_SHARED
+      #endif
+      int fsize(int fd) {
+        struct stat stat;
+        int res = fstat(fd,&stat);
+        return stat.st_size;
+      }
+      int printll(char* s) {
+        while (*s != '\n' && *s != ',' && *s != '\t') {
+          putchar(*s++);
+        }
+        return 0;
+      }
+      long hash(char *str0, int len)
+      {
+        unsigned char* str = (unsigned char*)str0;
+        unsigned long hash = 5381;
+        int c;
+
+        while ((c = *str++) && len--)
+          hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+        return hash;
+      }
+      size_t strlen(const char* str) {
+        const char* start = str;
+        while (*str != '\n' && (*str != '|') && (*str != '\0')) str++;
+        return str - start;
+      }
+      int strcmp(const char *s1, const char *s2) {
+        size_t l1 = strlen(s1);
+        size_t l2 = strlen(s2);
+        if (l1 != l2) return l2 - l1;
+        return strncmp(s1,s2,l1);
+      }
+      char* strstr(const char *s1, const char *s2) {
+        return strnstr(s1,s2,strlen(s1));
+      }
+      
 
 struct Anon1406772883 {
 int N_NATIONKEY;
@@ -140,11 +156,6 @@ int P_PARTKEY;
 char* P_MFGR;
 };
 
-struct Anon855148991 {
-struct Anon625264174* key;
-struct Anon1296044246* aggs;
-};
-
 struct Anon920667905Anon811555534Anon168903330 {
 int C_CUSTKEY;
 char* C_NAME;
@@ -187,19 +198,35 @@ long O_ORDERDATE;
 int O_SHIPPRIORITY;
 };
 
-struct Anon2134411685 {
-int key;
-struct Anon1023322325* aggs;
-};
-
-struct Anon1812879556 {
-char* key;
-struct Anon2052879266* aggs;
+struct Anon1732223439 {
+int C_CUSTKEY;
+char* C_NAME;
+char* C_ADDRESS;
+int C_NATIONKEY;
+char* C_PHONE;
+double C_ACCTBAL;
+char* C_MKTSEGMENT;
+char* C_COMMENT;
+int O_ORDERKEY;
+int O_CUSTKEY;
+char O_ORDERSTATUS;
+double O_TOTALPRICE;
+long O_ORDERDATE;
+char* O_ORDERPRIORITY;
+char* O_CLERK;
+int O_SHIPPRIORITY;
+char* O_COMMENT;
 };
 
 struct Anon0 {
-struct Anon1732223439* left;
-struct Anon168903330* right;
+struct Anon1732223439 left;
+struct Anon168903330 right;
+};
+
+struct Anon787349517 {
+bool exists;
+int key;
+struct Anon1023322325 aggs;
 };
 
 struct Anon15765642 {
@@ -247,6 +274,22 @@ double S_ACCTBAL;
 char* S_COMMENT;
 };
 
+struct Anon2052879266 {
+double _0;
+};
+
+struct Anon1007729034 {
+bool exists;
+char* key;
+struct Anon2052879266 aggs;
+};
+
+struct Anon884569349 {
+bool exists;
+struct Anon1465150758 key;
+struct Anon2052879266 aggs;
+};
+
 struct Anon327816002 {
 double PS_SUPPLYCOST;
 double S_ACCTBAL;
@@ -260,13 +303,20 @@ int P_PARTKEY;
 char* P_MFGR;
 };
 
-struct Anon2131537536 {
+struct Anon1230230422 {
 int key;
-struct Anon1023322325* wnd;
+struct Anon1023322325 wnd;
 };
 
-struct Anon2052879266 {
-double _0;
+struct Anon625264174 {
+char L_RETURNFLAG;
+char L_LINESTATUS;
+};
+
+struct Anon1272074242 {
+bool exists;
+struct Anon625264174 key;
+struct Anon567626277 aggs;
 };
 
 struct Anon722854457 {
@@ -281,29 +331,9 @@ char* N_NAME;
 int N_REGIONKEY;
 };
 
-struct Anon1732223439 {
-int C_CUSTKEY;
-char* C_NAME;
-char* C_ADDRESS;
-int C_NATIONKEY;
-char* C_PHONE;
-double C_ACCTBAL;
-char* C_MKTSEGMENT;
-char* C_COMMENT;
-int O_ORDERKEY;
-int O_CUSTKEY;
-char O_ORDERSTATUS;
-double O_TOTALPRICE;
-long O_ORDERDATE;
-char* O_ORDERPRIORITY;
-char* O_CLERK;
-int O_SHIPPRIORITY;
-char* O_COMMENT;
-};
-
-struct Anon625264174 {
-char L_RETURNFLAG;
-char L_LINESTATUS;
+struct Anon1124044545 {
+struct Anon625264174 key;
+struct Anon1296044246 aggs;
 };
 
 struct Anon1395358962 {
@@ -314,482 +344,1077 @@ double PS_SUPPLYCOST;
 char* PS_COMMENT;
 };
 
-struct Anon1555625313 {
-struct Anon1465150758* key;
-struct Anon2052879266* aggs;
-};
-
-struct Anon704530870 {
-struct Anon625264174* key;
-struct Anon567626277* aggs;
-};
-
 /************************ FUNCTIONS **************************/
-int x6684(struct Anon1812879556* x5696, struct Anon1812879556* x5695);
-int x6690(struct Anon1812879556* x6685, struct Anon1812879556* x6686, struct Anon1812879556** x6687);
-int x6684(struct Anon1812879556* x5696, struct Anon1812879556* x5695) {
-  char* x5697 = x5695->key;;
-  char* x5698 = x5696->key;;
-  int x5699 = strcmp(x5697,x5698);
-  return x5699;
-}
-int x6690(struct Anon1812879556* x6685, struct Anon1812879556* x6686, struct Anon1812879556** x6687) {
-  *x6687 = x6686;
-  return 0;
-}
 
 /************************ MAIN BODY **************************/
-int main(int x5357, char** x5358) {
-  FILE* x6028 = fopen("../databases/sf2/lineitem.tbl", "r");
-  int x6029 = 1048576;
-  int x6030 = 0;
-  int* x6031 = (int*)malloc(1048576 * sizeof(int));
-  int* x6032 = x6031;
-  long* x6053 = (long*)malloc(1048576 * sizeof(long));
-  long* x6054 = x6053;
-  long* x6055 = (long*)malloc(1048576 * sizeof(long));
-  long* x6056 = x6055;
+int main(int x4488, char** x4489) {
+  int x4490 = 0;
+  int x4491 = 1048576;
+  int x4492 = 0;
+  int* x4493 = (int*)malloc(1048576 * sizeof(int));
+  int* x4494 = x4493;
+  long* x4515 = (long*)malloc(1048576 * sizeof(long));
+  long* x4516 = x4515;
+  long* x4517 = (long*)malloc(1048576 * sizeof(long));
+  long* x4518 = x4517;
+  int x2 = open("../databases/sf2/lineitem.tbl",0);
+  int x3 = fsize(x2);
+  char* x4 = mmap(0, x3, PROT_READ, MAP_FILE | MAP_SHARED, x2, 0);
   for (;;) {
-    bool x6063 = !feof(x6028);
-    if (!x6063) break;
-    int x6065 = 0;
-    if (fscanf(x6028,"%d|",&x6065) == EOF) break;
-    int x6066 = 0;
-    if (fscanf(x6028,"%d|",&x6066) == EOF) break;
-    int x6067 = 0;
-    if (fscanf(x6028,"%d|",&x6067) == EOF) break;
-    int x6068 = 0;
-    if (fscanf(x6028,"%d|",&x6068) == EOF) break;
-    double x6069 = 0.0;
-    if (fscanf(x6028,"%lf|",&x6069) == EOF) break;
-    double x6070 = 0.0;
-    if (fscanf(x6028,"%lf|",&x6070) == EOF) break;
-    double x6071 = 0.0;
-    if (fscanf(x6028,"%lf|",&x6071) == EOF) break;
-    double x6072 = 0.0;
-    if (fscanf(x6028,"%lf|",&x6072) == EOF) break;
-    char x6073 = ' ';
-    if (fscanf(x6028,"%c|",&x6073) == EOF) break;
-    char x6074 = ' ';
-    if (fscanf(x6028,"%c|",&x6074) == EOF) break;
-    int x6075 = 0;
-    int x6076 = 0;
-    int x6077 = 0;
-    fscanf(x6028, "%d-%d-%d|",&x6075, &x6076, &x6077);
-    long x6078 = (x6075 * 10000) + (x6076 * 100) + x6077;
-    int x6079 = 0;
-    int x6080 = 0;
-    int x6081 = 0;
-    fscanf(x6028, "%d-%d-%d|",&x6079, &x6080, &x6081);
-    long x6082 = (x6079 * 10000) + (x6080 * 100) + x6081;
-    int x6083 = 0;
-    int x6084 = 0;
-    int x6085 = 0;
-    fscanf(x6028, "%d-%d-%d|",&x6083, &x6084, &x6085);
-    long x6086 = (x6083 * 10000) + (x6084 * 100) + x6085;
-    char* x6087 = (char*)malloc(26 * sizeof(char));
-    int x6089 = 0;
-    char x6088 = ' ';
-    while (1) {
-      fscanf(x6028,"%c",&x6088);
-      if (x6088=='|' || x6088=='\n') break;
-      if (x6089>=25) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6089); break;}
-      ((char*)x6087)[x6089] = x6088;
-      x6089 += 1;
+    int x4525 = x4490;
+    bool x4526 = x4525 < x3;
+    if (!x4526) break;
+    int x4529 = 0;
+    for (;;) {
+      int x4530 = x4490;
+      char x4531 = x4[x4530];
+      bool x4532 = x4531 != '|';
+      bool x4537 = x4532;
+      if (x4532) {
+        int x4533 = x4490;
+        char x4534 = x4[x4533];
+        bool x4535 = x4534 != '\n';
+        x4537 = x4535;
+      }
+      bool x4538 = x4537;
+      if (!x4538) break;
+      int x4540 = x4529;
+      int x4542 = x4490;
+      int x4541 = x4540 * 10;
+      char x4543 = x4[x4542];
+      char x4544 = x4543 - '0';
+      int x4545 = x4541 + x4544;
+      x4529 = x4545;
+      x4490 = x4490 + 1;
     }
-    ((char*)x6087)[x6089] = '\0';
-    char* x6092 = (char*)malloc(11 * sizeof(char));
-    int x6094 = 0;
-    char x6093 = ' ';
-    while (1) {
-      fscanf(x6028,"%c",&x6093);
-      if (x6093=='|' || x6093=='\n') break;
-      if (x6094>=10) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6094); break;}
-      ((char*)x6092)[x6094] = x6093;
-      x6094 += 1;
+    x4490 = x4490 + 1;
+    int x4551 = x4529;
+    for (;;) {
+      int x4554 = x4490;
+      char x4555 = x4[x4554];
+      bool x4556 = x4555 != '|';
+      bool x4561 = x4556;
+      if (x4556) {
+        int x4557 = x4490;
+        char x4558 = x4[x4557];
+        bool x4559 = x4558 != '\n';
+        x4561 = x4559;
+      }
+      bool x4562 = x4561;
+      if (!x4562) break;
+      x4490 = x4490 + 1;
     }
-    ((char*)x6092)[x6094] = '\0';
-    char* x6097 = (char*)malloc(45 * sizeof(char));
-    int x6099 = 0;
-    char x6098 = ' ';
-    while (1) {
-      fscanf(x6028,"%c",&x6098);
-      if (x6098=='|' || x6098=='\n') break;
-      if (x6099>=44) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6099); break;}
-      ((char*)x6097)[x6099] = x6098;
-      x6099 += 1;
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4578 = x4490;
+      char x4579 = x4[x4578];
+      bool x4580 = x4579 != '|';
+      bool x4585 = x4580;
+      if (x4580) {
+        int x4581 = x4490;
+        char x4582 = x4[x4581];
+        bool x4583 = x4582 != '\n';
+        x4585 = x4583;
+      }
+      bool x4586 = x4585;
+      if (!x4586) break;
+      x4490 = x4490 + 1;
     }
-    ((char*)x6097)[x6099] = '\0';
-    int x6102 = x6030;
-    int x6103 = x6029;
-    bool x6104 = x6102 == x6103;
-    if (x6104) {
-      int x6105 = x6103 * 4;
-      x6029 = x6105;
-      printf("buffer.resize %d\n",x6105);
-      int* x6108 = x6032;
-      int* x6109 = (int*)realloc(x6108,x6105 * sizeof(int));
-      x6032 = x6109;
-      long* x6141 = x6054;
-      long* x6142 = (long*)realloc(x6141,x6105 * sizeof(long));
-      x6054 = x6142;
-      long* x6144 = x6056;
-      long* x6145 = (long*)realloc(x6144,x6105 * sizeof(long));
-      x6056 = x6145;
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4602 = x4490;
+      char x4603 = x4[x4602];
+      bool x4604 = x4603 != '|';
+      bool x4609 = x4604;
+      if (x4604) {
+        int x4605 = x4490;
+        char x4606 = x4[x4605];
+        bool x4607 = x4606 != '\n';
+        x4609 = x4607;
+      }
+      bool x4610 = x4609;
+      if (!x4610) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4627 = x4490;
+      char x4628 = x4[x4627];
+      bool x4629 = x4628 != '.';
+      bool x4634 = x4629;
+      if (x4629) {
+        int x4630 = x4490;
+        char x4631 = x4[x4630];
+        bool x4632 = x4631 != '|';
+        x4634 = x4632;
+      }
+      bool x4635 = x4634;
+      bool x4640 = x4635;
+      if (x4635) {
+        int x4636 = x4490;
+        char x4637 = x4[x4636];
+        bool x4638 = x4637 != '\n';
+        x4640 = x4638;
+      }
+      bool x4641 = x4640;
+      if (!x4641) break;
+      x4490 = x4490 + 1;
+    }
+    int x4653 = x4490;
+    char x4654 = x4[x4653];
+    bool x4655 = x4654 == '.';
+    if (x4655) {
+      x4490 = x4490 + 1;
+      for (;;) {
+        int x4657 = x4490;
+        char x4658 = x4[x4657];
+        bool x4659 = x4658 != '|';
+        bool x4664 = x4659;
+        if (x4659) {
+          int x4660 = x4490;
+          char x4661 = x4[x4660];
+          bool x4662 = x4661 != '\n';
+          x4664 = x4662;
+        }
+        bool x4665 = x4664;
+        if (!x4665) break;
+        x4490 = x4490 + 1;
+      }
     } else {
     }
-    int* x6158 = x6032;
-    x6158[x6102] = x6065;
-    long* x6180 = x6054;
-    x6180[x6102] = x6082;
-    long* x6182 = x6056;
-    x6182[x6102] = x6086;
-    x6030 = x6030 + 1;
-  }
-  FILE* x6194 = fopen("../databases/sf2/orders.tbl", "r");
-  int x6195 = 1048576;
-  int x6196 = 0;
-  int* x6197 = (int*)malloc(1048576 * sizeof(int));
-  int* x6198 = x6197;
-  long* x6205 = (long*)malloc(1048576 * sizeof(long));
-  long* x6206 = x6205;
-  char** x6207 = (char**)malloc(1048576 * sizeof(char*));
-  char** x6208 = x6207;
-  for (;;) {
-    bool x6215 = !feof(x6194);
-    if (!x6215) break;
-    int x6217 = 0;
-    if (fscanf(x6194,"%d|",&x6217) == EOF) break;
-    int x6218 = 0;
-    if (fscanf(x6194,"%d|",&x6218) == EOF) break;
-    char x6219 = ' ';
-    if (fscanf(x6194,"%c|",&x6219) == EOF) break;
-    double x6220 = 0.0;
-    if (fscanf(x6194,"%lf|",&x6220) == EOF) break;
-    int x6221 = 0;
-    int x6222 = 0;
-    int x6223 = 0;
-    fscanf(x6194, "%d-%d-%d|",&x6221, &x6222, &x6223);
-    long x6224 = (x6221 * 10000) + (x6222 * 100) + x6223;
-    char* x6225 = (char*)malloc(16 * sizeof(char));
-    int x6227 = 0;
-    char x6226 = ' ';
-    while (1) {
-      fscanf(x6194,"%c",&x6226);
-      if (x6226=='|' || x6226=='\n') break;
-      if (x6227>=15) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6227); break;}
-      ((char*)x6225)[x6227] = x6226;
-      x6227 += 1;
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4692 = x4490;
+      char x4693 = x4[x4692];
+      bool x4694 = x4693 != '.';
+      bool x4699 = x4694;
+      if (x4694) {
+        int x4695 = x4490;
+        char x4696 = x4[x4695];
+        bool x4697 = x4696 != '|';
+        x4699 = x4697;
+      }
+      bool x4700 = x4699;
+      bool x4705 = x4700;
+      if (x4700) {
+        int x4701 = x4490;
+        char x4702 = x4[x4701];
+        bool x4703 = x4702 != '\n';
+        x4705 = x4703;
+      }
+      bool x4706 = x4705;
+      if (!x4706) break;
+      x4490 = x4490 + 1;
     }
-    ((char*)x6225)[x6227] = '\0';
-    char* x6229 = x6225; // unsafe immutable;
-    char* x6230 = (char*)malloc(16 * sizeof(char));
-    int x6232 = 0;
-    char x6231 = ' ';
-    while (1) {
-      fscanf(x6194,"%c",&x6231);
-      if (x6231=='|' || x6231=='\n') break;
-      if (x6232>=15) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6232); break;}
-      ((char*)x6230)[x6232] = x6231;
-      x6232 += 1;
-    }
-    ((char*)x6230)[x6232] = '\0';
-    int x6235 = 0;
-    if (fscanf(x6194,"%d|",&x6235) == EOF) break;
-    char* x6236 = (char*)malloc(80 * sizeof(char));
-    int x6238 = 0;
-    char x6237 = ' ';
-    while (1) {
-      fscanf(x6194,"%c",&x6237);
-      if (x6237=='|' || x6237=='\n') break;
-      if (x6238>=79) { printf("ERROR: scanner.nextString reading past end of buffer %d",x6238); break;}
-      ((char*)x6236)[x6238] = x6237;
-      x6238 += 1;
-    }
-    ((char*)x6236)[x6238] = '\0';
-    int x6241 = x6196;
-    int x6242 = x6195;
-    bool x6243 = x6241 == x6242;
-    if (x6243) {
-      int x6244 = x6242 * 4;
-      x6195 = x6244;
-      printf("buffer.resize %d\n",x6244);
-      int* x6247 = x6198;
-      int* x6248 = (int*)realloc(x6247,x6244 * sizeof(int));
-      x6198 = x6248;
-      long* x6259 = x6206;
-      long* x6260 = (long*)realloc(x6259,x6244 * sizeof(long));
-      x6206 = x6260;
-      char** x6262 = x6208;
-      char** x6263 = (char**)realloc(x6262,x6244 * sizeof(char*));
-      x6208 = x6263;
+    int x4718 = x4490;
+    char x4719 = x4[x4718];
+    bool x4720 = x4719 == '.';
+    if (x4720) {
+      x4490 = x4490 + 1;
+      for (;;) {
+        int x4722 = x4490;
+        char x4723 = x4[x4722];
+        bool x4724 = x4723 != '|';
+        bool x4729 = x4724;
+        if (x4724) {
+          int x4725 = x4490;
+          char x4726 = x4[x4725];
+          bool x4727 = x4726 != '\n';
+          x4729 = x4727;
+        }
+        bool x4730 = x4729;
+        if (!x4730) break;
+        x4490 = x4490 + 1;
+      }
     } else {
     }
-    int* x6276 = x6198;
-    x6276[x6241] = x6217;
-    long* x6284 = x6206;
-    x6284[x6241] = x6224;
-    char** x6286 = x6208;
-    x6286[x6241] = x6229;
-    x6196 = x6196 + 1;
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4757 = x4490;
+      char x4758 = x4[x4757];
+      bool x4759 = x4758 != '.';
+      bool x4764 = x4759;
+      if (x4759) {
+        int x4760 = x4490;
+        char x4761 = x4[x4760];
+        bool x4762 = x4761 != '|';
+        x4764 = x4762;
+      }
+      bool x4765 = x4764;
+      bool x4770 = x4765;
+      if (x4765) {
+        int x4766 = x4490;
+        char x4767 = x4[x4766];
+        bool x4768 = x4767 != '\n';
+        x4770 = x4768;
+      }
+      bool x4771 = x4770;
+      if (!x4771) break;
+      x4490 = x4490 + 1;
+    }
+    int x4783 = x4490;
+    char x4784 = x4[x4783];
+    bool x4785 = x4784 == '.';
+    if (x4785) {
+      x4490 = x4490 + 1;
+      for (;;) {
+        int x4787 = x4490;
+        char x4788 = x4[x4787];
+        bool x4789 = x4788 != '|';
+        bool x4794 = x4789;
+        if (x4789) {
+          int x4790 = x4490;
+          char x4791 = x4[x4790];
+          bool x4792 = x4791 != '\n';
+          x4794 = x4792;
+        }
+        bool x4795 = x4794;
+        if (!x4795) break;
+        x4490 = x4490 + 1;
+      }
+    } else {
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4822 = x4490;
+      char x4823 = x4[x4822];
+      bool x4824 = x4823 != '.';
+      bool x4829 = x4824;
+      if (x4824) {
+        int x4825 = x4490;
+        char x4826 = x4[x4825];
+        bool x4827 = x4826 != '|';
+        x4829 = x4827;
+      }
+      bool x4830 = x4829;
+      bool x4835 = x4830;
+      if (x4830) {
+        int x4831 = x4490;
+        char x4832 = x4[x4831];
+        bool x4833 = x4832 != '\n';
+        x4835 = x4833;
+      }
+      bool x4836 = x4835;
+      if (!x4836) break;
+      x4490 = x4490 + 1;
+    }
+    int x4848 = x4490;
+    char x4849 = x4[x4848];
+    bool x4850 = x4849 == '.';
+    if (x4850) {
+      x4490 = x4490 + 1;
+      for (;;) {
+        int x4852 = x4490;
+        char x4853 = x4[x4852];
+        bool x4854 = x4853 != '|';
+        bool x4859 = x4854;
+        if (x4854) {
+          int x4855 = x4490;
+          char x4856 = x4[x4855];
+          bool x4857 = x4856 != '\n';
+          x4859 = x4857;
+        }
+        bool x4860 = x4859;
+        if (!x4860) break;
+        x4490 = x4490 + 1;
+      }
+    } else {
+    }
+    x4490 = x4490 + 1;
+    x4490 = x4490 + 2;
+    x4490 = x4490 + 2;
+    for (;;) {
+      int x4892 = x4490;
+      char x4893 = x4[x4892];
+      bool x4894 = x4893 != '-';
+      bool x4899 = x4894;
+      if (x4894) {
+        int x4895 = x4490;
+        char x4896 = x4[x4895];
+        bool x4897 = x4896 != '\n';
+        x4899 = x4897;
+      }
+      bool x4900 = x4899;
+      if (!x4900) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4916 = x4490;
+      char x4917 = x4[x4916];
+      bool x4918 = x4917 != '-';
+      bool x4923 = x4918;
+      if (x4918) {
+        int x4919 = x4490;
+        char x4920 = x4[x4919];
+        bool x4921 = x4920 != '\n';
+        x4923 = x4921;
+      }
+      bool x4924 = x4923;
+      if (!x4924) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x4940 = x4490;
+      char x4941 = x4[x4940];
+      bool x4942 = x4941 != '|';
+      bool x4947 = x4942;
+      if (x4942) {
+        int x4943 = x4490;
+        char x4944 = x4[x4943];
+        bool x4945 = x4944 != '\n';
+        x4947 = x4945;
+      }
+      bool x4948 = x4947;
+      if (!x4948) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x4967 = 0;
+    for (;;) {
+      int x4968 = x4490;
+      char x4969 = x4[x4968];
+      bool x4970 = x4969 != '-';
+      bool x4975 = x4970;
+      if (x4970) {
+        int x4971 = x4490;
+        char x4972 = x4[x4971];
+        bool x4973 = x4972 != '\n';
+        x4975 = x4973;
+      }
+      bool x4976 = x4975;
+      if (!x4976) break;
+      int x4978 = x4967;
+      int x4980 = x4490;
+      int x4979 = x4978 * 10;
+      char x4981 = x4[x4980];
+      char x4982 = x4981 - '0';
+      int x4983 = x4979 + x4982;
+      x4967 = x4983;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x4989 = x4967;
+    int x4991 = 0;
+    for (;;) {
+      int x4992 = x4490;
+      char x4993 = x4[x4992];
+      bool x4994 = x4993 != '-';
+      bool x4999 = x4994;
+      if (x4994) {
+        int x4995 = x4490;
+        char x4996 = x4[x4995];
+        bool x4997 = x4996 != '\n';
+        x4999 = x4997;
+      }
+      bool x5000 = x4999;
+      if (!x5000) break;
+      int x5002 = x4991;
+      int x5004 = x4490;
+      int x5003 = x5002 * 10;
+      char x5005 = x4[x5004];
+      char x5006 = x5005 - '0';
+      int x5007 = x5003 + x5006;
+      x4991 = x5007;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5013 = x4991;
+    int x5015 = 0;
+    for (;;) {
+      int x5016 = x4490;
+      char x5017 = x4[x5016];
+      bool x5018 = x5017 != '|';
+      bool x5023 = x5018;
+      if (x5018) {
+        int x5019 = x4490;
+        char x5020 = x4[x5019];
+        bool x5021 = x5020 != '\n';
+        x5023 = x5021;
+      }
+      bool x5024 = x5023;
+      if (!x5024) break;
+      int x5026 = x5015;
+      int x5028 = x4490;
+      int x5027 = x5026 * 10;
+      char x5029 = x4[x5028];
+      char x5030 = x5029 - '0';
+      int x5031 = x5027 + x5030;
+      x5015 = x5031;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5037 = x5015;
+    int x5043 = 0;
+    for (;;) {
+      int x5044 = x4490;
+      char x5045 = x4[x5044];
+      bool x5046 = x5045 != '-';
+      bool x5051 = x5046;
+      if (x5046) {
+        int x5047 = x4490;
+        char x5048 = x4[x5047];
+        bool x5049 = x5048 != '\n';
+        x5051 = x5049;
+      }
+      bool x5052 = x5051;
+      if (!x5052) break;
+      int x5054 = x5043;
+      int x5056 = x4490;
+      int x5055 = x5054 * 10;
+      char x5057 = x4[x5056];
+      char x5058 = x5057 - '0';
+      int x5059 = x5055 + x5058;
+      x5043 = x5059;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5065 = x5043;
+    int x5067 = 0;
+    for (;;) {
+      int x5068 = x4490;
+      char x5069 = x4[x5068];
+      bool x5070 = x5069 != '-';
+      bool x5075 = x5070;
+      if (x5070) {
+        int x5071 = x4490;
+        char x5072 = x4[x5071];
+        bool x5073 = x5072 != '\n';
+        x5075 = x5073;
+      }
+      bool x5076 = x5075;
+      if (!x5076) break;
+      int x5078 = x5067;
+      int x5080 = x4490;
+      int x5079 = x5078 * 10;
+      char x5081 = x4[x5080];
+      char x5082 = x5081 - '0';
+      int x5083 = x5079 + x5082;
+      x5067 = x5083;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5089 = x5067;
+    int x5091 = 0;
+    for (;;) {
+      int x5092 = x4490;
+      char x5093 = x4[x5092];
+      bool x5094 = x5093 != '|';
+      bool x5099 = x5094;
+      if (x5094) {
+        int x5095 = x4490;
+        char x5096 = x4[x5095];
+        bool x5097 = x5096 != '\n';
+        x5099 = x5097;
+      }
+      bool x5100 = x5099;
+      if (!x5100) break;
+      int x5102 = x5091;
+      int x5104 = x4490;
+      int x5103 = x5102 * 10;
+      char x5105 = x4[x5104];
+      char x5106 = x5105 - '0';
+      int x5107 = x5103 + x5106;
+      x5091 = x5107;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5113 = x5091;
+    for (;;) {
+      int x5119 = x4490;
+      char x5120 = x4[x5119];
+      bool x5121 = x5120 != '|';
+      bool x5126 = x5121;
+      if (x5121) {
+        int x5122 = x4490;
+        char x5123 = x4[x5122];
+        bool x5124 = x5123 != '\n';
+        x5126 = x5124;
+      }
+      bool x5127 = x5126;
+      if (!x5127) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x5137 = x4490;
+      char x5138 = x4[x5137];
+      bool x5139 = x5138 != '|';
+      bool x5144 = x5139;
+      if (x5139) {
+        int x5140 = x4490;
+        char x5141 = x4[x5140];
+        bool x5142 = x5141 != '\n';
+        x5144 = x5142;
+      }
+      bool x5145 = x5144;
+      if (!x5145) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    for (;;) {
+      int x5155 = x4490;
+      char x5156 = x4[x5155];
+      bool x5157 = x5156 != '|';
+      bool x5162 = x5157;
+      if (x5157) {
+        int x5158 = x4490;
+        char x5159 = x4[x5158];
+        bool x5160 = x5159 != '\n';
+        x5162 = x5160;
+      }
+      bool x5163 = x5162;
+      if (!x5163) break;
+      x4490 = x4490 + 1;
+    }
+    x4490 = x4490 + 1;
+    int x5173 = x4492;
+    int x5174 = x4491;
+    bool x5175 = x5173 == x5174;
+    if (x5175) {
+      int x5176 = x5174 * 4;
+      x4491 = x5176;
+      printf("buffer.resize %d\n",x5176);
+      int* x5179 = x4494;
+      int* x5180 = (int*)realloc(x5179,x5176 * sizeof(int));
+      x4494 = x5180;
+      long* x5212 = x4516;
+      long* x5213 = (long*)realloc(x5212,x5176 * sizeof(long));
+      x4516 = x5213;
+      long* x5215 = x4518;
+      long* x5216 = (long*)realloc(x5215,x5176 * sizeof(long));
+      x4518 = x5216;
+    } else {
+    }
+    int* x5229 = x4494;
+    x5229[x5173] = x4551;
+    long* x5251 = x4516;
+    long x5038 = x4989 * 10000L;
+    long x5039 = x5013 * 100L;
+    long x5040 = x5038 + x5039;
+    long x5041 = x5040 + x5037;
+    x5251[x5173] = x5041;
+    long* x5253 = x4518;
+    long x5114 = x5065 * 10000L;
+    long x5115 = x5089 * 100L;
+    long x5116 = x5114 + x5115;
+    long x5117 = x5116 + x5113;
+    x5253[x5173] = x5117;
+    x4492 = x4492 + 1;
   }
-  GTree* x6298 = g_tree_new((GCompareFunc)x6684);;
-  bool x6299 = true == false;
-  int x5629;
-  for(x5629=0; x5629 < 1; x5629++) {
-    bool x6300 = false;
-    int x6301 = 0;
-    bool x6303 = false;
-    int x6304 = 0;
-    int* x6307 = (int*)malloc(1073741824 * sizeof(int));
-    int* x6308 = x6307;
-    int x6339 = 0;
-    int* x6340 = (int*)malloc(1048576 * sizeof(int));
-    int* x6341 = (int*)malloc(1073741824 * sizeof(int));
-    int x5672;
-    for(x5672=0; x5672 < 1048576; x5672++) {
-      x6340[x5672] = -1;
+  int x5264 = 0;
+  int x5265 = 1048576;
+  int x5266 = 0;
+  int* x5267 = (int*)malloc(1048576 * sizeof(int));
+  int* x5268 = x5267;
+  long* x5275 = (long*)malloc(1048576 * sizeof(long));
+  long* x5276 = x5275;
+  char** x5277 = (char**)malloc(1048576 * sizeof(char*));
+  char** x5278 = x5277;
+  int x3366 = open("../databases/sf2/orders.tbl",0);
+  int x3367 = fsize(x3366);
+  char* x3368 = mmap(0, x3367, PROT_READ, MAP_FILE | MAP_SHARED, x3366, 0);
+  for (;;) {
+    int x5285 = x5264;
+    bool x5286 = x5285 < x3367;
+    if (!x5286) break;
+    int x5289 = 0;
+    for (;;) {
+      int x5290 = x5264;
+      char x5291 = x3368[x5290];
+      bool x5292 = x5291 != '|';
+      bool x5297 = x5292;
+      if (x5292) {
+        int x5293 = x5264;
+        char x5294 = x3368[x5293];
+        bool x5295 = x5294 != '\n';
+        x5297 = x5295;
+      }
+      bool x5298 = x5297;
+      if (!x5298) break;
+      int x5300 = x5289;
+      int x5302 = x5264;
+      int x5301 = x5300 * 10;
+      char x5303 = x3368[x5302];
+      char x5304 = x5303 - '0';
+      int x5305 = x5301 + x5304;
+      x5289 = x5305;
+      x5264 = x5264 + 1;
     }
-    int x6346 = 1048576;
-    int x6347 = 0;
-    char** x6348 = (char**)malloc(1048576 * sizeof(char*));
-    char** x6349 = x6348;
-    double* x6350 = (double*)malloc(1048576 * sizeof(double));
-    double* x6351 = x6350;
-    int x6352 = 4194304;
-    int x6353 = 0;
-    int* x6354 = (int*)malloc(4194304 * sizeof(int));
-    int* x6355 = x6354;
-    int x5687;
-    for(x5687=0; x5687 < 4194304; x5687++) {
-      int* x6356 = x6355;
-      x6356[x5687] = -1;
+    x5264 = x5264 + 1;
+    int x5311 = x5289;
+    for (;;) {
+      int x5314 = x5264;
+      char x5315 = x3368[x5314];
+      bool x5316 = x5315 != '|';
+      bool x5321 = x5316;
+      if (x5316) {
+        int x5317 = x5264;
+        char x5318 = x3368[x5317];
+        bool x5319 = x5318 != '\n';
+        x5321 = x5319;
+      }
+      bool x5322 = x5321;
+      if (!x5322) break;
+      x5264 = x5264 + 1;
     }
-    int x6364 = 0;
-    struct timeval x6016, x6017, x6677;
-    gettimeofday(&x6016, NULL);
+    x5264 = x5264 + 1;
+    x5264 = x5264 + 2;
+    for (;;) {
+      int x5342 = x5264;
+      char x5343 = x3368[x5342];
+      bool x5344 = x5343 != '.';
+      bool x5349 = x5344;
+      if (x5344) {
+        int x5345 = x5264;
+        char x5346 = x3368[x5345];
+        bool x5347 = x5346 != '|';
+        x5349 = x5347;
+      }
+      bool x5350 = x5349;
+      bool x5355 = x5350;
+      if (x5350) {
+        int x5351 = x5264;
+        char x5352 = x3368[x5351];
+        bool x5353 = x5352 != '\n';
+        x5355 = x5353;
+      }
+      bool x5356 = x5355;
+      if (!x5356) break;
+      x5264 = x5264 + 1;
+    }
+    int x5368 = x5264;
+    char x5369 = x3368[x5368];
+    bool x5370 = x5369 == '.';
+    if (x5370) {
+      x5264 = x5264 + 1;
+      for (;;) {
+        int x5372 = x5264;
+        char x5373 = x3368[x5372];
+        bool x5374 = x5373 != '|';
+        bool x5379 = x5374;
+        if (x5374) {
+          int x5375 = x5264;
+          char x5376 = x3368[x5375];
+          bool x5377 = x5376 != '\n';
+          x5379 = x5377;
+        }
+        bool x5380 = x5379;
+        if (!x5380) break;
+        x5264 = x5264 + 1;
+      }
+    } else {
+    }
+    x5264 = x5264 + 1;
+    int x5405 = 0;
+    for (;;) {
+      int x5406 = x5264;
+      char x5407 = x3368[x5406];
+      bool x5408 = x5407 != '-';
+      bool x5413 = x5408;
+      if (x5408) {
+        int x5409 = x5264;
+        char x5410 = x3368[x5409];
+        bool x5411 = x5410 != '\n';
+        x5413 = x5411;
+      }
+      bool x5414 = x5413;
+      if (!x5414) break;
+      int x5416 = x5405;
+      int x5418 = x5264;
+      int x5417 = x5416 * 10;
+      char x5419 = x3368[x5418];
+      char x5420 = x5419 - '0';
+      int x5421 = x5417 + x5420;
+      x5405 = x5421;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    int x5427 = x5405;
+    int x5429 = 0;
+    for (;;) {
+      int x5430 = x5264;
+      char x5431 = x3368[x5430];
+      bool x5432 = x5431 != '-';
+      bool x5437 = x5432;
+      if (x5432) {
+        int x5433 = x5264;
+        char x5434 = x3368[x5433];
+        bool x5435 = x5434 != '\n';
+        x5437 = x5435;
+      }
+      bool x5438 = x5437;
+      if (!x5438) break;
+      int x5440 = x5429;
+      int x5442 = x5264;
+      int x5441 = x5440 * 10;
+      char x5443 = x3368[x5442];
+      char x5444 = x5443 - '0';
+      int x5445 = x5441 + x5444;
+      x5429 = x5445;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    int x5451 = x5429;
+    int x5453 = 0;
+    for (;;) {
+      int x5454 = x5264;
+      char x5455 = x3368[x5454];
+      bool x5456 = x5455 != '|';
+      bool x5461 = x5456;
+      if (x5456) {
+        int x5457 = x5264;
+        char x5458 = x3368[x5457];
+        bool x5459 = x5458 != '\n';
+        x5461 = x5459;
+      }
+      bool x5462 = x5461;
+      if (!x5462) break;
+      int x5464 = x5453;
+      int x5466 = x5264;
+      int x5465 = x5464 * 10;
+      char x5467 = x3368[x5466];
+      char x5468 = x5467 - '0';
+      int x5469 = x5465 + x5468;
+      x5453 = x5469;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    int x5475 = x5453;
+    int x5480 = x5264;
+    for (;;) {
+      int x5481 = x5264;
+      char x5482 = x3368[x5481];
+      bool x5483 = x5482 != '|';
+      bool x5488 = x5483;
+      if (x5483) {
+        int x5484 = x5264;
+        char x5485 = x3368[x5484];
+        bool x5486 = x5485 != '\n';
+        x5488 = x5486;
+      }
+      bool x5489 = x5488;
+      if (!x5489) break;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    for (;;) {
+      int x5499 = x5264;
+      char x5500 = x3368[x5499];
+      bool x5501 = x5500 != '|';
+      bool x5506 = x5501;
+      if (x5501) {
+        int x5502 = x5264;
+        char x5503 = x3368[x5502];
+        bool x5504 = x5503 != '\n';
+        x5506 = x5504;
+      }
+      bool x5507 = x5506;
+      if (!x5507) break;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    for (;;) {
+      int x5518 = x5264;
+      char x5519 = x3368[x5518];
+      bool x5520 = x5519 != '|';
+      bool x5525 = x5520;
+      if (x5520) {
+        int x5521 = x5264;
+        char x5522 = x3368[x5521];
+        bool x5523 = x5522 != '\n';
+        x5525 = x5523;
+      }
+      bool x5526 = x5525;
+      if (!x5526) break;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    for (;;) {
+      int x5541 = x5264;
+      char x5542 = x3368[x5541];
+      bool x5543 = x5542 != '|';
+      bool x5548 = x5543;
+      if (x5543) {
+        int x5544 = x5264;
+        char x5545 = x3368[x5544];
+        bool x5546 = x5545 != '\n';
+        x5548 = x5546;
+      }
+      bool x5549 = x5548;
+      if (!x5549) break;
+      x5264 = x5264 + 1;
+    }
+    x5264 = x5264 + 1;
+    int x5559 = x5266;
+    int x5560 = x5265;
+    bool x5561 = x5559 == x5560;
+    if (x5561) {
+      int x5562 = x5560 * 4;
+      x5265 = x5562;
+      printf("buffer.resize %d\n",x5562);
+      int* x5565 = x5268;
+      int* x5566 = (int*)realloc(x5565,x5562 * sizeof(int));
+      x5268 = x5566;
+      long* x5577 = x5276;
+      long* x5578 = (long*)realloc(x5577,x5562 * sizeof(long));
+      x5276 = x5578;
+      char** x5580 = x5278;
+      char** x5581 = (char**)realloc(x5580,x5562 * sizeof(char*));
+      x5278 = x5581;
+    } else {
+    }
+    int* x5594 = x5268;
+    x5594[x5559] = x5311;
+    long* x5602 = x5276;
+    long x5476 = x5427 * 10000L;
+    long x5477 = x5451 * 100L;
+    long x5478 = x5476 + x5477;
+    long x5479 = x5478 + x5475;
+    x5602[x5559] = x5479;
+    char** x5604 = x5278;
+    char* x5497 = x3368+x5480;
+    x5604[x5559] = x5497;
+    x5266 = x5266 + 1;
+  }
+  struct Anon2052879266 x5913;
+  x5913._0 = 1.0;
+  bool x972 = true == false;
+  int x5615;
+  for(x5615=0; x5615 < 5; x5615++) {
+    bool x5616 = false;
+    int x5617 = 0;
+    bool x5619 = false;
+    int x5620 = 0;
+    int* x5623 = (int*)malloc(134217728 * sizeof(int));
+    int* x5624 = x5623;
+    int x5655 = 0;
+    int* x5656 = (int*)malloc(67108864 * sizeof(int));
+    int* x5657 = (int*)malloc(134217728 * sizeof(int));
+    int x5658;
+    for(x5658=0; x5658 < 67108864; x5658++) {
+      x5656[x5658] = -1;
+    }
+    struct Anon1007729034* x5663 = (struct Anon1007729034*)malloc(16777216 * sizeof(struct Anon1007729034));
+    struct Anon1007729034* x5664 = x5663;
+    int x5665 = 0;
+    int* x5666 = (int*)malloc(16777216 * sizeof(int));
+    int x5667;
+    for(x5667=0; x5667 < 16777216; x5667++) {
+      struct Anon1007729034* x5668 = x5664;
+      struct Anon1007729034 x5669 = x5668[x5667];
+      char* x5670 = x5669.key;;
+      struct Anon2052879266 x5671 = x5669.aggs;;
+      struct Anon1007729034 x5672;
+      x5672.exists = false;
+      x5672.key = x5670;
+      x5672.aggs = x5671;
+      x5668[x5667] = x5672;
+    }
+    int x5677 = 0;
+    struct timeval x5957, x5958, x5959;
+    gettimeofday(&x5957, NULL);
     printf("%s\n","begin scan LINEITEM");
     for (;;) {
-      bool x6366 = x6303;
-      bool x6367 = !x6366;
-      bool x6372 = x6367;
-      if (x6367) {
-        int x6368 = x6304;
-        int x6369 = x6030;
-        bool x6370 = x6368 < x6369;
-        x6372 = x6370;
+      bool x5679 = x5619;
+      bool x5680 = !x5679;
+      bool x5685 = x5680;
+      if (x5680) {
+        int x5681 = x5620;
+        int x5682 = x4492;
+        bool x5683 = x5681 < x5682;
+        x5685 = x5683;
       }
-      bool x6373 = x6372;
-      if (!x6373) break;
-      int x6376 = x6304;
-      int* x6377 = x6032;
-      int x6378 = x6377[x6376];
-      long* x6399 = x6054;
-      long x6400 = x6399[x6376];
-      long* x6401 = x6056;
-      long x6402 = x6401[x6376];
-      x6304 = x6304 + 1;
-      bool x6410 = x6400 < x6402;
-      if (x6410) {
-        int x6411 = x6339;
-        int* x6412 = x6308;
-        x6412[x6411] = x6378;
-        x6339 = x6339 + 1;
-        int x6445 = x6378 & 1048575;
-        int x6446 = x6340[x6445];
-        x6340[x6445] = x6411;
-        x6341[x6411] = x6446;
+      bool x5686 = x5685;
+      if (!x5686) break;
+      int x5688 = x5620;
+      int* x5689 = x4494;
+      int x5690 = x5689[x5688];
+      long* x5711 = x4516;
+      long x5712 = x5711[x5688];
+      long* x5713 = x4518;
+      long x5714 = x5713[x5688];
+      x5620 = x5620 + 1;
+      bool x5723 = x5712 < x5714;
+      if (x5723) {
+        int x5724 = x5655;
+        int* x5725 = x5624;
+        x5725[x5724] = x5690;
+        x5655 = x5655 + 1;
+        int x5758 = x5690 & 67108863;
+        int x5759 = x5656[x5758];
+        x5656[x5758] = x5724;
+        x5657[x5724] = x5759;
       } else {
       }
     }
     printf("%s\n","begin scan ORDERS");
     for (;;) {
-      bool x6455 = x6300;
-      bool x6456 = !x6455;
-      bool x6461 = x6456;
-      if (x6456) {
-        int x6457 = x6301;
-        int x6458 = x6196;
-        bool x6459 = x6457 < x6458;
-        x6461 = x6459;
+      bool x5767 = x5616;
+      bool x5768 = !x5767;
+      bool x5773 = x5768;
+      if (x5768) {
+        int x5769 = x5617;
+        int x5770 = x5266;
+        bool x5771 = x5769 < x5770;
+        x5773 = x5771;
       }
-      bool x6462 = x6461;
-      if (!x6462) break;
-      int x6465 = x6301;
-      int* x6466 = x6198;
-      int x6467 = x6466[x6465];
-      long* x6474 = x6206;
-      long x6475 = x6474[x6465];
-      char** x6476 = x6208;
-      char* x6477 = x6476[x6465];
-      x6301 = x6301 + 1;
-      bool x6485 = x6475 < 19931101L;
-      bool x6487 = x6485;
-      if (x6485) {
-        bool x6486 = x6475 >= 19930801L;
-        x6487 = x6486;
+      bool x5774 = x5773;
+      if (!x5774) break;
+      int x5776 = x5617;
+      int* x5777 = x5268;
+      int x5778 = x5777[x5776];
+      long* x5785 = x5276;
+      long x5786 = x5785[x5776];
+      char** x5787 = x5278;
+      char* x5788 = x5787[x5776];
+      x5617 = x5617 + 1;
+      bool x5797 = x5786 < 19931101L;
+      bool x5799 = x5797;
+      if (x5797) {
+        bool x5798 = x5786 >= 19930801L;
+        x5799 = x5798;
       }
-      bool x6488 = x6487;
-      if (x6488) {
-        int x6489 = x6467 & 1048575;
-        int x6490 = x6340[x6489];
-        int x6491 = x6490;
-        bool x6492 = x6490 == -1;
-        bool x6493 = x6492;
+      bool x5800 = x5799;
+      if (x5800) {
+        int x5801 = x5778 & 67108863;
+        int x5802 = x5656[x5801];
+        int x5803 = x5802;
+        bool x5804 = x5802 == -1;
+        bool x5805 = x5804;
         for (;;) {
-          bool x6494 = x6493;
-          bool x6495 = !x6494;
-          if (!x6495) break;
-          int x6497 = x6491;
-          int* x6498 = x6308;
-          int x6499 = x6498[x6497];
-          bool x6530 = x6467 == x6499;
-          if (x6530) {
-            x6493 = true;
+          bool x5806 = x5805;
+          bool x5807 = !x5806;
+          if (!x5807) break;
+          int x5809 = x5803;
+          int* x5810 = x5624;
+          int x5811 = x5810[x5809];
+          bool x5843 = x5778 == x5811;
+          if (x5843) {
+            x5805 = true;
           } else {
-            int x6533 = x6341[x6497];
-            x6491 = x6533;
-            bool x6535 = x6533 == -1;
-            x6493 = x6535;
+            int x5846 = x5657[x5809];
+            x5803 = x5846;
+            bool x5848 = x5846 == -1;
+            x5805 = x5848;
           }
         }
-        int x6543 = x6491;
-        bool x6544 = x6543 == -1;
-        if (x6544) {
+        int x5854 = x5803;
+        bool x5856 = x5854 == -1;
+        if (x5856) {
         } else {
-          int x6546 = x6352;
-          int x6547 = x6546 - 1;
-          char x6548 = x6477[0];
-          int x6549 = x6548 * 2;
-          int x6550 = x6549 * 3;
-          int x6551 = x6550 & x6547;
-          int x6552 = x6551;
-          int* x6553 = x6355;
-          int x6554 = x6553[x6551];
-          int x6555 = x6554;
-          int x6556 = x6551 + 1;
-          int x6557 = x6553[x6556];
-          int x6558 = x6557;
-          for (;;) {
-            int x6559 = x6555;
-            bool x6560 = x6559 != -1;
-            bool x6576 = x6560;
-            if (x6560) {
-              int x6561 = x6558;
-              bool x6562 = x6561 != x6550;
-              bool x6572 = x6562;
-              if (x6562 == false) {
-                int x6563 = x6555;
-                char** x6564 = x6349;
-                char* x6565 = x6564[x6563];
-                bool x6568 = strcmp(x6565,x6477) == 0;;
-                bool x6569 = !x6568;
-                x6572 = x6569;
-              }
-              bool x6573 = x6572;
-              x6576 = x6573;
-            }
-            bool x6577 = x6576;
-            if (!x6577) break;
-            int x6580 = x6552;
-            int x6581 = x6580 + 2;
-            int x6582 = x6581 & x6547;
-            x6552 = x6582;
-            int* x6584 = x6355;
-            int x6585 = x6584[x6582];
-            x6555 = x6585;
-            int x6587 = x6582 + 1;
-            int x6588 = x6584[x6587];
-            x6558 = x6588;
+          char x5857 = x5788[0];
+          int x5858 = x5857 * 41;
+          char x5859 = x5788[1];
+          int x5860 = x5858 + x5859;
+          int x5861 = x5860 * 41;
+          char x5862 = x5788[2];
+          int x5863 = x5861 + x5862;
+          int x5864 = x5863 * 41;
+          char x5865 = x5788[3];
+          int x5866 = x5864 + x5865;
+          int x5867 = x5866 & 16777215;
+          int x5868 = x5867;
+          struct Anon1007729034* x5869 = x5664;
+          struct Anon1007729034 x5870 = x5869[x5867];
+          struct Anon1007729034 x5871 = x5870;
+          bool x5872 = x5870.exists;;
+          bool x5877 = x5872;
+          if (x5872) {
+            struct Anon1007729034 x5873 = x5871;
+            char* x5874 = x5873.key;;
+            bool x5875 = strcmp(x5874,x5788) == 0;;
+            x5877 = x5875;
           }
-          int x6593 = x6555;
-          bool x6594 = x6593 == -1;
-          int x6629;
-          if (x6594) {
-            int x6595 = x6353;
-            int x6596 = x6552;
-            x6553[x6596] = x6595;
-            int x6598 = x6596 + 1;
-            x6553[x6598] = x6550;
-            x6353 = x6353 + 1;
-            int x6601 = x6347;
-            int x6602 = x6346;
-            bool x6603 = x6601 == x6602;
-            if (x6603) {
-              int x6604 = x6602 * 4;
-              x6346 = x6604;
-              printf("buffer.resize %d\n",x6604);
-              char** x6607 = x6349;
-              char** x6608 = (char**)realloc(x6607,x6604 * sizeof(char*));
-              x6349 = x6608;
-              printf("buffer.resize %d\n",x6604);
-              double* x6611 = x6351;
-              double* x6612 = (double*)realloc(x6611,x6604 * sizeof(double));
-              x6351 = x6612;
-            } else {
-            }
-            char** x6616 = x6349;
-            x6616[x6601] = x6477;
-            double* x6618 = x6351;
-            x6618[x6601] = 0.0;
-            x6347 = x6347 + 1;
-            int x6621 = x6353;
-            int x6622 = x6621 * 4;
-            bool x6623 = x6622 > x6546;
-            if (x6623) {
-              printf("%s\n","ERROR: hash.resize not implemented");
-            } else {
-            }
-            x6629 = x6595;
+          bool x5878 = x5877;
+          if (x5878) {
+            struct Anon2052879266 x5879 = x5870.aggs;;
+            char* x5883 = x5870.key;;
+            double x5880 = x5879._0;;
+            double x5881 = x5880 + 1.0;
+            struct Anon2052879266 x5882;
+            x5882._0 = x5881;
+            struct Anon1007729034 x5884;
+            x5884.exists = true;
+            x5884.key = x5883;
+            x5884.aggs = x5882;
+            x5869[x5867] = x5884;
           } else {
-            x6629 = x6593;
+            struct Anon1007729034 x5914;
+            x5914.exists = true;
+            x5914.key = x5788;
+            x5914.aggs = x5913;
+            for (;;) {
+              struct Anon1007729034 x5887 = x5871;
+              bool x5888 = x5887.exists;;
+              bool x5923;
+              if (x5888) {
+                char* x5889 = x5887.key;;
+                bool x5890 = strcmp(x5889,x5788) == 0;;
+                bool x5910;
+                if (x5890) {
+                  struct Anon2052879266 x5891 = x5887.aggs;;
+                  int x5895 = x5868;
+                  struct Anon1007729034* x5897 = x5664;
+                  double x5892 = x5891._0;;
+                  double x5893 = x5892 + 1.0;
+                  struct Anon2052879266 x5894;
+                  x5894._0 = x5893;
+                  struct Anon1007729034 x5896;
+                  x5896.exists = true;
+                  x5896.key = x5889;
+                  x5896.aggs = x5894;
+                  x5897[x5895] = x5896;
+                  x5910 = false;
+                } else {
+                  int x5900 = x5868;
+                  int x5901 = x5900 + 1;
+                  int x5902 = x5901 % 16777215;
+                  x5868 = x5902;
+                  struct Anon1007729034* x5904 = x5664;
+                  struct Anon1007729034 x5905 = x5904[x5902];
+                  x5871 = x5905;
+                  x5910 = true;
+                }
+                x5923 = x5910;
+              } else {
+                int x5912 = x5868;
+                struct Anon1007729034* x5915 = x5664;
+                x5915[x5912] = x5914;
+                int x5917 = x5665;
+                x5666[x5917] = x5912;
+                x5665 = x5665 + 1;
+                x5923 = false;
+              }
+              if (!x5923) break;
+            }
           }
-          char** x6630 = x6349;
-          char* x6631 = x6630[x6629];
-          double* x6632 = x6351;
-          double x6633 = x6632[x6629];
-          x6630[x6629] = x6631;
-          double x6635 = x6633 + 1.0;
-          x6632[x6629] = x6635;
         }
       } else {
       }
     }
-    int x6646 = x6347;
-    int x5987;
-    for(x5987=0; x5987 < x6646; x5987++) {
-      char** x6647 = x6349;
-      char* x6648 = x6647[x5987];
-      double* x6649 = x6351;
-      double x6650 = x6649[x5987];
-      struct Anon2052879266* x6651 = (struct Anon2052879266*)malloc(sizeof(struct Anon2052879266));
-      x6651->_0 = x6650;
-      struct Anon1812879556* x6652 = (struct Anon1812879556*)malloc(sizeof(struct Anon1812879556));
-      x6652->key = x6648;
-      x6652->aggs = x6651;
-      g_tree_insert(x6298,x6652,x6652);; // x6653
-    }
-    for (;;) {
-      int x6656 = g_tree_nnodes(x6298);
-      bool x6657 = x6656 != 0;
-      if (!x6657) break;
-      struct Anon1812879556* x6659 = NULL;
-      g_tree_foreach(x6298, (GTraverseFunc)x6690, &x6659);
-      g_tree_remove(x6298,x6659);
-      if (x6299) {
+    int x5936 = x5665;
+    int x5938;
+    for(x5938=0; x5938 < x5936; x5938++) {
+      int x5939 = x5666[x5938];
+      struct Anon1007729034* x5940 = x5664;
+      struct Anon1007729034 x5941 = x5940[x5939];
+      if (x972) {
       } else {
-        char* x6663 = x6659->key;;
-        struct Anon2052879266* x6664 = x6659->aggs;;
-        double x6665 = x6664->_0;;
-        printf("%s|%.0f\n",x6663,x6665);
-        x6364 = x6364 + 1;
+        char* x5944 = x5941.key;;
+        struct Anon2052879266 x5946 = x5941.aggs;;
+        int x5945 = strlen(x5944);
+        double x5947 = x5946._0;;
+        printf("%.*s|%.0f\n",x5945,x5944,x5947);
+        x5677 = x5677 + 1;
       }
     }
-    int x6673 = x6364;
-    printf("(%d rows)\n",x6673);
-    gettimeofday(&x6017, NULL);
-    timeval_subtract(&x6677, &x6017, &x6016);
-    fprintf(stderr,"Generated Code Profiling Info: Operation completed in %ld milliseconds\n",((x6677.tv_sec * 1000) + (x6677.tv_usec/1000)));
+    int x5954 = x5677;
+    printf("(%d rows)\n",x5954);
+    gettimeofday(&x5958, NULL);
+    timeval_subtract(&x5959, &x5958, &x5957);
+    fprintf(stderr,"Generated Code Profiling Info: Operation completed in %ld milliseconds\n",((x5959.tv_sec * 1000) + (x5959.tv_usec/1000)));
   }
   return 0;
 }

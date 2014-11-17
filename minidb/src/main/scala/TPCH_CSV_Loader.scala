@@ -32,19 +32,21 @@ trait Loader extends DSL with TPCHRelations with DataStruct {
 
 
 trait CSVLoader extends Loader {
-	def loadString(size: Rep[Int], s: Rep[java.util.Scanner]): Rep[LegoString] = {
-		val NAME = NewArray[Byte](size+1) // +1 for null terminator
+	def loadString(size: Rep[Int], s: Scanner): Rep[LegoString] = {
+		/*val NAME = NewArray[Byte](size+1) // +1 for null terminator
 		s.nextString(NAME,size)
 		//NAME.filter(y => y != 0)
 		NAME.asInstanceOf[Rep[LegoString]].unsafeImmutable // HACK: depends on C string representation as char* 
+		*/
+		s.nextString(size)
 	}
 	override def loadLineitem1() = {
 		val name = LINEITEM_NAME
 		val file = dataFile(name)
 		// Load Relation 
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[LINEITEMRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newLINEITEMRecord(s.nextInt, s.nextInt, s.nextInt, s.nextInt, 
 										     s.nextDouble, s.nextDouble, s.nextDouble, s.nextDouble, 
 										     s.nextChar, s.nextChar, s.nextDate, s.nextDate, s.nextDate, 
@@ -57,10 +59,10 @@ trait CSVLoader extends Loader {
 		val file = LINEITEMTABLE
 		val size = FileLineCount(file) 
 		// Load Relation 
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[LINEITEMRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newLINEITEMRecord(s.nextInt, s.nextInt, s.nextInt, s.nextInt, 
 										     s.nextDouble, s.nextDouble, s.nextDouble, s.nextDouble, 
 										     s.nextChar, s.nextChar, s.nextDate, s.nextDate, s.nextDate, 
@@ -74,9 +76,9 @@ trait CSVLoader extends Loader {
 		val name = REGION_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[REGIONRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newREGIONRecord(s.nextInt, loadString(25,s), loadString(152,s))
 			ab append newEntry
 		}
@@ -87,10 +89,10 @@ trait CSVLoader extends Loader {
 		val file = REGIONTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[REGIONRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newREGIONRecord(s.nextInt, loadString(25,s), loadString(152,s))
 			hm(i) = newEntry
 			i+=1
@@ -101,9 +103,9 @@ trait CSVLoader extends Loader {
 		val name = ORDERS_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[ORDERSRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newORDERSRecord(s.nextInt, s.nextInt, s.nextChar, s.nextDouble, s.nextDate, 
 										  loadString(15,s), loadString(15,s), s.nextInt, loadString(79,s))
 			ab append newEntry
@@ -115,10 +117,10 @@ trait CSVLoader extends Loader {
 		val file = ORDERSTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[ORDERSRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newORDERSRecord(s.nextInt, s.nextInt, s.nextChar, s.nextDouble, s.nextDate, 
 										  loadString(15,s), loadString(15,s), s.nextInt, loadString(79,s))
 			hm(i) = newEntry
@@ -130,10 +132,10 @@ trait CSVLoader extends Loader {
 		val name = PART_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[PARTRecord]()
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newPARTRecord(s.nextInt, loadString(55,s), loadString(25,s), loadString(10,s), loadString(25,s), 
 										 s.nextInt, loadString(10,s), s.nextDouble, loadString(23,s))
 			ab append newEntry
@@ -145,10 +147,10 @@ trait CSVLoader extends Loader {
 		val file = PARTTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[PARTRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newPARTRecord(s.nextInt, loadString(55,s), loadString(25,s), loadString(10,s), loadString(25,s), 
 										 s.nextInt, loadString(10,s), s.nextDouble, loadString(23,s))
 			hm(i) = newEntry
@@ -160,9 +162,9 @@ trait CSVLoader extends Loader {
 		val name = NATION_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[NATIONRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newNATIONRecord(s.nextInt, loadString(25,s), s.nextInt, loadString(152,s))
 			ab append newEntry
 		}
@@ -173,10 +175,10 @@ trait CSVLoader extends Loader {
 		val file = NATIONTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[NATIONRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newNATIONRecord(s.nextInt, loadString(25,s), s.nextInt, loadString(152,s))
 			hm(i) = newEntry
 			i+=1
@@ -187,9 +189,9 @@ trait CSVLoader extends Loader {
 		val name = CUSTOMER_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[CUSTOMERRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newCUSTOMERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(10,s), loadString(117,s))
 			ab append newEntry
 		}
@@ -200,10 +202,10 @@ trait CSVLoader extends Loader {
 		val file = CUSTOMERTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[CUSTOMERRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newCUSTOMERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(10,s), loadString(117,s))
 			hm(i) = newEntry
 			i+=1
@@ -214,9 +216,9 @@ trait CSVLoader extends Loader {
 		val name = PARTSUPP_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[PARTSUPPRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newPARTSUPPRecord(s.nextInt, s.nextInt, s.nextInt, s.nextDouble, loadString(199,s))
 			ab append newEntry
 		}		
@@ -227,10 +229,10 @@ trait CSVLoader extends Loader {
 		val file = PARTSUPPTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[PARTSUPPRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newPARTSUPPRecord(s.nextInt, s.nextInt, s.nextInt, s.nextDouble, loadString(199,s))
 			hm(i) = newEntry
 			i+=1
@@ -241,9 +243,9 @@ trait CSVLoader extends Loader {
 		val name = SUPPLIER_NAME
 		val file = dataFile(name)
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val ab = LegoCollect[SUPPLIERRecord]()
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newSUPPLIERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(101,s))
 			ab append newEntry
 		}
@@ -254,10 +256,10 @@ trait CSVLoader extends Loader {
 		val file = SUPPLIERTABLE
 		val size = FileLineCount(file) 
 		/* Load Relation */
-		val s = newScanner(file)
+		val s = new Scanner(file)
 		val hm = NewArray[SUPPLIERRecord](size)
 		var i = 0
-		while (s.hasNext()) {
+		while (s.hasNext) {
 			val newEntry = newSUPPLIERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(101,s))
 			hm(i) = newEntry
 			i+=1

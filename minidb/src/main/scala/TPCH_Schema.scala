@@ -242,11 +242,13 @@ trait TPCHRelations extends ArrayOps with StringOps with LiftNumeric with Struct
 	}
 
 	type AGGRecord1[B,C] = Record {
+		val exists: Boolean;
 		val key: B;
 		val aggs: C;
 	}
 	def newAGGRecord1[B:Manifest,C:Manifest](k: Rep[B], a: Rep[C]): Rep[AGGRecord1[B,C]] = {
 		new Record {
+			val exists = unit(true)
 			val key = k;
 			val aggs = a;
 		}

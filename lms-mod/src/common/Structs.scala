@@ -249,7 +249,7 @@ case _ => super.fresh
   }
 
   def registerStruct[T<:Record:Manifest](name: String, elems: Seq[(String, Manifest[_])]) = {
-	encounteredStructs += name -> elems
+  	encounteredStructs += name -> elems
   }
   val encounteredStructs = new scala.collection.mutable.HashMap[String, Seq[(String, Manifest[_])]]
 }
@@ -684,55 +684,67 @@ trait CGenStruct extends CGenBase with BaseGenStruct {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-	case r@DefaultRecordDef() =>
-	  def defaultValue[T: ClassManifest]: T = classManifest[T].erasure.toString match {
-		case "boolean" => false.asInstanceOf[T]
-		case "byte" => (0: Byte).asInstanceOf[T]
-		case "short" => (0: Short).asInstanceOf[T]
-		case "char" => '\0'.asInstanceOf[T]
-		case "int" => 0.asInstanceOf[T]
-		case "long" => 0L.asInstanceOf[T]
-		case "float" => 0.0F.asInstanceOf[T]
-		case "double" => 0.0.asInstanceOf[T]
-	    case _ => "NULL".asInstanceOf[T]
-	  }
-	  val name = structName(r.m)
-	  val fields = encounteredStructs(name)
-	  allocStruct(sym, "struct " + structName(r.m), stream)
-	  fields.foreach( f => stream.println(quote(sym) + "->" + f._1 + " = " + defaultValue(f._2) + ";"))
+  	case r@DefaultRecordDef() =>
+  	  def defaultValue[T: ClassManifest]: T = classManifest[T].erasure.toString match {
+  		  case "boolean" => false.asInstanceOf[T]
+  		  case "byte" => (0: Byte).asInstanceOf[T]
+  		  case "short" => (0: Short).asInstanceOf[T]
+  		  case "char" => '\0'.asInstanceOf[T]
+  		  case "int" => 0.asInstanceOf[T]
+  		  case "long" => 0L.asInstanceOf[T]
+  		  case "float" => 0.0F.asInstanceOf[T]
+  		  case "double" => 0.0.asInstanceOf[T]
+  	    case _ => "NULL".asInstanceOf[T]
+  	  }
+  	  val name = structName(r.m)
+  	  val fields = encounteredStructs(name)
+  	  allocStruct(sym, "struct " + structName(r.m), stream)
+  	  //fields.foreach( f => stream.println(quote(sym) + "->" + f._1 + " = " + defaultValue(f._2) + ";"))
+      fields.foreach( f => stream.println(quote(sym) + "." + f._1 + " = " + defaultValue(f._2) + ";"))
     case Struct(tag, elems) =>
-	  val fields = encounteredStructs(tag.asInstanceOf[ClassTag[_]].name).map(x => x._1) zip elems
-	  allocStruct(sym, "struct " + tag.asInstanceOf[ClassTag[_]].name, stream)
-	  fields.foreach( f => stream.println(quote(sym) + "->" + f._1 + " = " + quote(f._2._2) + ";"))
+	    val fields = encounteredStructs(tag.asInstanceOf[ClassTag[_]].name).map(x => x._1) zip elems
+	    allocStruct(sym, "struct " + tag.asInstanceOf[ClassTag[_]].name, stream)
+	    //fields.foreach( f => stream.println(quote(sym) + "->" + f._1 + " = " + quote(f._2._2) + ";"))
+      fields.foreach( f => stream.println(quote(sym) + "." + f._1 + " = " + quote(f._2._2) + ";"))
     case fa@FieldApply(struct, index) =>
-      emitValDef(sym, quote(struct) + "->" + index + ";")
+      //emitValDef(sym, quote(struct) + "->" + index + ";")
+      emitValDef(sym, quote(struct) + "." + index + ";")
     case FieldUpdate(struct, index, rhs) =>
       emitValDef(sym, quote(struct) + "->" + index + " = " + quote(rhs))
     case RecordPrint(t) => 
       stream.println("print_" + structName(t.tp) + "(" + quote(t) + ");")
-	case c@ConcatenateRecords(record1, record2, leftAlias, rightAlias) => 
-		val name1 = structName(record1.tp).replace("CompositeRecord", "")
+	  case c@ConcatenateRecords(record1, record2, leftAlias, rightAlias) => 
+		  val name1 = structName(record1.tp).replace("CompositeRecord", "")
 	    val s1 = encounteredStructs(name1)
-		val name2 = structName(record2.tp).replace("CompositeRecord", "")
-		val s2 = encounteredStructs(name2)
+		  val name2 = structName(record2.tp).replace("CompositeRecord", "")
+		  val s2 = encounteredStructs(name2)
 	  	allocStruct(sym, remap(sym.tp).replace("*",""), stream)
-		stream.println(s1.map(x => quote(sym) + "->" + leftAlias + x._1 + " = " + quote(record1) + "->" + x._1).mkString(";\n") + ";")
-		stream.println(s2.map(x => quote(sym) + "->" + rightAlias + x._1 + " = " + quote(record2) + "->" + x._1).mkString(";\n") + ";")
+		  //stream.println(s1.map(x => quote(sym) + "->" + leftAlias + x._1 + " = " + quote(record1) + "->" + x._1).mkString(";\n") + ";")
+		  //stream.println(s2.map(x => quote(sym) + "->" + rightAlias + x._1 + " = " + quote(record2) + "->" + x._1).mkString(";\n") + ";")
+      stream.println(s1.map(x => quote(sym) + "." + leftAlias + x._1 + " = " + quote(record1) + "." + x._1).mkString(";\n") + ";")
+      stream.println(s2.map(x => quote(sym) + "." + rightAlias + x._1 + " = " + quote(record2) + "." + x._1).mkString(";\n") + ";")
     case _ => super.emitNode(sym, rhs)
   }
 
   override def remap[A](m: Manifest[A]) = m match {
-    case s if s <:< manifest[CompositeRecord[Any,Any]] => "struct " + structName(m) + "*"
-    case s if s <:< manifest[Record] => "struct " + structName(m) + "*"
+    case s if s <:< manifest[CompositeRecord[Any,Any]] => "struct " + structName(m) // + "*"
+    case s if s <:< manifest[Record] => "struct " + structName(m) // + "*"
     case _ =>  super.remap(m)
   }
 
   override def emitDataStructures(stream: PrintWriter) {
 	// Forward references to resolve dependencies
-    for ((name, elems) <- encounteredStructs)
-	  stream.println("struct " + name + ";")
-	// Actual structs (in any order)
-    for ((name, elems) <- encounteredStructs) {
+    val hs = new scala.collection.mutable.LinkedHashMap[String,Seq[(String, Manifest[_])]]
+    def hit(name: String, xs: Seq[(String,Manifest[_])]): Unit = {
+      xs foreach { x => 
+        val name = structName(x._2)
+        encounteredStructs.get(name).map(x => hit(name, x)) 
+      }
+      hs(name) = xs
+    }
+    encounteredStructs.foreach((hit _).tupled)
+
+    for ((name, elems) <- hs) {
       stream.println()
       stream.println("struct " + name + " {")
       for(e <- elems) stream.println(remap(e._2) + " " + e._1 + ";")

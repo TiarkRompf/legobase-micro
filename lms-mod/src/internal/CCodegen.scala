@@ -120,7 +120,8 @@ trait CCodegen extends CLikeCodegen {
   }
       
   def allocStruct(sym: Sym[Any], structName: String, out: PrintWriter) {
-  		out.println(structName + "* " + quote(sym) + " = (" + structName + "*)malloc(sizeof(" + structName + "));")
+    out.println(structName + " " + quote(sym)+ ";")
+		//out.println(structName + "* " + quote(sym) + " = (" + structName + "*)malloc(sizeof(" + structName + "));")
   }
 
   def getMemoryAllocString(count: String, memType: String): String = {

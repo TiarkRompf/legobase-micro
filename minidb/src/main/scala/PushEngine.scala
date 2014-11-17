@@ -64,11 +64,11 @@ trait PushEngine extends DSL with DataStruct {
     }
     
 
-    case class AggOp1[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
+    case class AggOp3[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
         override def desc = s"AGG(${parent.desc})"
  
         val elems = LegoCollect[AGGRecord1[B,C]]()
-        val hash = LegoHash[B](1 << 22)(i => elems.buf(i).key)
+        val hash = LegoHash[B](1 << 24)(i => elems.buf(i).key)
 
         def open() { parent.child = this; parent.open }
         def next() {
@@ -96,7 +96,7 @@ trait PushEngine extends DSL with DataStruct {
     case class AggOp2[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
         override def desc = s"AGG(${parent.desc})"
  
-        val hashSize = (1 << 20)
+        val hashSize = (1 << 24)
         val bucketSize = 1
 
         val dataSize = hashSize * bucketSize
@@ -155,6 +155,74 @@ trait PushEngine extends DSL with DataStruct {
         }
     }
 
+    case class AggOp1[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
+        override def desc = s"AGG(${parent.desc})"
+ 
+        val hashSize = (1 << 24)
+        val bucketSize = 1
+        val dataSize = hashSize * bucketSize
+
+        // this one stores flat data (i.e. struct)
+        val dataHash = LegoBufferFlat[AGGRecord1[B,C]](dataSize)
+
+        val dataCount = var_new(0)
+        val dataPos = NewArray[Int](dataSize)
+
+        for (i <- 0 until hashSize) {
+            val x = dataHash(i)
+            dataHash(i) = new Record { val exists = false; val key = x.key; val aggs = x.aggs }
+        }
+
+        val hashMask = hashSize - 1
+
+        def open() { parent.child = this; parent.open }
+        def next() {
+            parent.next
+            // might want to sort dataPos to get better access locality ...
+            for (i <- 0 until dataCount) {
+                child.consume(dataHash(dataPos(i)))
+            }
+        }
+        def reset() { parent.reset; printf("RESET / TODO"); open } // TODO / FIXME
+        def consume(tuple0: Rep[Record]) {
+            val tuple = tuple0.asInstanceOf[Rep[A]]
+            val k = grp(tuple)
+
+            val h = calcHashCode(k)
+            var bucket = h & hashMask
+
+            var cur = dataHash(bucket)
+            if (cur.exists && isEqual(cur.key,k)) {
+                val aggs = aggFun(tuple, cur.aggs)
+                dataHash(bucket) = newAGGRecord1(cur.key,aggs)
+            } else {
+                //dataHash(bucket) = newAGGRecord1(k,aggFun(tuple,init))
+                //dataPos(dataCount) = bucket
+                //dataCount += 1
+                while ({
+                  if (cur.exists) {
+                    val kcur = cur.key
+                    if (isEqual(kcur, k)) {
+                      val aggs = aggFun(tuple, cur.aggs)
+                      dataHash(bucket) = newAGGRecord1(kcur,aggs)
+                      false
+                    } else {
+                      bucket = (bucket + 1) % hashMask
+                      cur = dataHash(bucket)
+                      true
+                    }
+                  } else {
+                    dataHash(bucket) = newAGGRecord1(k,aggFun(tuple,init))
+                    dataPos(dataCount) = bucket
+                    dataCount += 1
+                    false
+                  }
+                }) {}
+            }
+
+        }
+    }
+
 
     case class MapOp1[A:Manifest,B:Manifest](parent: Operator[A])(aggFuncs: Rep[A] => Rep[B]) extends Operator[B] {
         override def desc = parent.desc
@@ -183,8 +251,9 @@ trait PushEngine extends DSL with DataStruct {
         MapOp1[CompositeRecord1[A,B],CompositeRecord[A,B]](parent)(xy => union(xy.left, xy.right))
     }
 
+    def SortOp[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) = parent
     
-    case class SortOp[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) extends Operator[A] {
+    case class SortOp0[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) extends Operator[A] {
         val sortedTree = TreeSet(orderingFunc)
         def next() = {
             parent.next
@@ -231,7 +300,7 @@ trait PushEngine extends DSL with DataStruct {
     }
     
     case class ViewOp[A<:Record:Manifest](parent: Operator[A], n: Int) extends Operator[A] { self =>
-        var init: Boolean = false // static variable! *generate* code for self open only once
+        var init: Boolean = false // static variable! *generate* code for self.open only once
         val table = LegoCollect[A]()
 
         val sub = new Array[Operator[A]](n)
@@ -269,8 +338,8 @@ trait PushEngine extends DSL with DataStruct {
         override def desc = s"(${leftParent.desc} HJA-X ${rightParent.desc})"
         var mode: scala.Int = 0
 
-        val hashSize = (1 << 20)
-        val bucketSize = (1 << 10)
+        val hashSize = (1 << 26)
+        val bucketSize = (1 << 1)
 
         val hm = new LegoLinkedHashMap[C,A](hashSize, bucketSize)
 
@@ -389,8 +458,8 @@ trait PushEngine extends DSL with DataStruct {
         override def desc = s"(${leftParent.desc} X ${rightParent.desc})"
         var mode: scala.Int = 0
 
-        val hashSize = (1 << 20)
-        val bucketSize = (1 << 10)
+        val hashSize = (1 << 26)
+        val bucketSize = (1 << 1)
 
         val hm = new LegoLinkedHashMap[C,A](hashSize, bucketSize)
 
@@ -402,19 +471,19 @@ trait PushEngine extends DSL with DataStruct {
           rightParent.open
         }
         def next() {
-          printf(s"$desc: leftParent.next start\n");
-          timeGeneratedCode {
+          //printf(s"$desc: leftParent.next start\n");
+          //timeGeneratedCode {
             leftParent.next
-            printf(s"$desc: leftParent.next done\n");
-          }
+            //printf(s"$desc: leftParent.next done\n");
+          //}
 
           mode = 1
   
-          printf(s"$desc: rightParent.next start\n");
-          timeGeneratedCode {
+          //printf(s"$desc: rightParent.next start\n");
+          //timeGeneratedCode {
             rightParent.next
-            printf(s"$desc: rightParent.next done\n");
-          }
+            //printf(s"$desc: rightParent.next done\n");
+          //}
         }
         def consume(tuple0: Rep[Record]) {
             if (mode == 0) {
@@ -441,11 +510,11 @@ trait PushEngine extends DSL with DataStruct {
         override def desc = s"(${leftParent.desc} LO-X ${rightParent.desc})"
         var mode: scala.Int = 0
 
-        val hashSize = (1 << 20)
-        val bucketSize = (1 << 10)
+        val hashSize = (1 << 26)
+        val bucketSize = (1 << 1)
 
         val hm = new LegoLinkedHashMap[C,B](hashSize, bucketSize)
-        val defaultB = DefaultRecord[B]() // TODO: optimize
+        val defaultB = defaultValue[B]
 
         def reset() { rightParent.reset; leftParent.reset; println("ERROR: lefthashsemijoin.reset not implemented")/*hm.clear;*/ }
         def open() = {
@@ -495,8 +564,8 @@ trait PushEngine extends DSL with DataStruct {
         override def desc = s"(${leftParent.desc} LHS-X ${rightParent.desc})"
         var mode: scala.Int = 0
 
-        val hashSize = (1 << 20)
-        val bucketSize = (1 << 10)
+        val hashSize = (1 << 26)
+        val bucketSize = (1 << 1)
 
         val hm = new LegoLinkedHashMap[C,B](hashSize, bucketSize)
 
@@ -529,7 +598,7 @@ trait PushEngine extends DSL with DataStruct {
     
     case class NestedLoopsJoinOp[A<:Record:Manifest, B<:Record:Manifest](leftParent: Operator[A], rightParent: Operator[B], leftAlias: String = "", rightAlias: String = "")(joinCond: (Rep[A],Rep[B])=>Rep[Boolean]) extends Operator[CompositeRecord1[A,B]] {
         var mode: scala.Int = 0
-        var leftTuple = var_new[A](unit(null).asInstanceOf[Rep[A]])
+        var leftTuple = defaultValue[A]
 
         def open() {
             rightParent.child = this
@@ -537,7 +606,7 @@ trait PushEngine extends DSL with DataStruct {
             rightParent.open
             leftParent.open 
         }
-        def reset() = { rightParent.reset; leftParent.reset; leftTuple = unit(null).asInstanceOf[Rep[A]] }
+        def reset() = { rightParent.reset; leftParent.reset; leftTuple = defaultValue[A] }
         def next() { leftParent.next }
         def consume(tuple0: Rep[Record]) {
             if (mode == 0) {

@@ -103,7 +103,20 @@ trait DataStruct extends DSL with UncheckedHelper {
     }
   }
 
-  def recordFieldTypes[T<:Record:Manifest]: List[(String,Manifest[_])] = manifest[T] match {
+  /*class FlatBuffer[T:Manifest](size: Rep[Int]) extends LegoBuffer[T] {
+    val buf = var_new(NewArray[T](size))
+    def apply(x: Rep[Int]) = {
+
+      record_new[T](structName(manifest[T]), elems map { case (k,m,v) => (k,v(x)) })
+    }
+    def update(x: Rep[Int], y: Rep[T]): Rep[Unit] = buf(x) = y
+    def resize(x: Rep[Int]): Rep[Unit] = {
+     buf = array_realloc(buf,x)
+    }
+  }*/
+
+
+  def recordFieldTypes[T:Manifest]: List[(String,Manifest[_])] = manifest[T] match {
     case m: RefinedManifest[T] => m.fields
     case m if m.toString.contains("CompositeRecord") =>
       val (mA:Manifest[Record])::(mB:Manifest[Record])::Nil = m.typeArguments
@@ -111,9 +124,9 @@ trait DataStruct extends DSL with UncheckedHelper {
     // catch _ => MatchError!
   }
 
-  def refinedManifest[T<:Record:Manifest]: RefinedManifest[T] = manifest[T] match {
+  def refinedManifest[T:Manifest]: RefinedManifest[T] = manifest[T] match {
     case m: RefinedManifest[T] => m
-    case m0 => 
+    case m0 if m0 <:< manifest[Record] => 
       new RefinedManifest[T] {
           val runtimeClass = classOf[Record]
           val fields = recordFieldTypes(m0)
@@ -121,10 +134,14 @@ trait DataStruct extends DSL with UncheckedHelper {
   }
 
   def LegoBuffer[T:Manifest](size: Rep[Int]): LegoBuffer[T] = if (manifest[T] <:< manifest[Record]) {
-    val rm = refinedManifest[Record](manifest[T].asInstanceOf[Manifest[Record]]).asInstanceOf[RefinedManifest[T]]
+    val rm = refinedManifest[T]
     new RecordBuffer(size)(rm)
   } else {
     new ColumnBuffer(size)
+  }
+
+  def LegoBufferFlat[T:Manifest](size: Rep[Int]) = new ColumnBuffer[T](size) {
+
   }
 
 
@@ -193,7 +210,7 @@ trait DataStruct extends DSL with UncheckedHelper {
   }
 
   def calcHashCode[T:Manifest](x: Rep[T]): Rep[Int] = if (manifest[T] <:< manifest[Record]) {
-    recordHashCode(x)(manifest[T].asInstanceOf[RefinedManifest[T]])
+    recordHashCode(x)(refinedManifest[T])
   } else if (manifest[T] == manifest[Character]) {
     x.asInstanceOf[Rep[Int]]
   } else if (manifest[T] == manifest[Int]) {
@@ -201,7 +218,11 @@ trait DataStruct extends DSL with UncheckedHelper {
   } else if (manifest[T] == manifest[Long]) {
     x.asInstanceOf[Rep[Long]].toInt
   } else if (manifest[T] == manifest[String]) {
-    x.asInstanceOf[Rep[String]].charAt(0).asInstanceOf[Rep[Int]] // TODO: proper string hash ...
+    // TODO: proper string hash ...
+    (((x.asInstanceOf[Rep[String]].charAt(0).asInstanceOf[Rep[Int]] * 41 + 
+    x.asInstanceOf[Rep[String]].charAt(1).asInstanceOf[Rep[Int]]) * 41 + 
+    x.asInstanceOf[Rep[String]].charAt(2).asInstanceOf[Rep[Int]]) * 41 + 
+    x.asInstanceOf[Rep[String]].charAt(3).asInstanceOf[Rep[Int]])
   } else {
     unit(777) // not the best default, but hey ... 
   }
@@ -213,10 +234,27 @@ trait DataStruct extends DSL with UncheckedHelper {
   }
 
   def isEqual[T:Manifest](x: Rep[T], y: Rep[T]): Rep[Boolean] = if (manifest[T] <:< manifest[Record]) {
-    recordEquals(x,y)(manifest[T].asInstanceOf[RefinedManifest[T]])
+    recordEquals(x,y)(refinedManifest[T])
   } else {
     __equal[T,T](x,y)
   }
+
+  def defaultValue[T:Manifest]: Rep[T] = (if (manifest[T] <:< manifest[Record]) {
+    val elems = recordFieldTypes[T]
+    record_new[T](structName(manifest[T]), elems map { case (k,m) => (k,defaultValue(m)) })    
+  } else if (manifest[T] == manifest[Character]) {
+    unit('\0')
+  } else if (manifest[T] == manifest[Int]) {
+    unit(0)
+  } else if (manifest[T] == manifest[Long]) {
+    unit(0L)
+  } else if (manifest[T] == manifest[Double]) {
+    unit(0.0)
+  } else if (manifest[T] == manifest[String]) {
+    unit("")
+  } else {
+    unit(null.asInstanceOf[T])
+  }).asInstanceOf[Rep[T]]
 
 
   /* hash builder */

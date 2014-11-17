@@ -51,6 +51,7 @@ trait StringOps extends Variables with OverloadHack {
   def infix_endsWith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext) = string_endswith(s1,s2)
   def infix_replaceAll(s1: Rep[String], d1: Rep[String], d2: Rep[String])(implicit pos: SourceContext) = string_replaceAll(s1,d1,d2)
   def infix_trim(s: Rep[String])(implicit pos: SourceContext) = string_trim(s)
+  def infix_length(s: Rep[String])(implicit pos: SourceContext) = string_length(s)
   def infix_split(s: Rep[String], separators: Rep[String])(implicit pos: SourceContext) = string_split(s, separators)
   def infix_toDouble(s: Rep[String])(implicit pos: SourceContext) = string_todouble(s)
   def infix_toFloat(s: Rep[String])(implicit pos: SourceContext) = string_tofloat(s)
@@ -69,6 +70,7 @@ trait StringOps extends Variables with OverloadHack {
   def string_endswith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext): Rep[Boolean]
   def string_replaceAll(s1: Rep[String], d1: Rep[String], d2: Rep[String])(implicit pos: SourceContext): Rep[String]
   def string_trim(s: Rep[String])(implicit pos: SourceContext): Rep[String]
+  def string_length(s: Rep[String])(implicit pos: SourceContext): Rep[Int]
   def string_split(s: Rep[String], separators: Rep[String])(implicit pos: SourceContext): Rep[Array[String]]
   def string_valueof(d: Rep[Any])(implicit pos: SourceContext): Rep[String]
   def string_todouble(s: Rep[String])(implicit pos: SourceContext): Rep[Double]
@@ -93,6 +95,7 @@ trait StringOpsExp extends StringOps with VariablesExp with Structs {
   }
   case class StringReplaceAll(s1: Exp[String], d1: Exp[String], d2: Exp[String]) extends Def[String]
   case class StringTrim(s: Exp[String]) extends Def[String]
+  case class StringLength(s: Exp[String]) extends Def[Int]
   case class StringSplit(s: Exp[String], separators: Exp[String]) extends Def[Array[String]]
   case class StringValueOf(a: Exp[Any]) extends Def[String]
   case class StringToDouble(s: Exp[String]) extends Def[Double]
@@ -112,6 +115,7 @@ trait StringOpsExp extends StringOps with VariablesExp with Structs {
   def string_endswith(s1: Exp[String], s2: Exp[String])(implicit pos: SourceContext) = StringEndsWith(s1,s2)
   def string_replaceAll(s1: Exp[String], d1: Exp[String], d2: Exp[String])(implicit pos: SourceContext) = StringReplaceAll(s1,d1,d2)
   def string_trim(s: Exp[String])(implicit pos: SourceContext) : Rep[String] = StringTrim(s)
+  def string_length(s: Exp[String])(implicit pos: SourceContext) : Rep[Int] = StringLength(s)
   def string_split(s: Exp[String], separators: Exp[String])(implicit pos: SourceContext) : Rep[Array[String]] = StringSplit(s, separators)
   def string_valueof(a: Exp[Any])(implicit pos: SourceContext) = StringValueOf(a)
   def string_todouble(s: Exp[String])(implicit pos: SourceContext) = StringToDouble(s)
@@ -209,6 +213,7 @@ trait CGenStringOps extends CGenBase with CNestedCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case StringNew(s1) => emitValDef(sym, src"$s1")
+    case StringLength(s1) => emitValDef(sym, src"strlen($s1)")
     case StringPlus(s1,s2) => emitValDef(sym,src"strcat($s1,$s2);")
     case StringStartsWith(s1,s2) => emitValDef(sym, "strncmp(" + quote(s1) + "," + quote(s2) + ", strlen(" + quote(s2) + ")) == 0;")
     case sew@StringEndsWith(s1,s2) => {

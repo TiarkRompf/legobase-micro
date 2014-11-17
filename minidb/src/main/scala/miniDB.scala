@@ -91,7 +91,7 @@ trait ExtraDCE extends GenericNestedCodegen {
       super.emitNode(sym,rhs)
   }
   override def runTransformations[A:Manifest](body: Block[A]): Block[A] = {
-    extraDCE(super.runTransformations(body))
+    extraDCE(body/*super.runTransformations(body)*/)
   }
   def extraDCE[A](res: Block[A]): Block[A] = {
     import scala.collection.mutable
@@ -154,6 +154,65 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
    with CGenRangeOps with CGenListOps with CGenTupleOps with CGenObjectOps  
    with CLikeGenIOOps with CGenTreeSet with CGenDate with CGenTiming with CGenHashMapOps with CGenHashCodeOps with ExtraDCE { 
     override val IR: self.type = self 
+    override def emitDataStructures(out: PrintWriter) {
+      out.println("""
+      #include <sys/mman.h>
+      #include <sys/stat.h>
+      #ifndef MAP_FILE
+      #define MAP_FILE MAP_SHARED
+      #endif
+      int fsize(int fd) {
+        struct stat stat;
+        int res = fstat(fd,&stat);
+        return stat.st_size;
+      }
+      int printll(char* s) {
+        while (*s != '\n' && *s != ',' && *s != '\t') {
+          putchar(*s++);
+        }
+        return 0;
+      }
+      long hash(char *str0, int len)
+      {
+        unsigned char* str = (unsigned char*)str0;
+        unsigned long hash = 5381;
+        int c;
+
+        while ((c = *str++) && len--)
+          hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+        return hash;
+      }
+      size_t strlen(const char* str) {
+        const char* start = str;
+        while (*str != '\n' && (*str != '|') && (*str != '\0')) str++;
+        return str - start;
+      }
+      int strcmp(const char *s1, const char *s2) {
+        size_t l1 = strlen(s1);
+        size_t l2 = strlen(s2);
+        if (l1 != l2) return l2 - l1;
+        return strncmp(s1,s2,l1);
+      }
+      char* strstr(const char *s1, const char *s2) {
+        return strnstr(s1,s2,strlen(s1));
+      }
+      """)
+      super.emitDataStructures(out)
+    }
+    override def remap[A](m: Manifest[A]): String = m.toString match {
+      case "java.lang.String" => "char*"
+      case "Array[Char]" => "char*"
+      case "Char" => "char"
+      case _ => super.remap(m)
+    }
+    override def quote(x: Exp[Any]) = x match {
+      case Const(s: String) => "\""+s.replace("\"", "\\\"").replace("\n", "\\n")+"\"" // TODO: more escapes?
+      case Const('\n') if x.tp == manifest[Char] => "'\\n'"
+      case Const('\t') if x.tp == manifest[Char] => "'\\t'"
+      case Const('\0') if x.tp == manifest[Char] => "'\\0'"
+      case _ => super.quote(x)
+    }
   }
   def getSourceName: String
   def compile2[A1,A2,B](f: (Exp[A1],Exp[A2]) => Exp[B])(implicit mA1: Manifest[A1], mA2: Manifest[A2], mB: Manifest[B]): (A1,A2) =>B = {
@@ -198,7 +257,7 @@ class miniDBC extends CImpl with CSVLoader {
 //object miniDBScala extends miniDBScala with Queries {
 object miniDBC extends miniDBC with Queries {
   import utilities._
-  val numRuns: scala.Int = 1
+  val numRuns: scala.Int = 5
   
   def cmain(argc: Rep[Int], args: Rep[Array[String]]) = {
     val q = currQuery match {

@@ -1,0 +1,202 @@
+=== Q1 ===
+(4 rows)
+Generated Code Profiling Info: Operation completed in 198 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 103 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 95 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 96 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 102 milliseconds
+=== Q2 ===
+(100 rows)
+Generated Code Profiling Info: Operation completed in 67 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 53 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 54 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 57 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 94 milliseconds
+=== Q3 ===
+(10 rows)
+Generated Code Profiling Info: Operation completed in 200 milliseconds
+(10 rows)
+Generated Code Profiling Info: Operation completed in 118 milliseconds
+(10 rows)
+Generated Code Profiling Info: Operation completed in 112 milliseconds
+(10 rows)
+Generated Code Profiling Info: Operation completed in 113 milliseconds
+(10 rows)
+Generated Code Profiling Info: Operation completed in 121 milliseconds
+=== Q4 ===
+(5 rows)
+Generated Code Profiling Info: Operation completed in 170 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 108 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 103 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 102 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 106 milliseconds
+=== Q5 ===
+(5 rows)
+Generated Code Profiling Info: Operation completed in 148 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 94 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 82 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 87 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 94 milliseconds
+=== Q6 ===
+(1 rows)
+Generated Code Profiling Info: Operation completed in 120 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 50 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 44 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 43 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 44 milliseconds
+=== Q7 ===
+(4 rows)
+Generated Code Profiling Info: Operation completed in 218 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 147 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 136 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 145 milliseconds
+(4 rows)
+Generated Code Profiling Info: Operation completed in 152 milliseconds
+=== Q8 ===
+(2 rows)
+Generated Code Profiling Info: Operation completed in 217 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 147 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 138 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 178 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 164 milliseconds
+=== Q9 ===
+(175 rows)
+Generated Code Profiling Info: Operation completed in 673 milliseconds
+(175 rows)
+Generated Code Profiling Info: Operation completed in 543 milliseconds
+(175 rows)
+Generated Code Profiling Info: Operation completed in 601 milliseconds
+(175 rows)
+Generated Code Profiling Info: Operation completed in 505 milliseconds
+(175 rows)
+Generated Code Profiling Info: Operation completed in 597 milliseconds
+=== Q10 ===
+(20 rows)
+Generated Code Profiling Info: Operation completed in 261 milliseconds
+(20 rows)
+Generated Code Profiling Info: Operation completed in 212 milliseconds
+(20 rows)
+Generated Code Profiling Info: Operation completed in 207 milliseconds
+(20 rows)
+Generated Code Profiling Info: Operation completed in 204 milliseconds
+(20 rows)
+Generated Code Profiling Info: Operation completed in 226 milliseconds
+=== Q11 ===
+(5 rows)
+Generated Code Profiling Info: Operation completed in 18 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 9 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 7 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 10 milliseconds
+(5 rows)
+Generated Code Profiling Info: Operation completed in 11 milliseconds
+=== Q12 ===
+(2 rows)
+Generated Code Profiling Info: Operation completed in 252 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 141 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 134 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 134 milliseconds
+(2 rows)
+Generated Code Profiling Info: Operation completed in 135 milliseconds
+=== Q13 ===
+(41 rows)
+Generated Code Profiling Info: Operation completed in 831 milliseconds
+(41 rows)
+Generated Code Profiling Info: Operation completed in 772 milliseconds
+(41 rows)
+Generated Code Profiling Info: Operation completed in 777 milliseconds
+(41 rows)
+Generated Code Profiling Info: Operation completed in 781 milliseconds
+(41 rows)
+Generated Code Profiling Info: Operation completed in 803 milliseconds
+=== Q14 ===
+(1 rows)
+Generated Code Profiling Info: Operation completed in 146 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 90 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 85 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 84 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 87 milliseconds
+=== Q15 ===
+(1 rows)
+Generated Code Profiling Info: Operation completed in 93 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 31 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 24 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 24 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 24 milliseconds
+=== Q16 ===
+=== Q17 ===
+=== Q18 ===
+(100 rows)
+Generated Code Profiling Info: Operation completed in 866 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 829 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 825 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 825 milliseconds
+(100 rows)
+Generated Code Profiling Info: Operation completed in 823 milliseconds
+=== Q19 ===
+(1 rows)
+Generated Code Profiling Info: Operation completed in 789 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 604 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 597 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 594 milliseconds
+(1 rows)
+Generated Code Profiling Info: Operation completed in 592 milliseconds
+=== Q20 ===
+(494 rows)
+Generated Code Profiling Info: Operation completed in 137 milliseconds
+(494 rows)
+Generated Code Profiling Info: Operation completed in 87 milliseconds
+(494 rows)
+Generated Code Profiling Info: Operation completed in 78 milliseconds
+(494 rows)
+Generated Code Profiling Info: Operation completed in 80 milliseconds
+(494 rows)
+Generated Code Profiling Info: Operation completed in 78 milliseconds
+=== Q21 ===
+=== Q22 ===
