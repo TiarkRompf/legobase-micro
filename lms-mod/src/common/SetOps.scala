@@ -52,10 +52,7 @@ trait SetOpsExp extends SetOps with ArrayOps with EffectExp {
   case class SetSize[A:Manifest](s: Exp[Set[A]]) extends Def[Int]
   case class SetClear[A:Manifest](s: Exp[Set[A]]) extends Def[Unit]
   case class SetToSeq[A:Manifest](s: Exp[Set[A]]) extends Def[Seq[A]]
-  case class SetToArray[A:Manifest](s: Exp[Set[A]]) extends Def[Array[A]] {
-    //val array = unit(manifest[A].newArray(0))
-    val array = NewArray[A](s.size)
-  }
+  case class SetToArray[A:Manifest](s: Exp[Set[A]]) extends Def[Array[A]]
   case class SetMap[A:Manifest,B:Manifest](a: Exp[Set[A]], x: Sym[A], block: Block[B]) extends Def[Set[B]]
   case class SetForeach[T](a: Exp[Set[T]], x: Sym[T], block: Block[Unit]) extends Def[Unit]
   case class SetEmpty[T:Manifest]() extends Def[Set[T]] {
@@ -132,17 +129,7 @@ trait ScalaGenSetOps extends BaseGenSetOps with ScalaGenEffect {
     case SetSize(s) => emitValDef(sym, src"$s.size")
     case SetClear(s) => emitValDef(sym, src"$s.clear()")
     case SetToSeq(s) => emitValDef(sym, src"$s.toSeq")
-    case n@SetToArray(s) => //emitValDef(sym, quote(s) + ".toArray")
-      emitValDef(sym, "{ // workaround for refinedManifest problem" +
-      src"\nval out = ${n.array}" +
-      src"\nval in = $s.toSeq" +
-      src"\nvar i = 0" +
-      src"\nwhile (i < in.length) {" +
-      src"\nout(i) = in(i)" +
-      src"\ni += 1" +
-      src"\n}" +
-      src"\nout" +
-      src"\n}")
+    case n@SetToArray(s) => emitValDef(sym, quote(s) + ".toArray")
     case SetForeach(a,x,block) => 
       emitValDef(sym, src"$a.foreach{")    
       gen"""$x => 

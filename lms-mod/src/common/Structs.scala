@@ -588,9 +588,9 @@ trait CGenStruct extends CGenBase with BaseGenStruct {
     case RecordHash(t) =>
         sym.atPhase(LIRLowering) {
             val rec = LIRLowering(t)
-	        def hash[T:Manifest](lrec: Exp[T]): Exp[Int] = {
+	        def hash[T:Manifest](lrec: Exp[T]): Exp[Size] = {
 			    val fields = encounteredStructs(structName(manifest[T]))
-                var h = var_new[Int](unit(0))
+                var h = var_new[Size](unit(0))
                 fields.foreach { fld => 
                     if (fld._2.erasure.isPrimitive || fld._2 == manifest[java.lang.Character])
                       h += field(lrec, fld._1)(fld._2,implicitly[SourceContext])
@@ -603,9 +603,9 @@ trait CGenStruct extends CGenBase with BaseGenStruct {
 						val a = field(lrec, fld._1)(fld._2, implicitly[SourceContext])
 						a.tp = fldtype
 						val arr = field[Array[Byte]](a,"array")
-						val arrlen = field[Int](a,"length").asInstanceOf[Rep[Int]]
-						var i = var_new[Int](unit(0))
-                		var harr = var_new[Int](unit(0))
+						val arrlen = field[Size](a,"length").asInstanceOf[Rep[Size]]
+						var i = var_new[Size](unit(0))
+                		var harr = var_new[Size](unit(0))
 						__whileDo(i < arrlen && arr(i) != unit('\0'), {
                     		harr += arr(i)
 							i+=1
@@ -668,8 +668,8 @@ trait CGenStruct extends CGenBase with BaseGenStruct {
                         if (arrayType == manifest[Array[Byte]]) 
                             printf(remapToPrintFDescr(arrayType), array)
                         else {
-	    					val length = field[Int](repfld, "length")
-                            for (i <- unit(0) until length: Rep[Range])
+	    					val length = field[Long](repfld, "length")
+                            for (i <- unit(0L) until length: Rep[LongRange])
                                 printf(remapToPrintFDescr(arrayElemType), array_apply(array.asInstanceOf[Exp[Array[Any]]],i)(arrayElemType.asInstanceOf[Manifest[Any]], implicitly[SourceContext]))
                         }
 					}

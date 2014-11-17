@@ -34,14 +34,14 @@ trait TPCHRelations extends ArrayOps with StringOps with LiftNumeric with Struct
 	
 	// TODO: move to dataStruct
 	type LegoString = String
-	def infix_charAt(s1: Rep[String],idx:Rep[Int])(implicit pos: SourceContext): Rep[Character] = s1.asInstanceOf[Rep[Array[Character]]](idx)
+	def infix_charAt(s1: Rep[String],idx:Rep[Long])(implicit pos: SourceContext): Rep[Character] = s1.asInstanceOf[Rep[Array[Character]]](idx)
 	def infix_containsSlice(s1: Rep[String],s2:Rep[String])(implicit pos: SourceContext): Rep[Boolean] = string_containsSlice(s1,s2)
 	def infix_compareTo(s1: Rep[String],s2:Rep[String])(implicit pos: SourceContext): Rep[Int] = string_compareTo(s1,s2)
 	def infix_indexOfSlice(s1: Rep[String],s2:Rep[String],idx:Rep[Int])(implicit pos: SourceContext): Rep[Int] = string_indexOfSlice(s1,s2,idx)
 	def string_new(s1: Rep[Character],s2:Rep[Character])(implicit pos: SourceContext): Rep[String] = {
-		val buf = NewArray[Character](3)
-		buf(0) = s1
-		buf(1) = s2
+		val buf = NewArray[Character](3L)
+		buf(0L) = s1
+		buf(1L) = s2
 		buf.asInstanceOf[Rep[String]]
 	}
 

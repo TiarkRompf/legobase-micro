@@ -29,6 +29,13 @@ trait DSL extends ScalaOpsPkg with Functions with UncheckedOps with LiftBoolean 
   var datapath: java.lang.String
   def parseDate(x: String): Long
   def parseString(x: Rep[String]): Rep[LegoString]
+
+  object SizeDefaults {
+      def defaultInputBufferSize: Rep[Long] = uncheckedPure[Long]("DEFAULT_INPUT_SIZE")
+      def defaultViewSize:        Rep[Long] = uncheckedPure[Long]("DEFAULT_VIEW_SIZE")
+      def defaultAggHashSize:     Rep[Long] = uncheckedPure[Long]("DEFAULT_AGG_HASH_SIZE ")
+      def defaultJoinHashSize:    Rep[Long] = uncheckedPure[Long]("DEFAULT_JOIN_HASH_SIZE")
+  }  
 }
 
 trait DSLExp extends DSL with FunctionsExp with UncheckedOpsExp with ScannerExp 
@@ -161,7 +168,15 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
       #ifndef MAP_FILE
       #define MAP_FILE MAP_SHARED
       #endif
-      int fsize(int fd) {
+
+      // buffer and hashtable sizes
+      #define DEFAULT_INPUT_SIZE      (1L << 20)
+      #define DEFAULT_VIEW_SIZE       (1L << 20)
+      #define DEFAULT_AGG_HASH_SIZE   (1L << 24)
+      #define DEFAULT_JOIN_HASH_SIZE  (1L << 26)
+
+
+      long fsize(int fd) {
         struct stat stat;
         int res = fstat(fd,&stat);
         return stat.st_size;

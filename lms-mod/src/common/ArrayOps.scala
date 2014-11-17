@@ -8,6 +8,8 @@ import scala.collection.mutable.{HashMap,Set}
 
 trait ArrayOps extends Variables {
 
+  type Size = Long
+
   // multiple definitions needed because implicits won't chain
   // not using infix here because apply doesn't work with infix methods
   implicit def varToArrayOps[T:Manifest](x: Var[Array[T]]) = new ArrayOpsCls(readVar(x))
@@ -18,7 +20,7 @@ trait ArrayOps extends Variables {
   // substitution for "new Array[T](...)"
   // TODO: look into overriding __new for arrays
   object NewArray {
-    def apply[T:Manifest](n: Rep[Int], specializedType: Rep[String] = unit("")) = array_obj_new(n, specializedType)    
+    def apply[T:Manifest](n: Rep[Size], specializedType: Rep[String] = unit("")) = array_obj_new(n, specializedType)    
   }
 
   object Array {
@@ -26,8 +28,8 @@ trait ArrayOps extends Variables {
   }
 
   class ArrayOpsCls[T:Manifest](a: Rep[Array[T]]){
-    def apply(n: Rep[Int])(implicit pos: SourceContext) = array_apply(a, n)
-    def update(n: Rep[Int], y: Rep[T])(implicit pos: SourceContext) = array_update(a,n,y)
+    def apply(n: Rep[Size])(implicit pos: SourceContext) = array_apply(a, n)
+    def update(n: Rep[Size], y: Rep[T])(implicit pos: SourceContext) = array_update(a,n,y)
     def length(implicit pos: SourceContext) = array_length(a)
     def foreach(block: Rep[T] => Rep[Unit])(implicit pos: SourceContext) = array_foreach(a, block)
     def filter(f: Rep[T] => Rep[Boolean]) = array_filter(a, f)
@@ -41,19 +43,19 @@ trait ArrayOps extends Variables {
     def mkString(del: String = "") = array_mkString(a,del)
     def startsWith[B:Manifest](s2: Rep[Array[B]])(implicit pos: SourceContext) = array_startsWith[T,B](a,s2)
     def endsWith[B:Manifest](s2: Rep[Array[B]])(implicit pos: SourceContext) = array_endsWith[T,B](a,s2)
-	def slice(from: Rep[Int], until: Rep[Int]) = array_slice[T](a, from, until)
+	def slice(from: Rep[Size], until: Rep[Size]) = array_slice[T](a, from, until)
 	def hash = array_hash(a)
 	def containsSlice(a2: Rep[Array[T]]) = array_containsSlice(a,a2)
-	def indexOfSlice(a2: Rep[Array[T]], idx: Rep[Int]) = array_indexOfSlice(a,a2, idx)
+	def indexOfSlice(a2: Rep[Array[T]], idx: Rep[Size]) = array_indexOfSlice(a,a2, idx)
 	def compare(a2: Rep[Array[T]]) = array_compare(a,a2)
   }    
 
-  def array_obj_new[T:Manifest](n: Rep[Int], specializedType: Rep[String] = unit("")): Rep[Array[T]]
+  def array_obj_new[T:Manifest](n: Rep[Size], specializedType: Rep[String] = unit("")): Rep[Array[T]]
   def array_obj_fromseq[T:Manifest](xs: Seq[T]): Rep[Array[T]]
-  def array_apply[T:Manifest](x: Rep[Array[T]], n: Rep[Int])(implicit pos: SourceContext): Rep[T]
-  def array_update[T:Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext): Rep[Unit]
-  def array_unsafe_update[T:Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext): Rep[Unit]
-  def array_length[T:Manifest](x: Rep[Array[T]])(implicit pos: SourceContext) : Rep[Int]
+  def array_apply[T:Manifest](x: Rep[Array[T]], n: Rep[Size])(implicit pos: SourceContext): Rep[T]
+  def array_update[T:Manifest](x: Rep[Array[T]], n: Rep[Size], y: Rep[T])(implicit pos: SourceContext): Rep[Unit]
+  def array_unsafe_update[T:Manifest](x: Rep[Array[T]], n: Rep[Size], y: Rep[T])(implicit pos: SourceContext): Rep[Unit]
+  def array_length[T:Manifest](x: Rep[Array[T]])(implicit pos: SourceContext) : Rep[Size]
   def array_foreach[T:Manifest](x: Rep[Array[T]], block: Rep[T] => Rep[Unit])(implicit pos: SourceContext): Rep[Unit]
   def array_filter[T : Manifest](l: Rep[Array[T]], f: Rep[T] => Rep[Boolean])(implicit pos: SourceContext): Rep[Array[T]]
   def array_group_by[T : Manifest, B: Manifest](l: Rep[Array[T]], f: Rep[T] => Rep[B])(implicit pos: SourceContext): Rep[HashMap[B, Array[T]]]
@@ -66,25 +68,25 @@ trait ArrayOps extends Variables {
   def array_mkString[A: Manifest](a: Rep[Array[A]], del: String = ""): Rep[String]
   def array_startsWith[A:Manifest, B:Manifest](s1: Rep[Array[A]], s2: Rep[Array[B]])(implicit pos: SourceContext): Rep[Boolean]
   def array_endsWith[A:Manifest, B:Manifest](s1: Rep[Array[A]], s2: Rep[Array[B]])(implicit pos: SourceContext): Rep[Boolean]
-  def array_slice[A: Manifest](a: Rep[Array[A]], from: Rep[Int], until: Rep[Int]): Rep[Array[A]]
-  def array_hash[A:Manifest](a: Rep[Array[A]]): Rep[Int]
+  def array_slice[A: Manifest](a: Rep[Array[A]], from: Rep[Size], until: Rep[Size]): Rep[Array[A]]
+  def array_hash[A:Manifest](a: Rep[Array[A]]): Rep[Size]
   def array_containsSlice[A:Manifest](s1: Rep[Array[A]], s2: Rep[Array[A]])(implicit pos: SourceContext): Rep[Boolean]
-  def array_indexOfSlice[A:Manifest](s1: Rep[Array[A]], s2: Rep[Array[A]], idx: Rep[Int])(implicit pos: SourceContext): Rep[Int]
+  def array_indexOfSlice[A:Manifest](s1: Rep[Array[A]], s2: Rep[Array[A]], idx: Rep[Size])(implicit pos: SourceContext): Rep[Size]
   def array_compare[A:Manifest](s1: Rep[Array[A]], s2: Rep[Array[A]])(implicit pos: SourceContext): Rep[Int]
-  def array_copy[T:Manifest](src: Rep[Array[T]], srcPos: Rep[Int], dest: Rep[Array[T]], destPos: Rep[Int], len: Rep[Int])(implicit pos: SourceContext): Rep[Unit]
-  def array_unsafe_copy[T:Manifest](src: Rep[Array[T]], srcPos: Rep[Int], dest: Rep[Array[T]], destPos: Rep[Int], len: Rep[Int])(implicit pos: SourceContext): Rep[Unit]
+  def array_copy[T:Manifest](src: Rep[Array[T]], srcPos: Rep[Size], dest: Rep[Array[T]], destPos: Rep[Size], len: Rep[Size])(implicit pos: SourceContext): Rep[Unit]
+  def array_unsafe_copy[T:Manifest](src: Rep[Array[T]], srcPos: Rep[Size], dest: Rep[Array[T]], destPos: Rep[Size], len: Rep[Size])(implicit pos: SourceContext): Rep[Unit]
 }
 
 trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp with StructExp with WhileExp with OrderingOps with PrimitiveOps   with NumericOps {
-  case class ArrayNew[T:Manifest](n: Exp[Int], specializedType: Rep[String] = unit("")) extends Def[Array[T]] {
+  case class ArrayNew[T:Manifest](n: Exp[Size], specializedType: Rep[String] = unit("")) extends Def[Array[T]] {
     val m = manifest[T]
   }
   case class ArrayFromSeq[T:Manifest](xs: Seq[T]) extends Def[Array[T]] {
     val m = manifest[T]
   }
-  case class ArrayApply[T:Manifest](a: Exp[Array[T]], n: Exp[Int]) extends Def[T]
-  case class ArrayUpdate[T:Manifest](a: Exp[Array[T]], n: Exp[Int], y: Exp[T]) extends Def[Unit]
-  case class ArrayLength[T:Manifest](a: Exp[Array[T]]) extends Def[Int] {
+  case class ArrayApply[T:Manifest](a: Exp[Array[T]], n: Exp[Size]) extends Def[T]
+  case class ArrayUpdate[T:Manifest](a: Exp[Array[T]], n: Exp[Size], y: Exp[T]) extends Def[Unit]
+  case class ArrayLength[T:Manifest](a: Exp[Array[T]]) extends Def[Size] {
     val m = manifest[T]
   }
   case class ArrayForeach[T](a: Exp[Array[T]], x: Sym[T], block: Block[Unit]) extends Def[Unit]
@@ -103,27 +105,27 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp with StructE
   case class ArrayMkString[A:Manifest](a: Exp[Array[A]], b: String = "") extends Def[String]
   case class ArrayStartsWith[A:Manifest,B:Manifest](s1: Exp[Array[A]], s2: Exp[Array[B]]) extends Def[Boolean]
   case class ArrayEndsWith[A:Manifest,B:Manifest](s1: Exp[Array[A]], s2: Exp[Array[B]]) extends Def[Boolean]
-  case class ArraySlice[A:Manifest](a: Exp[Array[A]], from: Exp[Int], until: Exp[Int]) extends Def[Array[A]] {
+  case class ArraySlice[A:Manifest](a: Exp[Array[A]], from: Exp[Size], until: Exp[Size]) extends Def[Array[A]] {
 	val m = manifest[A]
   }
   case class ArrayContainsSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]]) extends Def[Boolean]
-  case class ArrayIndexOfSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]], idx: Rep[Int]) extends Def[Int] {
+  case class ArrayIndexOfSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]], idx: Rep[Size]) extends Def[Size] {
     val m = manifest[A]
   }
   case class ArrayCompare[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]]) extends Def[Int] {
     val m = manifest[A]
   }
-  case class ArrayHash[A:Manifest](a: Exp[Array[A]]) extends Def[Int]
-  case class ArrayCopy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Int], dest: Exp[Array[T]], destPos: Exp[Int], len: Exp[Int]) extends Def[Unit] {
+  case class ArrayHash[A:Manifest](a: Exp[Array[A]]) extends Def[Size]
+  case class ArrayCopy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Size], dest: Exp[Array[T]], destPos: Exp[Size], len: Exp[Size]) extends Def[Unit] {
     val m = manifest[T]
   }
   
-  def array_obj_new[T:Manifest](n: Exp[Int], specializedType: Rep[String] = unit("")) = reflectMutable(ArrayNew(n, specializedType))
+  def array_obj_new[T:Manifest](n: Exp[Size], specializedType: Rep[String] = unit("")) = reflectMutable(ArrayNew(n, specializedType))
   def array_obj_fromseq[T:Manifest](xs: Seq[T]) = /*reflectMutable(*/ ArrayFromSeq(xs) /*)*/
-  def array_apply[T:Manifest](x: Exp[Array[T]], n: Exp[Int])(implicit pos: SourceContext): Exp[T] = ArrayApply(x, n)
-  def array_update[T:Manifest](x: Exp[Array[T]], n: Exp[Int], y: Exp[T])(implicit pos: SourceContext) = reflectWrite(x)(ArrayUpdate(x,n,y))
-  def array_unsafe_update[T:Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext) = ArrayUpdate(x,n,y)
-  def array_length[T:Manifest](a: Exp[Array[T]])(implicit pos: SourceContext) : Rep[Int] = ArrayLength(a)
+  def array_apply[T:Manifest](x: Exp[Array[T]], n: Exp[Size])(implicit pos: SourceContext): Exp[T] = ArrayApply(x, n)
+  def array_update[T:Manifest](x: Exp[Array[T]], n: Exp[Size], y: Exp[T])(implicit pos: SourceContext) = reflectWrite(x)(ArrayUpdate(x,n,y))
+  def array_unsafe_update[T:Manifest](x: Rep[Array[T]], n: Rep[Size], y: Rep[T])(implicit pos: SourceContext) = ArrayUpdate(x,n,y)
+  def array_length[T:Manifest](a: Exp[Array[T]])(implicit pos: SourceContext) : Rep[Size] = ArrayLength(a)
   def array_foreach[T:Manifest](a: Exp[Array[T]], block: Exp[T] => Exp[Unit])(implicit pos: SourceContext): Exp[Unit] = {
     val x = fresh[T]
     val b = reifyEffects(block(x))
@@ -153,13 +155,13 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp with StructE
   def array_mkString[A: Manifest](a: Rep[Array[A]], del: String = "") = reflectEffect(ArrayMkString(a, del))
   def array_startsWith[A:Manifest,B:Manifest](s1: Exp[Array[A]], s2: Exp[Array[B]])(implicit pos: SourceContext) = ArrayStartsWith(s1,s2)
   def array_endsWith[A:Manifest,B:Manifest](s1: Exp[Array[A]], s2: Exp[Array[B]])(implicit pos: SourceContext) = ArrayEndsWith(s1,s2)
-  def array_slice[A: Manifest](a: Exp[Array[A]], from: Exp[Int], until: Exp[Int]) = reflectEffect(ArraySlice[A](a,from,until))
+  def array_slice[A: Manifest](a: Exp[Array[A]], from: Exp[Size], until: Exp[Size]) = reflectEffect(ArraySlice[A](a,from,until))
   def array_hash[A:Manifest](a: Rep[Array[A]]) = reflectEffect(ArrayHash(a))
   def array_containsSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]])(implicit pos: SourceContext) = ArrayContainsSlice(s1,s2)
-  def array_indexOfSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]], idx: Exp[Int])(implicit pos: SourceContext) = ArrayIndexOfSlice(s1,s2,idx)
+  def array_indexOfSlice[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]], idx: Exp[Size])(implicit pos: SourceContext) = ArrayIndexOfSlice(s1,s2,idx)
   def array_compare[A:Manifest](s1: Exp[Array[A]], s2: Exp[Array[A]])(implicit pos: SourceContext)= ArrayCompare(s1,s2)
-  def array_copy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Int], dest: Exp[Array[T]], destPos: Exp[Int], len: Exp[Int])(implicit pos: SourceContext) = reflectWrite(dest)(ArrayCopy(src,srcPos,dest,destPos,len))
-  def array_unsafe_copy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Int], dest: Exp[Array[T]], destPos: Exp[Int], len: Exp[Int])(implicit pos: SourceContext) = ArrayCopy(src,srcPos,dest,destPos,len)
+  def array_copy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Size], dest: Exp[Array[T]], destPos: Exp[Size], len: Exp[Size])(implicit pos: SourceContext) = reflectWrite(dest)(ArrayCopy(src,srcPos,dest,destPos,len))
+  def array_unsafe_copy[T:Manifest](src: Exp[Array[T]], srcPos: Exp[Size], dest: Exp[Array[T]], destPos: Exp[Size], len: Exp[Size])(implicit pos: SourceContext) = ArrayCopy(src,srcPos,dest,destPos,len)
   
   //////////////
   // mirroring
@@ -215,7 +217,7 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp with StructE
 trait ArrayOpsExpOpt extends ArrayOpsExp {
 
 
-  override def array_apply[T:Manifest](x: Exp[Array[T]], n: Exp[Int])(implicit pos: SourceContext): Exp[T] = {
+  override def array_apply[T:Manifest](x: Exp[Array[T]], n: Exp[Size])(implicit pos: SourceContext): Exp[T] = {
     if (context ne null) {
       // find the last modification of array x
       // if it is an assigment at index n, just return the last value assigned
@@ -233,7 +235,7 @@ trait ArrayOpsExpOpt extends ArrayOpsExp {
     }
   }
 
-  override def array_update[T:Manifest](x: Exp[Array[T]], n: Exp[Int], y: Exp[T])(implicit pos: SourceContext) = {
+  override def array_update[T:Manifest](x: Exp[Array[T]], n: Exp[Size], y: Exp[T])(implicit pos: SourceContext) = {
     if (context ne null) {
       // find the last modification of array x
       // if it is an assigment at index n with the same value, just do nothing

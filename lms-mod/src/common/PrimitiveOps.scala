@@ -113,6 +113,7 @@ trait PrimitiveOps extends Variables with OverloadHack {
   /**
    * Long
    */
+  def infix_%(lhs: Rep[Long], rhs: Rep[Long])(implicit o: Overloaded1, pos: SourceContext) = long_mod(lhs, rhs)
   def infix_&(lhs: Rep[Long], rhs: Rep[Long])(implicit o: Overloaded1, pos: SourceContext) = long_binaryand(lhs, rhs)
   def infix_|(lhs: Rep[Long], rhs: Rep[Long])(implicit o: Overloaded1, pos: SourceContext) = long_binaryor(lhs, rhs)
   def infix_^(lhs: Rep[Long], rhs: Rep[Long])(implicit o: Overloaded1, pos: SourceContext) = long_binaryxor(lhs, rhs)
@@ -121,6 +122,7 @@ trait PrimitiveOps extends Variables with OverloadHack {
   def infix_>>>(lhs: Rep[Long], rhs: Rep[Int])(implicit pos: SourceContext) = long_shiftright_unsigned(lhs, rhs)
   def infix_toInt(lhs: Rep[Long])(implicit o: Overloaded1, pos: SourceContext) = long_toint(lhs)
     
+  def long_mod(lhs: Rep[Long], rhs: Rep[Long])(implicit pos: SourceContext): Rep[Long]
   def long_binaryand(lhs: Rep[Long], rhs: Rep[Long])(implicit pos: SourceContext): Rep[Long]
   def long_binaryor(lhs: Rep[Long], rhs: Rep[Long])(implicit pos: SourceContext): Rep[Long]
   def long_binaryxor(lhs: Rep[Long], rhs: Rep[Long])(implicit pos: SourceContext): Rep[Long]
@@ -195,6 +197,7 @@ trait PrimitiveOpsExp extends PrimitiveOps with BaseExp {
   /**
    * Long
    */
+  case class LongMod(lhs: Exp[Long], rhs: Exp[Long]) extends Def[Long]
   case class LongBinaryOr(lhs: Exp[Long], rhs: Exp[Long]) extends Def[Long]
   case class LongBinaryXor(lhs: Exp[Long], rhs: Exp[Long]) extends Def[Long]
   case class LongBinaryAnd(lhs: Exp[Long], rhs: Exp[Long]) extends Def[Long]
@@ -203,6 +206,7 @@ trait PrimitiveOpsExp extends PrimitiveOps with BaseExp {
   case class LongShiftRightUnsigned(lhs: Exp[Long], rhs: Exp[Int]) extends Def[Long]
   case class LongToInt(lhs: Exp[Long]) extends Def[Int]
 
+  def long_mod(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) = LongMod(lhs, rhs)
   def long_binaryor(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) = LongBinaryOr(lhs,rhs)
   def long_binaryxor(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) = LongBinaryXor(lhs,rhs)
   def long_binaryand(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) = LongBinaryAnd(lhs,rhs)
@@ -235,6 +239,7 @@ trait PrimitiveOpsExp extends PrimitiveOps with BaseExp {
       case IntToLong(x) => int_tolong(f(x))
       case LongShiftLeft(x,y) => long_shiftleft(f(x),f(y))
       case LongShiftRight(x,y) => long_shiftright(f(x),f(y))
+      case LongMod(x,y) => long_mod(f(x),f(y))
       case LongBinaryOr(x,y) => long_binaryand(f(x),f(y))
       case LongBinaryXor(x,y) => long_binaryand(f(x),f(y))
       case LongBinaryAnd(x,y) => long_binaryand(f(x),f(y))
@@ -301,7 +306,10 @@ trait CLikeGenPrimitiveOps extends CLikeGenBase {
       case IntBinaryOr(lhs,rhs) => emitValDef(sym, src"$lhs | $rhs")
       case IntBinaryAnd(lhs,rhs) => emitValDef(sym, src"$lhs & $rhs")
       case IntDoubleValue(lhs) => emitValDef(sym, src"(double)$lhs")
+      case LongMod(lhs,rhs) => emitValDef(sym, src"$lhs % $rhs")
       case LongToInt(lhs) => emitValDef(sym, src"(int)$lhs")
+      case LongBinaryOr(lhs,rhs) => emitValDef(sym, src"$lhs | $rhs")
+      case LongBinaryAnd(lhs,rhs) => emitValDef(sym, src"$lhs & $rhs")
 	    case CharMinus(lhs,rhs) => emitValDef(sym, src"$lhs - $rhs")
       case _ => super.emitNode(sym, rhs)
     }

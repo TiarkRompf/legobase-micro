@@ -112,13 +112,13 @@ trait GeneratorOps extends Base with Variables with LiftVariables with IfThenEls
       grps
     }
 
-	def groupByMultipleAggregates[K2:Manifest, V2:Manifest](newMapFun: () => Rep[scala.collection.mutable.HashMap[K2, Array[V2]]], numAggs: Rep[Int], group: Rep[(K, V)] => Rep[K2], fn: (Rep[V], Rep[V2]) => Rep[V2]*): Rep[scala.collection.mutable.HashMap[K2, Array[V2]]] = {
+	def groupByMultipleAggregates[K2:Manifest, V2:Manifest](newMapFun: () => Rep[scala.collection.mutable.HashMap[K2, Array[V2]]], numAggs: Rep[Long], group: Rep[(K, V)] => Rep[K2], fn: (Rep[V], Rep[V2]) => Rep[V2]*): Rep[scala.collection.mutable.HashMap[K2, Array[V2]]] = {
       val grps = newMapFun()//HashMap[K2,Array[V2]]()
       self.apply {
         x:Rep[(K,V)] => {
         	val key: Rep[K2] = group(x)
 			val aggs = grps.getOrElseUpdate(key, NewArray[V2](numAggs))//fn.length))// lookupOrDefault[K2,Array[V2]](grps,key,init))
-			fn.foldLeft(0) { (cnt,aggfn) => {
+			fn.foldLeft(0L) { (cnt,aggfn) => {
 	        	val value = aggfn(x._2,aggs(cnt))
 				aggs(cnt) = value
 				cnt+1

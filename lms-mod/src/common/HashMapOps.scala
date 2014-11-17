@@ -82,14 +82,7 @@ trait HashMapOpsExp extends HashMapOps with EffectExp with TupleOpsExp with Func
   case class HashMapGetOrElseUpdate[K:Manifest,V:Manifest](m: Exp[HashMap[K,V]], k: Exp[K], vl: Block[V]) extends HashMapDef[K,V,V] with IfThenElseExp
   case class HashMapMkString[K:Manifest,V:Manifest](m: Exp[HashMap[K,V]], v:Rep[String]) extends HashMapDef[K,V,String]
 
-  def hashmap_new[K:Manifest,V:Manifest]() = {
-	def toArray(x: Exp[K]): Exp[Array[Any]] = x.asInstanceOf[Exp[Array[Any]]]
-    if (manifest[K].erasure.isArray)
-        hashmap_new[K,V]( (x:Exp[K]) => toArray(x).hash, (x:Exp[K],y:Exp[K]) => toArray(x).corresponds(toArray(y)))
-    else if (manifest[K].erasure.getSimpleName == "Record")
-        hashmap_new[K,V]( (x:Exp[K]) => record_hash(x), (x:Exp[K],y:Exp[K]) => record_equals(x,y))
-    else reflectMutable(HashMapNew[K,V]())
-  }
+  def hashmap_new[K:Manifest,V:Manifest]() = reflectMutable(HashMapNew[K,V]())
   def hashmap_new[K:Manifest,V:Manifest](hash: Exp[K] => Exp[Int], equals: (Exp[K],Exp[K])=>Exp[Boolean]) = {
     val k = fresh[K]
     val v1 = fresh[K]
