@@ -209,6 +209,24 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         if (l1 != l2) return l2 - l1;
         return strncmp(s1,s2,l1);
       }
+      char* strnstr(const char *s, const char *find, size_t slen) {
+        char c, sc;
+        size_t len;
+
+        if ((c = *find++) != '\0') {
+          len = strlen(find);
+          do {
+            do {
+              if (slen-- < 1 || (sc = *s++) == '\0')
+                return (NULL);
+            } while (sc != c);
+            if (len > slen)
+              return (NULL);
+          } while (strncmp(s, find, len) != 0);
+          s--;
+        }
+        return ((char *)s);
+      }
       char* strstr(const char *s1, const char *s2) {
         return strnstr(s1,s2,strlen(s1));
       }

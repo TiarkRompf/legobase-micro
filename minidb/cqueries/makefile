@@ -1,7 +1,8 @@
-#CC=clang
-CC=/usr/local/Cellar/gcc/4.9.1/bin/gcc-4.9
+# CC=clang
+# CC=/usr/local/Cellar/gcc/4.9.1/bin/gcc-4.9
+CC=/usr/bin/gcc-4.9
 
-LIBS=-O3 -I/usr/local/include/glib-2.0/ -I/usr/local/lib/glib-2.0/include -L/usr/local/lib -lglib-2.0
+LIBS=-O3 `pkg-config --cflags --libs glib-2.0` -L/usr/lib
 CFLAGS=-g
 
  FILES=$(wildcard *.c)
