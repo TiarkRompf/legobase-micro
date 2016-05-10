@@ -83,6 +83,12 @@ trait Scanner extends ScalaOpsPkg with LiftVariables with LiftPrimitives  with L
         stringFromCharArray(data,start,len) //len
       }
 
+      def skipLine(): Rep[Unit] = {
+        if (boolean_and(pos > 0L, data(pos - 1L) != '\n'))
+          while (data(pos) != '\n') pos += 1
+          pos += 1
+      }
+
       def nextChar(d: Rep[Char] = '|'): Rep[Character] = {
         val c = data(pos)
         pos += 2 // skip delim
