@@ -729,6 +729,8 @@ trait CGenStruct extends CGenBase with BaseGenStruct {
   override def remap[A](m: Manifest[A]) = m match {
     case s if s <:< manifest[CompositeRecord[Any,Any]] => "struct " + structName(m) // + "*"
     case s if s <:< manifest[Record] => "struct " + structName(m) // + "*"
+    case s if s.toString.contains("Pointer") => // TODO find a better place
+      super.remap(m.typeArguments.head) + "*"
     case _ =>  super.remap(m)
   }
 
