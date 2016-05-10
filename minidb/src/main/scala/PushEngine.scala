@@ -253,21 +253,54 @@ trait PushEngine extends DSL with DataStruct {
         MapOp1[CompositeRecord1[A,B],CompositeRecord[A,B]](parent)(xy => union(xy.left, xy.right))
     }
 
-    def SortOp[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) = parent
-    
+    def SortOp[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) = SortOp1(parent)(orderingFunc)
+
     case class SortOp0[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) extends Operator[A] {
         val sortedTree = TreeSet(orderingFunc)
         def next() = {
             parent.next
-            while (sortedTree.size != 0) { 
+            while (sortedTree.size != 0) {
                 val elem = sortedTree.head
                 sortedTree -= elem
                 child.consume(elem.asInstanceOf[Rep[Record]])
-            } 
+            }
         }
-        def reset() { parent.reset; open } 
+        def reset() { parent.reset; open }
         def open() { parent.child = this; parent.open }
         def consume(tuple: Rep[Record]) { sortedTree insert tuple.asInstanceOf[Rep[A]] }
+    }
+
+    case class SortOp1[A:Manifest](parent: Operator[A])(orderingFunc: Function2[Rep[A],Rep[A],Rep[Int]]) extends Operator[A] {
+        val cap0 = 1024L
+        val cap = var_new(cap0)
+        val len = var_new(0L)
+        val buf = LegoBufferFlat[A](cap0)
+
+        def ensureSize() = {
+          if (len == cap) {
+            cap = cap * 4
+            buf.resize(cap)
+          }
+        }
+
+        def append(x: Rep[A]) = {
+          ensureSize()
+          buf(len) = x
+          len += 1
+        }
+
+        def next() = {
+            parent.next
+
+            buf.sort(orderingFunc, len)
+
+            for (i <- 0L until len) {
+                child.consume(buf(i).asInstanceOf[Rep[Record]])
+            }
+        }
+        def reset() { parent.reset; open }
+        def open() { parent.child = this; parent.open }
+        def consume(tuple: Rep[Record]) { append(tuple.asInstanceOf[Rep[A]]) }
     }
 
     // not used except in Q17 -- otherwise just use agg
