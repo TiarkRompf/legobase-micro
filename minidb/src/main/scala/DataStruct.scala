@@ -25,8 +25,10 @@ trait UncheckedHelperExp extends DSL with UncheckedOpsExp {
 
 }
 
+
 trait UncheckedHelper extends DSL with UncheckedOps {
 
+    class MyPointer[T:Manifest]
     implicit def rq(c: StringContext) = new {
       def cg(args: Thunk[Rep[Any]]*) = new {
         def as[T:Manifest]: Rep[T] = {
@@ -62,6 +64,31 @@ trait UncheckedHelper extends DSL with UncheckedOps {
       }
     }
 
+    def deref[T:Manifest](ptr: Rep[MyPointer[T]]): Rep[T] = {
+      cg"(*$ptr)".as[T]
+    }
+
+    def array_quicksort[T:Manifest](xs: Rep[Array[T]], size: Rep[Long], comp: Function2[Rep[T],Rep[T],Rep[Int]]): Rep[Unit] = {
+      // TODO: proper IR node
+      val f = uninlinedFunc2((a:Rep[MyPointer[T]], b:Rep[MyPointer[T]]) => comp(deref(a), deref(b)))
+      if (manifest[T] == manifest[Int])
+        cg"qsort($xs,$size,sizeof(int),(__compar_fn_t)$f)".as[Unit]
+      else if (manifest[T] == manifest[Long])
+        cg"qsort($xs,$size,sizeof(long),(__compar_fn_t)$f)".as[Unit]
+      else if (manifest[T] == manifest[Double])
+        cg"qsort($xs,$size,sizeof(double),(__compar_fn_t)$f)".as[Unit]
+      else if (manifest[T] == manifest[Character])
+        cg"qsort($xs,$size,sizeof(char),(__compar_fn_t)$f)".as[Unit]
+      else if (manifest[T] == manifest[String])
+        cg"qsort($xs,$size,sizeof(char*),(__compar_fn_t)$f)".as[Unit]
+      else if (manifest[T] <:< manifest[Record]) {
+        val name = structName(manifest[T])
+        rq(new StringContext("qsort((void *)", ",", s",sizeof(struct $name), (__compar_fn_t)", ")")).cg(xs, size, f).as[Unit]
+      } else {
+        cg"qsort((void *)$xs,$size,sizeof(void*),(__compar_fn_t)$f)".as[Unit]
+      }
+    }
+
 }
 
 
@@ -77,17 +104,21 @@ trait DataStruct extends DSL with UncheckedHelper {
     def apply(x: Rep[Long]): Rep[T]
     def update(x: Rep[Long], y: Rep[T]): Rep[Unit]
     def resize(x: Rep[Long]): Rep[Unit]
+    def sort(comp: Function2[Rep[T],Rep[T],Rep[Int]], len: Rep[Long]): Rep[Unit]
   }
 
   class RecordBuffer[T](size: Rep[Long])(implicit rm: RefinedManifest[T]) extends LegoBuffer[T] {
     val elems = rm.fields map { case (k,m) => (k,m,LegoBuffer(size)(m)) }
-    def apply(x: Rep[Long]) = 
+    def apply(x: Rep[Long]) =
       record_new[T](structName(manifest[T]), elems map { case (k,m,v) => (k,v(x)) })
-    def update(x: Rep[Long], y: Rep[T]): Rep[Unit] = 
+    def update(x: Rep[Long], y: Rep[T]): Rep[Unit] =
       elems foreach { case (k,m,v:LegoBuffer[t]) => v(x) = record_select(y,k)(manifest[T],m.asInstanceOf[Manifest[t]]) }
     def resize(x: Rep[Long]): Rep[Unit] = {
       printf("buffer.resize %d\n",x)
       elems foreach { case (k,m,v) => v.resize(x) }
+    }
+    def sort(comp: Function2[Rep[T],Rep[T],Rep[Int]], len: Rep[Long]): Rep[Unit] = {
+      throw new RuntimeException("TODO buffer.sort")
     }
   }
 
@@ -97,6 +128,9 @@ trait DataStruct extends DSL with UncheckedHelper {
     def update(x: Rep[Long], y: Rep[T]): Rep[Unit] = buf(x) = y
     def resize(x: Rep[Long]): Rep[Unit] = {
      buf = array_realloc(buf,x)
+    }
+    def sort(comp: Function2[Rep[T],Rep[T],Rep[Int]], len: Rep[Long]): Rep[Unit] = {
+      array_quicksort(buf, len, comp)
     }
   }
 
