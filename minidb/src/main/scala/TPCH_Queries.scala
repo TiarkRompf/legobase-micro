@@ -731,13 +731,17 @@ new plan:
         val customerTable = loadCustomer1()
         val ordersTable = loadOrders1()
         runQuery {
-                val unusual = parseString("unusual")
-                val packages = parseString("packages")
+                val unusual = parseString("special")
+                val packages = parseString("requests")
                 val scanCustomer = ScanOp2(customerTable)
                 val scanOrders = SelectOp(ScanOp2(ordersTable))(x => {
                     val idxu = x.O_COMMENT.indexOfSlice(unusual, 0)
-                    val idxp = x.O_COMMENT.indexOfSlice(packages, idxu)
-                    !(idxu != -1 && idxp != -1)
+                    if (idxu >= 0) {
+                      val idxp = x.O_COMMENT.indexOfSlice(packages, idxu + 7)
+                      idxp == -1
+                    } else {
+                      true
+                    }
                 })
                 val jo = MapCatOp(LeftOuterJoinOp1(scanCustomer, scanOrders)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY))
                 val aggOp1 = AggOp1(jo)(x => x[Int]("C_CUSTKEY"))(zero1)(

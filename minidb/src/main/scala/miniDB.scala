@@ -206,7 +206,7 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
       int strcmp(const char *s1, const char *s2) {
         size_t l1 = strlen(s1);
         size_t l2 = strlen(s2);
-        if (l1 != l2) return l2 - l1;
+        if (l1 > l2) l1 = l2;
         return strncmp(s1,s2,l1);
       }
       char* strnstr(const char *s, const char *find, size_t slen) {
@@ -228,7 +228,11 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         return ((char *)s);
       }
       char* strstr(const char *s1, const char *s2) {
-        return strnstr(s1,s2,strlen(s1));
+        char* tmp;
+        if ((tmp = strnstr(s1,s2,strlen(s1))) == NULL) {
+          return s1 - (1 << 10); // Hack
+        }
+        return tmp;
       }
       """)
       super.emitDataStructures(out)
