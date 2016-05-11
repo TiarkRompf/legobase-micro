@@ -23,20 +23,20 @@ trait GenericQuery extends Engine with Loader {
       timeGeneratedCode {
         po.open
         po.next
-        printf("(%d rows)\\n", po.numRows)
+        printf("(%ld rows)\\n", po.numRows)
       }
     }
   }
 }
 
 trait Queries extends GenericQuery {
-    def zero1 = new Record { 
+    def zero1 = new Record {
         val _0 = 0.0
     }
-    def zero2 = new Record { 
+    def zero2 = new Record {
         val _0 = 0.0; val _1 = 0.0
     }
-    def zero6 = new Record { 
+    def zero6 = new Record {
         val _0 = 0.0; val _1 = 0.0; val _2 = 0.0; val _3 = 0.0; val _4 = 0.0; val _5 = 0.0
     }
 
@@ -45,9 +45,9 @@ trait Queries extends GenericQuery {
         runQuery {
                 val constantDate: Long = parseDate("1998-08-11")
                 val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE <= constantDate)
-                val aggOp = AggOp1(lineitemScan)(x => new Record { 
-                    val L_RETURNFLAG = x.L_RETURNFLAG 
-                    val L_LINESTATUS = x.L_LINESTATUS 
+                val aggOp = AggOp1(lineitemScan)(x => new Record {
+                    val L_RETURNFLAG = x.L_RETURNFLAG
+                    val L_LINESTATUS = x.L_LINESTATUS
                 })(zero6)((t,currAgg) => new Record {
                     val _0 = {t.L_DISCOUNT + currAgg._0}
                     val _1 = {t.L_QUANTITY + currAgg._1}
@@ -59,7 +59,7 @@ trait Queries extends GenericQuery {
                 val mapOp = MapOp1(aggOp)(kv => new Record {
                     val key = kv.key
                     val aggs = new Record {
-                        val _0 = kv.aggs._0; val _1 = kv.aggs._1; val _2 = kv.aggs._2 
+                        val _0 = kv.aggs._0; val _1 = kv.aggs._1; val _2 = kv.aggs._2
                         val _3 = kv.aggs._3; val _4 = kv.aggs._4; val _5 = kv.aggs._5
                         val _6 = kv.aggs._1/kv.aggs._5 // AVG(L_QUANTITY)
                         val _7 = kv.aggs._2/kv.aggs._5 // AVG(L_EXTENDEDPRICE)
@@ -86,12 +86,13 @@ trait Queries extends GenericQuery {
         val regionTable   = loadRegion1()
         val supplierTable = loadSupplier1()
         runQuery {
-                val africa = parseString("AFRICA")
-                val tin = parseString("TIN")
+                val africa = parseString("EUROPE")
+                val tin = parseString("BRASS")
+                val size = 15
                 val partsuppScan = ScanOp2(partsuppTable)
                 val supplierScan = ScanOp2(supplierTable)
                 // XX unnecessary to name all the fields
-                val jo1 = MapOp1(HashJoinOp2(supplierScan, partsuppScan)((x,y) => x.S_SUPPKEY == y.PS_SUPPKEY)(x => x.S_SUPPKEY)(x => x.PS_SUPPKEY)) { x => new Record { 
+                val jo1 = MapOp1(HashJoinOp2(supplierScan, partsuppScan)((x,y) => x.S_SUPPKEY == y.PS_SUPPKEY)(x => x.S_SUPPKEY)(x => x.PS_SUPPKEY)) { x => new Record {
                     val PS_SUPPLYCOST = x.right.PS_SUPPLYCOST
                     val PS_PARTKEY    = x.right.PS_PARTKEY
                     val S_NATIONKEY   = x.left.S_NATIONKEY
@@ -102,7 +103,7 @@ trait Queries extends GenericQuery {
                     val S_COMMENT     = x.left.S_COMMENT
                 }}
                 val nationScan = ScanOp2(nationTable)
-                val jo2 = MapOp1(HashJoinOp2(nationScan, jo1)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY)) { x => new Record { 
+                val jo2 = MapOp1(HashJoinOp2(nationScan, jo1)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY)) { x => new Record {
                     val PS_SUPPLYCOST = x.right.PS_SUPPLYCOST
                     val PS_PARTKEY    = x.right.PS_PARTKEY
                     val S_ACCTBAL     = x.right.S_ACCTBAL
@@ -113,8 +114,8 @@ trait Queries extends GenericQuery {
                     val N_NAME        = x.left.N_NAME
                     val N_REGIONKEY   = x.left.N_REGIONKEY
                 }}
-                val partScan = SelectOp(ScanOp2(partTable))(x => x.P_SIZE == 43 && x.P_TYPE.endsWith(tin))
-                val jo3 = MapOp1(HashJoinOp2(partScan, jo2)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x => x.P_PARTKEY)(x => x.PS_PARTKEY)) { x => new Record { 
+                val partScan = SelectOp(ScanOp2(partTable))(x => x.P_SIZE == size && x.P_TYPE.endsWith(tin))
+                val jo3 = MapOp1(HashJoinOp2(partScan, jo2)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x => x.P_PARTKEY)(x => x.PS_PARTKEY)) { x => new Record {
                     val PS_SUPPLYCOST = x.right.PS_SUPPLYCOST
                     val S_ACCTBAL     = x.right.S_ACCTBAL
                     val S_NAME        = x.right.S_NAME
@@ -127,7 +128,7 @@ trait Queries extends GenericQuery {
                     val P_MFGR        = x.left.P_MFGR
                 }}
                 val regionScan = SelectOp(ScanOp2(regionTable))(x => x.R_NAME == africa)
-                val jo4 = MapOp1(HashJoinOp2(regionScan, jo3)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY)) { x => new Record { 
+                val jo4 = MapOp1(HashJoinOp2(regionScan, jo3)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY)) { x => new Record {
                     val PS_SUPPLYCOST = x.right.PS_SUPPLYCOST
                     val S_ACCTBAL     = x.right.S_ACCTBAL
                     val S_NAME        = x.right.S_NAME
@@ -188,8 +189,8 @@ trait Queries extends GenericQuery {
         val ordersTable = loadOrders1()
         val customerTable = loadCustomer1()
         runQuery {
-                val constantDate = parseDate("1995-03-04")
-                val scanCustomer = SelectOp(ScanOp2(customerTable))(x => x.C_MKTSEGMENT == parseString("HOUSEHOLD"))
+                val constantDate = parseDate("1995-03-15")
+                val scanCustomer = SelectOp(ScanOp2(customerTable))(x => x.C_MKTSEGMENT == parseString("BUILDING"))
                 val scanOrders   = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE < constantDate)
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE > constantDate)
                 val jo1 = MapCatOp(HashJoinOp2(scanCustomer, scanOrders)( (x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY))
@@ -198,13 +199,13 @@ trait Queries extends GenericQuery {
                     val L_ORDERKEY  = x[Int]("L_ORDERKEY")
                     val O_ORDERDATE = x[Long]("O_ORDERDATE")
                     val O_SHIPPRIORITY = x[Int]("O_SHIPPRIORITY")
-                })(zero1)((t, currAgg) => new Record { 
+                })(zero1)((t, currAgg) => new Record {
                     val _0 = { currAgg._0 + t[Double]("L_EXTENDEDPRICE") * (1.0-t[Double]("L_DISCOUNT"))}
                 })
-                /*val sortOp = SortOp(aggOp)((kv1,kv2) => {
+                val sortOp = SortOp(aggOp)((kv1,kv2) => {
                     val agg1 = kv1.aggs._0; val agg2 = kv2.aggs._0
                     if (agg1 < agg2) 1
-                    else if (agg1 > agg2) -1 
+                    else if (agg1 > agg2) -1
                     else {
                         val k1 = kv1.key.O_ORDERDATE
                         val k2 = kv2.key.O_ORDERDATE
@@ -212,12 +213,11 @@ trait Queries extends GenericQuery {
                         else if (k1 > k2) 1
                         else 0
                     }
-                })*/
+                })
                 // SORT IS A BIG BOTTLENECK HERE: RESULT IS BIG, BUT WE ONLY TAKE THE TOP 10 ROWS BELOW
-                val sortOp = aggOp
-                var i = 0                
+                var i = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%d|%.4f|%.*s|%d\n",kv.key.L_ORDERKEY,kv.aggs._0,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_SHIPPRIORITY)
+                    printf("%d|%.4f|%s|%d\n",kv.key.L_ORDERKEY,kv.aggs._0,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_SHIPPRIORITY)
                     i+=1
                 }, () => i < 10)
                 po
@@ -228,8 +228,8 @@ trait Queries extends GenericQuery {
         val lineitemTable = loadLineitem1()
         val ordersTable = loadOrders1()
         runQuery {
-                val constantDate1: Long = parseDate("1993-11-01")
-                val constantDate2: Long = parseDate("1993-08-01")
+                val constantDate1: Long = parseDate("1993-10-01")
+                val constantDate2: Long = parseDate("1993-07-01")
                 val scanOrders   = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE < constantDate1 && x.O_ORDERDATE >= constantDate2)
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_COMMITDATE < x.L_RECEIPTDATE)
                 val hj = LeftHashSemiJoinOp1(scanOrders, scanLineitem)((x,y) => x.O_ORDERKEY == y.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.L_ORDERKEY)
@@ -254,8 +254,8 @@ trait Queries extends GenericQuery {
         val regionTable = loadRegion1()
         val ordersTable = loadOrders1()
         runQuery {
-                val constantDate1 = parseDate("1996-01-01")
-                val constantDate2 = parseDate("1997-01-01")
+                val constantDate1 = parseDate("1994-01-01")
+                val constantDate2 = parseDate("1995-01-01")
                 val scanRegion = SelectOp(ScanOp2(regionTable))(x => x.R_NAME == parseString("ASIA"))
                 val scanNation = ScanOp2(nationTable)
                 val scanSupplier = ScanOp2(supplierTable)
@@ -263,15 +263,15 @@ trait Queries extends GenericQuery {
                 val scanLineitem = ScanOp2(lineitemTable)
                 val scanOrders = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE >= constantDate1 && x.O_ORDERDATE < constantDate2)
                 /*--*/
-                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x => 
-                    new Record { val dummy = 7 }}) { x => 
+                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x =>
+                    new Record { val dummy = 7 }}) { x =>
                     new Record { val N_NAME      = x.right.N_NAME
-                                 val N_NATIONKEY = x.right.N_NATIONKEY 
+                                 val N_NATIONKEY = x.right.N_NATIONKEY
                                }}
 
                 val jo2 = MapOp1(HashJoinOp1(jo1, scanCustomer)((x,y) => x.N_NATIONKEY == y.C_NATIONKEY)(x => x.N_NATIONKEY)(x => x.C_NATIONKEY) { x =>
                     new Record { val N_NAME      = x.N_NAME
-                                 val N_NATIONKEY = x.N_NATIONKEY 
+                                 val N_NATIONKEY = x.N_NATIONKEY
                                }}) { x =>
                     new Record { val N_NAME      = x.left.N_NAME
                                  val N_NATIONKEY = x.left.N_NATIONKEY
@@ -280,7 +280,7 @@ trait Queries extends GenericQuery {
 
                 val jo3 = MapOp1(HashJoinOp1(jo2, scanOrders)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY) { x =>
                     new Record { val N_NAME      = x.N_NAME
-                                 val N_NATIONKEY = x.N_NATIONKEY 
+                                 val N_NATIONKEY = x.N_NATIONKEY
                                }}) { x =>
                     new Record { val N_NAME      = x.left.N_NAME
                                  val N_NATIONKEY = x.left.N_NATIONKEY
@@ -290,19 +290,19 @@ trait Queries extends GenericQuery {
                 // (region X nation X customer X orders)  XX  lineitems  <--- match orderkey
                 val jo4 = MapOp1(HashJoinOp1(jo3, scanLineitem)((x,y) => x.O_ORDERKEY == y.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.L_ORDERKEY) { x =>
                     new Record { val N_NAME      = x.N_NAME
-                                 val N_NATIONKEY = x.N_NATIONKEY 
+                                 val N_NATIONKEY = x.N_NATIONKEY
                                }}) { x =>
                     new Record { val N_NAME      = x.left.N_NAME
                                  val N_NATIONKEY = x.left.N_NATIONKEY
-                                 val L_SUPPKEY   = x.right.L_SUPPKEY 
-                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE 
-                                 val L_DISCOUNT  = x.right.L_DISCOUNT 
+                                 val L_SUPPKEY   = x.right.L_SUPPKEY
+                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE
+                                 val L_DISCOUNT  = x.right.L_DISCOUNT
                                }}
 
                 // suppler  XX  (region X nation X customer X orders X lineitems)  <--- match suppkey
                 val jo5 = SelectOp(HashJoinOp1(scanSupplier, jo4)((x,y) => x.S_SUPPKEY == y.L_SUPPKEY)(x => x.S_SUPPKEY)(x => x.L_SUPPKEY) { x =>
                     new Record { val S_NATIONKEY = x.S_NATIONKEY }
-                }){ x => 
+                }){ x =>
                     x.left.S_NATIONKEY == x.right.N_NATIONKEY
                 }
 
@@ -358,10 +358,10 @@ struct SUPPLIERRecord_REGIONRecord_NATIONRecord_CUSTOMERRecord_ORDERSRecord_LINE
                 val scanLineitem = ScanOp2(lineitemTable)
                 val scanOrders = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE >= constantDate1 && x.O_ORDERDATE < constantDate2)
                 /*--*/
-                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x => 
-                    new Record { val dummy = 7 }}) { x => 
+                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x =>
+                    new Record { val dummy = 7 }}) { x =>
                     new Record { val N_NAME      = x.right.N_NAME
-                                 val N_NATIONKEY = x.right.N_NATIONKEY 
+                                 val N_NATIONKEY = x.right.N_NATIONKEY
                                }}
 
                 val jo2 = MapOp1(HashJoinOp1(jo1, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY) { x =>
@@ -373,10 +373,10 @@ struct SUPPLIERRecord_REGIONRecord_NATIONRecord_CUSTOMERRecord_ORDERSRecord_LINE
 
                 val jo3 = MapOp1(HashJoinOp1(scanOrders, scanLineitem)((x,y) => x.O_ORDERKEY == y.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.L_ORDERKEY) { x =>
                     new Record { val O_CUSTKEY  = x.O_CUSTKEY }}) { x =>
-                    new Record { val O_CUSTKEY  = x.left.O_CUSTKEY 
-                                 val L_SUPPKEY  = x.right.L_SUPPKEY 
-                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE 
-                                 val L_DISCOUNT  = x.right.L_DISCOUNT 
+                    new Record { val O_CUSTKEY  = x.left.O_CUSTKEY
+                                 val L_SUPPKEY  = x.right.L_SUPPKEY
+                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE
+                                 val L_DISCOUNT  = x.right.L_DISCOUNT
                                }}
 
                 // (region X nation X supplier)  XX  (orders X lineitems)  <--- match suppkey
@@ -385,14 +385,14 @@ struct SUPPLIERRecord_REGIONRecord_NATIONRecord_CUSTOMERRecord_ORDERSRecord_LINE
                     new Record { val N_NAME      = x.left.N_NAME
                                  val N_NATIONKEY = x.left.N_NATIONKEY
                                  val O_CUSTKEY   = x.right.O_CUSTKEY
-                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE 
-                                 val L_DISCOUNT  = x.right.L_DISCOUNT 
+                                 val L_EXTENDEDPRICE  = x.right.L_EXTENDEDPRICE
+                                 val L_DISCOUNT  = x.right.L_DISCOUNT
                                }}
 
                 // customer  XX  (region X nation X supplier X orders X lineitems)  <--- match custkey, nationkey
                 val jo5 = SelectOp(HashJoinOp1(scanCustomer, jo4)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY){ x =>
                     new Record { val C_NATIONKEY = x.C_NATIONKEY }
-                }){ x => 
+                }){ x =>
                     x.left.C_NATIONKEY == x.right.N_NATIONKEY
                 }
 
@@ -433,8 +433,8 @@ new plan:
                 val scanLineitem = ScanOp2(lineitemTable)
                 val scanOrders = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE >= constantDate1 && x.O_ORDERDATE < constantDate2)
                 /*--*/
-                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x => 
-                    new Record { val dummy = 7 }}) { x => 
+                val jo1 = MapOp1(HashJoinOp1(scanRegion, scanNation)((x,y) => x.R_REGIONKEY == y.N_REGIONKEY)(x => x.R_REGIONKEY)(x => x.N_REGIONKEY) { x =>
+                    new Record { val dummy = 7 }}) { x =>
                     new Record { val N_NATIONKEY = x.right.N_NATIONKEY; val N_NAME = x.right.N_NAME }}
 
                 val jo2 = MapOp1(HashJoinOp1(jo1, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY) { x =>
@@ -452,7 +452,7 @@ new plan:
                 val jo5 = SelectOp(
                             HashJoinOp1(jo4, scanLineitem)((x,y) => x.O_ORDERKEY == y.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.L_ORDERKEY){x=>
                                     new Record { val N_NAME = x.N_NAME; val S_SUPPKEY = x.S_SUPPKEY }
-                                })(x => 
+                                })(x =>
                                 x.left.S_SUPPKEY == x.right.L_SUPPKEY)
 
                 val aggOp = AggOp1(jo5)(x => x.left.N_NAME)(new Record { val _0 = 0.0 })(
@@ -467,9 +467,9 @@ new plan:
     def Q6 = {
         val lineitemTable = loadLineitem1()
         runQuery {
-                val constantDate1: Long = parseDate("1996-01-01")
-                val constantDate2: Long = parseDate("1997-01-01")
-                val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2 && x.L_DISCOUNT >= 0.08 && x.L_DISCOUNT <= 0.1 && x.L_QUANTITY < 24)
+                val constantDate1: Long = parseDate("1994-01-01")
+                val constantDate2: Long = parseDate("1995-01-01")
+                val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2 && x.L_DISCOUNT >= 0.05 && x.L_DISCOUNT <= 0.07 && x.L_QUANTITY < 24)
                 val aggOp = AggOp1(lineitemScan)(x => "Total")(zero1)((t,currAgg) => new Record{val _0 = (t.L_EXTENDEDPRICE * t.L_DISCOUNT) + currAgg._0})
                 val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs._0))
                 po
@@ -483,8 +483,8 @@ new plan:
         val customerTable = loadCustomer1()
         val supplierTable = loadSupplier1()
         runQuery {
-                val usa = parseString("UNITED STATES")
-                val indonesia = parseString("INDONESIA")
+                val usa = parseString("FRANCE")
+                val indonesia = parseString("GERMANY")
                 val scanNation1 = MapOp1(ScanOp2(nationTable)){ x => new Record {
                     val N1_N_NATIONKEY = x.N_NATIONKEY
                     val N1_N_NAME      = x.N_NAME
@@ -543,9 +543,9 @@ new plan:
         runQuery {
                 val constantDate1 = parseDate("1995-01-01")
                 val constantDate2 = parseDate("1996-12-31")
-                val asia = parseString("ASIA")
-                val indonesia = parseString("INDONESIA")
-                val medAnonNick = parseString("MEDIUM ANODIZED NICKEL")
+                val asia = parseString("AMERICA")
+                val indonesia = parseString("BRAZIL")
+                val medAnonNick = parseString("ECONOMY ANODIZED STEEL")
                 val scanLineitem = ScanOp2(lineitemTable)
                 val scanPart = SelectOp(ScanOp2(partTable))(x => x.P_TYPE == medAnonNick)
                 val jo1 = MapCatOp(HashJoinOp2(scanPart, scanLineitem)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY))
@@ -570,9 +570,9 @@ new plan:
                 }}
                 val jo7 = MapCatOp(HashJoinOp2(scanNation2, jo6, "REC1_","REC2_")((x,y) => x.REC1_N_NATIONKEY == y.f.REC2_S_NATIONKEY)(x => x.REC1_N_NATIONKEY)(x => x.f.REC2_S_NATIONKEY))
                 val aggOp = AggOp1(jo7)(x => newDate(x[Long]("REC2_O_ORDERDATE")).getYear.toInt)(zero2)(
-                    (t, currAgg) => new Record { 
+                    (t, currAgg) => new Record {
                         val _0 = { currAgg._0 + t.f.REC2_L_EXTENDEDPRICE * (1.0 - t[Double]("REC2_L_DISCOUNT")) }
-                        val _1 = { if (t.f.REC1_N_NAME == indonesia) currAgg._1 + t.f.REC2_L_EXTENDEDPRICE * (1.0 - t[Double]("REC2_L_DISCOUNT")) 
+                        val _1 = { if (t.f.REC1_N_NAME == indonesia) currAgg._1 + t.f.REC2_L_EXTENDEDPRICE * (1.0 - t[Double]("REC2_L_DISCOUNT"))
                                    else currAgg._1 }
                     }
                 )
@@ -595,7 +595,7 @@ new plan:
         val supplierTable = loadSupplier1()
         val lineitemTable = loadLineitem1()
         runQuery {
-                val ghost = parseString("ghost")
+                val ghost = parseString("green")
                 val soNation = ScanOp2(nationTable)
                 val soSupplier = ScanOp2(supplierTable)
                 val soLineitem = ScanOp2(lineitemTable)
@@ -633,8 +633,8 @@ new plan:
         val customerTable = loadCustomer1()
         val ordersTable = loadOrders1()
         runQuery {
-                val constantDate1 = parseDate("1994-11-01")
-                val constantDate2 = parseDate("1995-02-01")
+                val constantDate1 = parseDate("1993-10-01")
+                val constantDate2 = parseDate("1994-01-01")
                 val so1 = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE >= constantDate1 && x.O_ORDERDATE < constantDate2)
                 val so2 = ScanOp2(customerTable)
                 val hj1 = MapCatOp(HashJoinOp2(so1,so2)((x,y) => x.O_CUSTKEY == y.C_CUSTKEY)(x => x.O_CUSTKEY)(x => x.C_CUSTKEY))
@@ -675,7 +675,7 @@ new plan:
         val supplierTable = loadSupplier1()
         val nationTable = loadNation1()
         runQuery {
-                val uk = parseString("UNITED KINGDOM")
+                val uk = parseString("GERMANY")
                 val scanSupplier = ScanOp2(supplierTable)
                 val scanNation   = SelectOp(ScanOp2(nationTable))(x => x.N_NAME == uk)
                 val jo1 = MapCatOp(HashJoinOp2[NATIONRecord,SUPPLIERRecord,Int](scanNation, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(y => y.S_NATIONKEY))
@@ -716,7 +716,7 @@ new plan:
                 val URGENT = parseString("1-URGENT")
                 val HIGH = parseString("2-HIGH")
                 val aggOp = AggOp1(jo)(x => x[LegoString]("L_SHIPMODE"))(zero2)(
-                    (t,currAgg) => new Record { 
+                    (t,currAgg) => new Record {
                         val _0 = { if (infix_||(t.f.O_ORDERPRIORITY == URGENT , t.f.O_ORDERPRIORITY == HIGH)) currAgg._0 + 1 else currAgg._0 }
                         val _1 = { if (infix_&&(t.f.O_ORDERPRIORITY != URGENT , t.f.O_ORDERPRIORITY != HIGH)) currAgg._1 + 1 else currAgg._1 }
                     }
@@ -769,16 +769,16 @@ new plan:
         val partTable = loadPart1()
         runQuery {
                 val promo = parseString("PROMO")
-                val constantDate = parseDate("1994-04-01")
-                val constantDate2 = parseDate("1994-03-01")
+                val constantDate = parseDate("1995-10-01")
+                val constantDate2 = parseDate("1995-09-01")
                 val so1 = ScanOp2(partTable)
                 val so2 = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate2 && x.L_SHIPDATE < constantDate)
                 val jo = MapCatOp(HashJoinOp2(so1, so2)( (x,y) => x.P_PARTKEY == y.L_PARTKEY )(x => x.P_PARTKEY)(x => x.L_PARTKEY))
-                val aggOp = AggOp1(jo)(x => "Total")(zero2)( 
-                        (t,currAgg) => new Record { 
-                            val _0 = { if (string_startswith(t[LegoString]("P_TYPE") , promo)) 
+                val aggOp = AggOp1(jo)(x => "Total")(zero2)(
+                        (t,currAgg) => new Record {
+                            val _0 = { if (string_startswith(t[LegoString]("P_TYPE") , promo))
                                          currAgg._0 + (t.f.L_EXTENDEDPRICE * (1.0 - t[Double]("L_DISCOUNT")))
-                                       else currAgg._0 } 
+                                       else currAgg._0 }
                             val _1 =  { currAgg._1 + (t.f.L_EXTENDEDPRICE * (1.0 - t[Double]("L_DISCOUNT"))) }
                 })
                 val mapOp = MapOp1(aggOp)(kv => (kv.aggs._0 * 100) / kv.aggs._1)
@@ -791,8 +791,8 @@ new plan:
         val lineitemTable = loadLineitem1()
         val supplierTable = loadSupplier1()
         runQuery {
-                val constantDate = parseDate("1993-09-01")
-                val constantDate2 = parseDate("1993-12-01")
+                val constantDate = parseDate("1996-01-01")
+                val constantDate2 = parseDate("1996-04-01")
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate && x.L_SHIPDATE < constantDate2)
                 val aggOp1 = AggOp1(scanLineitem)(x => x.L_SUPPKEY)(zero1)(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + (t.L_EXTENDEDPRICE * (1.0 - t.L_DISCOUNT)) }
@@ -825,10 +825,10 @@ new plan:
         runQuery {
                 val str1 = parseString("Customer")
                 val str2 = parseString("Complaints")
-                val brand21 = parseString("Brand#21")
-                val promoPlated = parseString("PROMO PLATED")
+                val brand21 = parseString("Brand#45")
+                val promoPlated = parseString("MEDIUM POLISHED")
                 val partScan = SelectOp(ScanOp2(partTable))(x => !(x.P_BRAND startsWith brand21) && !(x.P_TYPE startsWith promoPlated) &&
-                                                                 (x.P_SIZE==23 || x.P_SIZE==3 || x.P_SIZE==33 || x.P_SIZE==29 || 
+                                                                 (x.P_SIZE==23 || x.P_SIZE==3 || x.P_SIZE==33 || x.P_SIZE==29 ||
                                                                   x.P_SIZE==40 || x.P_SIZE==27 || x.P_SIZE==22 || x.P_SIZE==4))
                 val partsuppScan = ScanOp2(partsuppTable)
                 val jo1 = MapCatOp(HashJoinOp2(partScan, partsuppScan)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x => x.P_PARTKEY)(x => x.PS_PARTKEY))
@@ -874,8 +874,8 @@ new plan:
         val lineitemTable = loadLineitem1()
         val partTable = loadPart1()
         runQuery {
-                val medbag = parseString("MED BAG")
-                val brand15 = parseString("Brand#15")
+                val medbag = parseString("MED BOX")
+                val brand15 = parseString("Brand#23")
                 val scanLineitem = ScanOp2(lineitemTable)
                 val scanPart = SelectOp(ScanOp2(partTable))(x => x.P_CONTAINER == medbag && x.P_BRAND == brand15)
                 val jo = MapCatOp(HashJoinOp2(scanPart, scanLineitem)( (x,y) => x.P_PARTKEY == y.L_PARTKEY )(x => x.P_PARTKEY)(x => x.L_PARTKEY))
@@ -951,7 +951,7 @@ new plan:
                 val SMBOX = parseString("SM BOX")
                 val SMCASE = parseString("SM CASE")
                 val SMPACK = parseString("SM PACK")
-                val SMPKG = parseString("SM PKG")   
+                val SMPKG = parseString("SM PKG")
                 val MEDBAG = parseString("MED BAG")
                 val MEDBOX = parseString("MED BOX")
                 val MEDPACK = parseString("MED PACK")
@@ -964,28 +964,28 @@ new plan:
                 val AIR = parseString("AIR")
                 val AIRREG = parseString("AIRREG")
 
-                val so1 = SelectOp(ScanOp2(partTable))(x => x.P_SIZE >= 1 && 
+                val so1 = SelectOp(ScanOp2(partTable))(x => x.P_SIZE >= 1 &&
                                 (x.P_SIZE<=5 && x.P_BRAND==Brand31 && (x.P_CONTAINER==SMBOX  || x.P_CONTAINER==SMCASE ||
-                                                                       x.P_CONTAINER==SMPACK || x.P_CONTAINER==SMPKG)) || 
+                                                                       x.P_CONTAINER==SMPACK || x.P_CONTAINER==SMPKG)) ||
                                 (x.P_SIZE<=10 && x.P_BRAND==Brand43 && (x.P_CONTAINER==MEDBAG  || x.P_CONTAINER==MEDBOX ||
                                                                         x.P_CONTAINER==MEDPACK || x.P_CONTAINER==MEDPKG)) ||
-                                (x.P_SIZE<=15 && x.P_BRAND==Brand43 && (x.P_CONTAINER==LGBOX  || x.P_CONTAINER==LGCASE || 
+                                (x.P_SIZE<=15 && x.P_BRAND==Brand43 && (x.P_CONTAINER==LGBOX  || x.P_CONTAINER==LGCASE ||
                                                                         x.P_CONTAINER==LGPACK || x.P_CONTAINER==LGPKG))
                 )
-                val so2 = SelectOp(ScanOp2(lineitemTable))(x => 
-                                ((x.L_QUANTITY<=36 && x.L_QUANTITY>=26) || (x.L_QUANTITY<=25 && x.L_QUANTITY>=15) || 
-                                 (x.L_QUANTITY<=14 && x.L_QUANTITY>=4)) && x.L_SHIPINSTRUCT == DELIVERINPERSON && 
+                val so2 = SelectOp(ScanOp2(lineitemTable))(x =>
+                                ((x.L_QUANTITY<=36 && x.L_QUANTITY>=26) || (x.L_QUANTITY<=25 && x.L_QUANTITY>=15) ||
+                                 (x.L_QUANTITY<=14 && x.L_QUANTITY>=4)) && x.L_SHIPINSTRUCT == DELIVERINPERSON &&
                                  (x.L_SHIPMODE==AIR || x.L_SHIPMODE==AIRREG)
                 )
-                val jo = SelectOp(MapCatOp(HashJoinOp2(so1, so2)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY)))(   
-                    x => x.f.P_BRAND == Brand31 && 
+                val jo = SelectOp(MapCatOp(HashJoinOp2(so1, so2)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY)))(
+                    x => x.f.P_BRAND == Brand31 &&
                          (x.f.P_CONTAINER==SMBOX || x.f.P_CONTAINER==SMCASE || x.f.P_CONTAINER==SMPACK || x.f.P_CONTAINER==SMPKG) &&
-                          x[Double]("L_QUANTITY")>=4 && x[Double]("L_QUANTITY")<=14 && x[Int]("P_SIZE")<=5 || x.f.P_BRAND==Brand43 && 
+                          x[Double]("L_QUANTITY")>=4 && x[Double]("L_QUANTITY")<=14 && x[Int]("P_SIZE")<=5 || x.f.P_BRAND==Brand43 &&
                          (x.f.P_CONTAINER==MEDBAG || x.f.P_CONTAINER==MEDBOX || x.f.P_CONTAINER==MEDPACK || x.f.P_CONTAINER==MEDPKG) &&
-                          x[Double]("L_QUANTITY")>=15 && x[Double]("L_QUANTITY")<=25 && x[Int]("P_SIZE")<=10 || x.f.P_BRAND==Brand43 && 
-                         (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) && 
+                          x[Double]("L_QUANTITY")>=15 && x[Double]("L_QUANTITY")<=25 && x[Int]("P_SIZE")<=10 || x.f.P_BRAND==Brand43 &&
+                         (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) &&
                           x[Double]("L_QUANTITY")>=26 && x[Double]("L_QUANTITY")<=36 && x[Int]("P_SIZE")<=15)
-                val aggOp = AggOp1(jo)(x => "Total")(0.0)(  
+                val aggOp = AggOp1(jo)(x => "Total")(0.0)(
                     (t,currAgg) => { currAgg + (t[Double]("L_EXTENDEDPRICE") * (1.0 - t.f.L_DISCOUNT)) }
                 )
                 val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs))
@@ -1070,18 +1070,18 @@ new plan:
                 val v22 = parseString("22")
                 val v20 = parseString("20")
                 val v24 = parseString("24")
-                val v26 = parseString("26")     
+                val v26 = parseString("26")
                 val v25 = parseString("25")
                 // Subquery
                 val customerScan1 = SelectOp(ScanOp2(customerTable))(x => {
                     x.C_ACCTBAL > 0.00 && (
-                        x.C_PHONE.startsWith(v23)  || (x.C_PHONE.startsWith(v29) || (x.C_PHONE.startsWith(v22) || 
-                        (x.C_PHONE.startsWith(v20) || (x.C_PHONE.startsWith(v24) || (x.C_PHONE.startsWith(v26) || 
+                        x.C_PHONE.startsWith(v23)  || (x.C_PHONE.startsWith(v29) || (x.C_PHONE.startsWith(v22) ||
+                        (x.C_PHONE.startsWith(v20) || (x.C_PHONE.startsWith(v24) || (x.C_PHONE.startsWith(v26) ||
                         x.C_PHONE.startsWith(v25))))))
                     )
                 })
                 val aggOp1 = AggOp1(customerScan1)(x => "AVG_C_ACCTBAL")(zero2)(
-                    (t,currAgg) => new Record { 
+                    (t,currAgg) => new Record {
                         val _0 = {t.C_ACCTBAL + currAgg._0}
                         val _1 = {currAgg._1 + 1}
                     }
@@ -1090,15 +1090,15 @@ new plan:
                 // External Query
                 val customerScan2 = MapOp1(NestedLoopsJoinOp(nestedAVG,ScanOp2(customerTable))((nestedAVG,x) => {
                     x.C_ACCTBAL > nestedAVG._0 && (
-                        x.C_PHONE.startsWith(v23)  || (x.C_PHONE.startsWith(v29) || (x.C_PHONE.startsWith(v22) || 
-                        (x.C_PHONE.startsWith(v20) || (x.C_PHONE.startsWith(v24) || (x.C_PHONE.startsWith(v26) || 
+                        x.C_PHONE.startsWith(v23)  || (x.C_PHONE.startsWith(v29) || (x.C_PHONE.startsWith(v22) ||
+                        (x.C_PHONE.startsWith(v20) || (x.C_PHONE.startsWith(v24) || (x.C_PHONE.startsWith(v26) ||
                         x.C_PHONE.startsWith(v25))))))
                     )
                 }))(x => new Record { val C_CUSTKEY = x.right.C_CUSTKEY; val C_ACCTBAL = x.right.C_ACCTBAL; val C_PHONE = x.right.C_PHONE })
-                val ordersScan = ScanOp2(ordersTable)    
+                val ordersScan = ScanOp2(ordersTable)
                 val jo = HashJoinAnti(customerScan2, ordersScan)((x,y) => x.C_CUSTKEY==y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY)
                 val aggOp2 = AggOp1(jo)(x => new Record { val _0 = infix_charAt(x.C_PHONE,0L); val _1 = infix_charAt(x.C_PHONE,1L)})(zero2)(
-                    (t, currAgg) => new Record { 
+                    (t, currAgg) => new Record {
                         val _0 = {t.C_ACCTBAL + currAgg._0}
                         val _1 = {currAgg._1 + 1}
                     }
