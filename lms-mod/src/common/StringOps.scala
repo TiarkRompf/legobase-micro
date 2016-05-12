@@ -222,7 +222,7 @@ trait CGenStringOps extends CGenBase with CNestedCodegen {
       emitValDef(sym, "strncmp(" + quote(s1) + "+" + quote(sew.lenstr) + "-" + quote(sew.lensuf) + "," + quote(s2) + ", " + quote(sew.lensuf) + ") == 0;")
     }
     case StringContainsSlice(s1,s2) =>
-		emitValDef(sym, "strstr(" + quote(s1) + "," + quote(s2) + ") != NULL")
+      emitValDef(sym, "strstr(" + quote(s1) + "," + quote(s2) + ") >= " + quote(s1))
     case StringCompareTo(s1,s2) =>
 		emitValDef(sym, "strcmp(" + quote(s1) + "," + quote(s2) + ")")
     case StringIndexOfSlice(s1,s2,idx) =>
