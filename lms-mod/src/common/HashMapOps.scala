@@ -308,10 +308,12 @@ trait CLikeGenHashMapOps extends BaseGenHashMapOps with CLikeCodegen {
         emitValDef(sym, "g_hash_table_new((GHashFunc)" + quote(uhf) + ",(GEqualFunc)" + quote(uef) + ")")
     }
 	case HashMapSize(m) => emitValDef(sym, "g_hash_table_size(" + quote(m) + ");")
-	case HashMapApply(m,k) => emitValDef(sym, "g_hash_table_lookup(" + quote(m) + "," + remapKeyIfPrimitive(k) + ");"); 
+	case HashMapApply(m,k) => emitValDef(sym, "g_hash_table_lookup(" + quote(m) + "," + remapKeyIfPrimitive(k) + ");");
     case HashMapUpdate(m,k,v) => stream.println("g_hash_table_insert(" + quote(m) + "," + remapKeyIfPrimitive(k) + "," + quote(v) + ");");
     case HashMapKeySet(m) => emitValDef(sym, "g_hash_table_get_keys(" + quote(m) + ")")
-    case HashMapRemove(m,k) => stream.println("g_hash_table_remove(" + quote(m) + "," + remapKeyIfPrimitive(k) + ");");
+    case HashMapRemove(m,k) =>
+      emitValDef(sym, "g_hash_table_lookup(" + quote(m) + "," + remapKeyIfPrimitive(k) + ");");
+      stream.println("g_hash_table_remove(" + quote(m) + "," + remapKeyIfPrimitive(k) + ");");
     case HashMapClear(m) => stream.println("g_hash_table_remove_all(" + quote(m) + ");")
 	case HashMapContains(m,k) => emitValDef(sym, "g_hash_table_lookup(" + quote(m) + "," + remapKeyIfPrimitive(k) + ") != NULL")
     case _ => super.emitNode(sym, rhs)

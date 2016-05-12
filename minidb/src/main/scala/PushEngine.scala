@@ -390,17 +390,12 @@ trait PushEngine extends DSL with DataStruct {
           mode = 1
           rightParent.next
 
-          println("ERROR: hashjoin-anti not yet implemented")
-/*
-            // Step 3: Return everything that left in the hash table
-            keySet = hm.keySet
-            while (hm.size != 0) {
-                val k = keySet.head
-                val elemList = hm(k)
-                child.consume(removeFromList(elemList, elemList(0), 0))
-            } 
-*/
+          // Step 3: Return everything that left in the hash table
+          for (elem <- hm) {
+              child.consume(elem)
+          }
         }
+
         def consume(tuple0: Rep[Record]) {
             if (mode == 0) {
                 val tuple = tuple0.asInstanceOf[Rep[A]]
@@ -412,6 +407,7 @@ trait PushEngine extends DSL with DataStruct {
                 for (bufElem <- hm(k)) {
                     if (joinCond(bufElem, tuple)) {
                         // removeFromList
+                        hm -= (k, bufElem)
                     }
                 }
             }

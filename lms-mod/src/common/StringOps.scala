@@ -221,13 +221,13 @@ trait CGenStringOps extends CGenBase with CNestedCodegen {
       emitValDef(sew.lensuf,"strlen("+quote(s2)+")")
       emitValDef(sym, "strncmp(" + quote(s1) + "+" + quote(sew.lenstr) + "-" + quote(sew.lensuf) + "," + quote(s2) + ", " + quote(sew.lensuf) + ") == 0;")
     }
-    case StringContainsSlice(s1,s2) => 
+    case StringContainsSlice(s1,s2) =>
 		emitValDef(sym, "strstr(" + quote(s1) + "," + quote(s2) + ") != NULL")
-    case StringCompareTo(s1,s2) => 
+    case StringCompareTo(s1,s2) =>
 		emitValDef(sym, "strcmp(" + quote(s1) + "," + quote(s2) + ")")
-    case StringIndexOfSlice(s1,s2,idx) => 
-		emitValDef(sym, "strstr(&" + quote(s1) + "[" + quote(idx) + "]," + quote(s2) + ") - " + quote(s1))
-		stream.println("if (" + quote(sym) + " < 0) " + quote(sym) + " = -1;") 
+    case StringIndexOfSlice(s1,s2,idx) =>
+		emitValDef(sym, "strstr(&(" + quote(s1) + "[" + quote(idx) + "])," + quote(s2) + ") - " + quote(s1))
+		stream.println("if (" + quote(sym) + " < 0) " + quote(sym) + " = -1;")
     case StringTrim(s) => throw new GenerationFailedException("CGenStringOps: StringTrim not implemented yet")
     case StringSplit(s, sep) => throw new GenerationFailedException("CGenStringOps: StringSplit not implemented yet")
     case _ => super.emitNode(sym, rhs)

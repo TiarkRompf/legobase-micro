@@ -827,17 +827,21 @@ new plan:
                 val str2 = parseString("Complaints")
                 val brand21 = parseString("Brand#45")
                 val promoPlated = parseString("MEDIUM POLISHED")
-                val partScan = SelectOp(ScanOp2(partTable))(x => !(x.P_BRAND startsWith brand21) && !(x.P_TYPE startsWith promoPlated) &&
-                                                                 (x.P_SIZE==23 || x.P_SIZE==3 || x.P_SIZE==33 || x.P_SIZE==29 ||
-                                                                  x.P_SIZE==40 || x.P_SIZE==27 || x.P_SIZE==22 || x.P_SIZE==4))
+                val partScan = SelectOp(ScanOp2(partTable))(x => x.P_BRAND != brand21 && !(x.P_TYPE startsWith promoPlated) &&
+                                                                 (x.P_SIZE==49 || x.P_SIZE==14 || x.P_SIZE==23 || x.P_SIZE==45 ||
+                                                                  x.P_SIZE==19 || x.P_SIZE==3 || x.P_SIZE==36 || x.P_SIZE==9))
                 val partsuppScan = ScanOp2(partsuppTable)
                 val jo1 = MapCatOp(HashJoinOp2(partScan, partsuppScan)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x => x.P_PARTKEY)(x => x.PS_PARTKEY))
                 val supplierScan = SelectOp(ScanOp2(supplierTable))(x => {
                     val idxu = x.S_COMMENT.indexOfSlice(str1, 0)
-                    val idxp = x.S_COMMENT.indexOfSlice(str2, idxu)
-                    idxu != -1 && idxp != -1
+                    if (idxu != -1) {
+                      val idxp = x.S_COMMENT.indexOfSlice(str2, idxu + 8)
+                      idxp != -1
+                    } else {
+                      false
+                    }
                 })
-                val jo2 = HashJoinAnti(jo1, supplierScan)((x,y) => x.f.PS_SUPPKEY == y.S_SUPPKEY)(x => x.f.PS_SUPPKEY)(x => x.S_SUPPKEY)
+                val jo2 = HashJoinAnti1(jo1, supplierScan)((x,y) => x[Int]("PS_SUPPKEY") == y[Int]("S_SUPPKEY"))(x => x[Int]("PS_SUPPKEY"))(x => x[Int]("S_SUPPKEY"))
                 val aggOp = AggOp1(jo2)(x => new Record {
                     val P_BRAND = x[LegoString]("P_BRAND")
                     val P_TYPE  = x[LegoString]("P_TYPE")
@@ -863,9 +867,13 @@ new plan:
                         res
                     }
                 })
-                val po = PrintOp(sortOp)(x => printf("%.*s|%.*s|%d|%.0f\n",
+                var j = 0
+                val po = PrintOp(sortOp)(x => {
+                  printf("%.*s|%.*s|%d|%.0f\n",
                     x.key.P_BRAND.length,(x.key.P_BRAND),x.key.P_TYPE.length,(x.key.P_TYPE),
-                    x.key.P_SIZE,x.aggs._0))
+                    x.key.P_SIZE,x.aggs._0)
+                  j += 1
+                }, () => j < 20)
                 po
         }
     }
@@ -933,7 +941,7 @@ new plan:
                 // LIMIT 100 -- SORT BOTTLENECK?
                 var j = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%.*s|%d|%d|%.*s|%.2f|%.2f\n",
+                    printf("%.*s|%d|%d|%s|%.2f|%.2f\n",
                         kv.key.C_NAME.length,(kv.key.C_NAME),
                         kv.key.C_CUSTKEY,kv.key.O_ORDERKEY,getDateAsString(kv.key.O_ORDERDATE),kv.key.O_TOTALPRICE,kv.aggs._0)
                     j+=1
@@ -946,8 +954,9 @@ new plan:
         val lineitemTable = loadLineitem1()
         val partTable = loadPart1()
         runQuery {
-                val Brand31 = parseString("Brand#31")
-                val Brand43 = parseString("Brand#43")
+                val Brand12 = parseString("Brand#12")
+                val Brand23 = parseString("Brand#23")
+                val Brand34 = parseString("Brand#34")
                 val SMBOX = parseString("SM BOX")
                 val SMCASE = parseString("SM CASE")
                 val SMPACK = parseString("SM PACK")
@@ -962,29 +971,29 @@ new plan:
                 val LGPKG = parseString("LG PKG")
                 val DELIVERINPERSON = parseString("DELIVER IN PERSON")
                 val AIR = parseString("AIR")
-                val AIRREG = parseString("AIRREG")
+                val AIRREG = parseString("AIR REG")
 
                 val so1 = SelectOp(ScanOp2(partTable))(x => x.P_SIZE >= 1 &&
-                                (x.P_SIZE<=5 && x.P_BRAND==Brand31 && (x.P_CONTAINER==SMBOX  || x.P_CONTAINER==SMCASE ||
+                                (x.P_SIZE<=5 && x.P_BRAND==Brand12 && (x.P_CONTAINER==SMBOX  || x.P_CONTAINER==SMCASE ||
                                                                        x.P_CONTAINER==SMPACK || x.P_CONTAINER==SMPKG)) ||
-                                (x.P_SIZE<=10 && x.P_BRAND==Brand43 && (x.P_CONTAINER==MEDBAG  || x.P_CONTAINER==MEDBOX ||
+                                (x.P_SIZE<=10 && x.P_BRAND==Brand23 && (x.P_CONTAINER==MEDBAG  || x.P_CONTAINER==MEDBOX ||
                                                                         x.P_CONTAINER==MEDPACK || x.P_CONTAINER==MEDPKG)) ||
-                                (x.P_SIZE<=15 && x.P_BRAND==Brand43 && (x.P_CONTAINER==LGBOX  || x.P_CONTAINER==LGCASE ||
+                                (x.P_SIZE<=15 && x.P_BRAND==Brand34 && (x.P_CONTAINER==LGBOX  || x.P_CONTAINER==LGCASE ||
                                                                         x.P_CONTAINER==LGPACK || x.P_CONTAINER==LGPKG))
                 )
                 val so2 = SelectOp(ScanOp2(lineitemTable))(x =>
-                                ((x.L_QUANTITY<=36 && x.L_QUANTITY>=26) || (x.L_QUANTITY<=25 && x.L_QUANTITY>=15) ||
-                                 (x.L_QUANTITY<=14 && x.L_QUANTITY>=4)) && x.L_SHIPINSTRUCT == DELIVERINPERSON &&
+                                ((x.L_QUANTITY<=30 && x.L_QUANTITY>=20) || (x.L_QUANTITY<=20 && x.L_QUANTITY>=10) ||
+                                 (x.L_QUANTITY<=11 && x.L_QUANTITY>=1)) && x.L_SHIPINSTRUCT == DELIVERINPERSON &&
                                  (x.L_SHIPMODE==AIR || x.L_SHIPMODE==AIRREG)
                 )
                 val jo = SelectOp(MapCatOp(HashJoinOp2(so1, so2)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY)))(
-                    x => x.f.P_BRAND == Brand31 &&
+                    x => x.f.P_BRAND == Brand12 &&
                          (x.f.P_CONTAINER==SMBOX || x.f.P_CONTAINER==SMCASE || x.f.P_CONTAINER==SMPACK || x.f.P_CONTAINER==SMPKG) &&
-                          x[Double]("L_QUANTITY")>=4 && x[Double]("L_QUANTITY")<=14 && x[Int]("P_SIZE")<=5 || x.f.P_BRAND==Brand43 &&
+                          x[Double]("L_QUANTITY")>=1 && x[Double]("L_QUANTITY")<=11 && x[Int]("P_SIZE")<=5 || x.f.P_BRAND==Brand23 &&
                          (x.f.P_CONTAINER==MEDBAG || x.f.P_CONTAINER==MEDBOX || x.f.P_CONTAINER==MEDPACK || x.f.P_CONTAINER==MEDPKG) &&
-                          x[Double]("L_QUANTITY")>=15 && x[Double]("L_QUANTITY")<=25 && x[Int]("P_SIZE")<=10 || x.f.P_BRAND==Brand43 &&
+                          x[Double]("L_QUANTITY")>=10 && x[Double]("L_QUANTITY")<=20 && x[Int]("P_SIZE")<=10 || x.f.P_BRAND==Brand34 &&
                          (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) &&
-                          x[Double]("L_QUANTITY")>=26 && x[Double]("L_QUANTITY")<=36 && x[Int]("P_SIZE")<=15)
+                          x[Double]("L_QUANTITY")>=20 && x[Double]("L_QUANTITY")<=30 && x[Int]("P_SIZE")<=15)
                 val aggOp = AggOp1(jo)(x => "Total")(0.0)(
                     (t,currAgg) => { currAgg + (t[Double]("L_EXTENDEDPRICE") * (1.0 - t.f.L_DISCOUNT)) }
                 )
@@ -993,6 +1002,7 @@ new plan:
         }
     }
 
+    // FIXME query has duplicate lines
    def Q20 = {
         val partTable = loadPart1()
         val nationTable = loadNation1()
@@ -1000,10 +1010,10 @@ new plan:
         val partsuppTable = loadPartsupp1()
         val lineitemTable = loadLineitem1()
         runQuery {
-                val constantDate1 = parseDate("1996-01-01")
-                val constantDate2 = parseDate("1997-01-01")
-                val jordan = parseString("JORDAN")
-                val azure  = parseString("azure")
+                val constantDate1 = parseDate("1994-01-01")
+                val constantDate2 = parseDate("1995-01-01")
+                val jordan = parseString("CANADA")
+                val azure  = parseString("forest")
                 val scanPart = SelectOp(ScanOp2(partTable))(x => x.P_NAME startsWith azure)
                 val scanPartsupp = ScanOp2(partsuppTable)
                 val jo1 = MapCatOp(HashJoinOp2(scanPart, scanPartsupp)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x=>x.P_PARTKEY)(x=>x.PS_PARTKEY))
@@ -1019,8 +1029,9 @@ new plan:
                 val jo3 = MapCatOp(HashJoinOp2(selOp, scanSupplier)((x,y) => x.key.PS_SUPPKEY == y.S_SUPPKEY)(x => x.key.PS_SUPPKEY)(x => x.S_SUPPKEY))
                 val scanNation = SelectOp(ScanOp2(nationTable))(x => x.N_NAME == jordan)
                 val jo4 = MapCatOp(HashJoinOp2(scanNation, jo3)((x,y) => x.N_NATIONKEY == y.f.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.f.S_NATIONKEY))
-                val sortOp = SortOp(jo4)((x,y) => x[LegoString]("S_NAME") compareTo y.f.S_NAME)
-                val po = PrintOp(sortOp)(kv => printf("%.*s|%.*s\n",
+                // FIXME useless but lead to compilation error
+                // val sortOp = SortOp(jo4)((x,y) => x[LegoString]("S_NAME") compareTo y.f.S_NAME)
+                val po = PrintOp(jo4)(kv => printf("%.*s|%.*s\n",
                     kv[LegoString]("S_NAME").length,(kv[LegoString]("S_NAME")),kv.f.S_ADDRESS.length,(kv.f.S_ADDRESS)))
                 po
         }
@@ -1032,7 +1043,7 @@ new plan:
         val ordersTable   = loadOrders1()
         val nationTable   = loadNation1()
         runQuery {
-                val morocco = parseString("MOROCCO")
+                val morocco = parseString("SAUDI ARABIA")
                 val lineitemScan1 = SelectOp(ScanOp2(lineitemTable))(x => x.L_RECEIPTDATE > x.L_COMMITDATE)
                 val lineitemScan2 = ScanOp2(lineitemTable)
                 val lineitemScan3 = SelectOp(ScanOp2(lineitemTable))(x => x.L_RECEIPTDATE > x.L_COMMITDATE)
@@ -1042,7 +1053,7 @@ new plan:
                 val jo1 = MapCatOp(HashJoinOp2(nationScan, supplierScan)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY))
                 val jo2 = MapCatOp(HashJoinOp2(jo1, lineitemScan1)((x,y) => x.f.S_SUPPKEY == y.L_SUPPKEY)(x => x.f.S_SUPPKEY)(x => x.L_SUPPKEY))
                 val jo3 = LeftHashSemiJoinOp1(jo2, lineitemScan2)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
-                val jo4 = HashJoinAnti(jo3, lineitemScan3)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
+                val jo4 = HashJoinAnti1(jo3, lineitemScan3)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
                 val jo5 = MapCatOp(HashJoinOp2(ordersScan,jo4)((x,y) => x.O_ORDERKEY==y.f.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.f.L_ORDERKEY))
                 val aggOp = AggOp1(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0.0)((t,currAgg) => {currAgg + 1})
                 val sortOp = SortOp(aggOp)((x,y) => {
@@ -1065,13 +1076,13 @@ new plan:
         val customerTable = loadCustomer1()
         val ordersTable = loadOrders1()
         runQuery {
-                val v23 = parseString("23")
-                val v29 = parseString("29")
-                val v22 = parseString("22")
-                val v20 = parseString("20")
-                val v24 = parseString("24")
-                val v26 = parseString("26")
-                val v25 = parseString("25")
+                val v23 = parseString("13")
+                val v29 = parseString("31")
+                val v22 = parseString("23")
+                val v20 = parseString("29")
+                val v24 = parseString("30")
+                val v26 = parseString("18")
+                val v25 = parseString("17")
                 // Subquery
                 val customerScan1 = SelectOp(ScanOp2(customerTable))(x => {
                     x.C_ACCTBAL > 0.00 && (

@@ -64,6 +64,7 @@ trait CSVLoader extends Loader {
    val ab = LegoCollect[REGIONRecord](SizeDefaults.defaultInputBufferSize)
    while (s.hasNext) {
      val newEntry = newREGIONRecord(s.nextInt, loadString(25,s), loadString(152,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -78,6 +79,7 @@ trait CSVLoader extends Loader {
    while (s.hasNext) {
      val newEntry = newORDERSRecord(s.nextInt, s.nextInt, s.nextChar, s.nextDouble, s.nextDate,
        loadString(15,s), loadString(15,s), s.nextInt, loadString(79,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -93,6 +95,7 @@ trait CSVLoader extends Loader {
    while (s.hasNext) {
      val newEntry = newPARTRecord(s.nextInt, loadString(55,s), loadString(25,s), loadString(10,s), loadString(25,s),
        s.nextInt, loadString(10,s), s.nextDouble, loadString(23,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -106,6 +109,7 @@ trait CSVLoader extends Loader {
    val ab = LegoCollect[NATIONRecord](SizeDefaults.defaultInputBufferSize)
    while (s.hasNext) {
      val newEntry = newNATIONRecord(s.nextInt, loadString(25,s), s.nextInt, loadString(152,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -119,6 +123,7 @@ trait CSVLoader extends Loader {
    val ab = LegoCollect[CUSTOMERRecord](SizeDefaults.defaultInputBufferSize)
    while (s.hasNext) {
      val newEntry = newCUSTOMERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(10,s), loadString(117,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -132,6 +137,7 @@ trait CSVLoader extends Loader {
    val ab = LegoCollect[PARTSUPPRecord](SizeDefaults.defaultInputBufferSize)
    while (s.hasNext) {
      val newEntry = newPARTSUPPRecord(s.nextInt, s.nextInt, s.nextInt, s.nextDouble, loadString(199,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result
@@ -145,6 +151,7 @@ trait CSVLoader extends Loader {
    val ab = LegoCollect[SUPPLIERRecord](SizeDefaults.defaultInputBufferSize)
    while (s.hasNext) {
      val newEntry = newSUPPLIERRecord(s.nextInt, loadString(25,s), loadString(40,s), s.nextInt, loadString(15,s), s.nextDouble, loadString(101,s))
+      s.skipLine()
      ab append newEntry
    }
    ab.result

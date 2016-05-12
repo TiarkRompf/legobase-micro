@@ -58,7 +58,10 @@ trait UncheckedHelper extends DSL with UncheckedOps {
         cg"(char**)realloc($xs,$size * sizeof(char*))".as[Array[T]]
       else if (manifest[T] == manifest[Array[Int]])
         cg"(int**)realloc($xs,$size * sizeof(int*))".as[Array[T]]
-      else {
+      else if (manifest[T] <:< manifest[Record]) {
+        val name = structName(manifest[T])
+        rq(new StringContext(s"(struct $name *)realloc(", ",", s"* sizeof(struct $name))")).cg(xs, size).as[Array[T]]
+      } else {
         printf(s"ERROR: realloc for type ${manifest[Array[T]]} not implemented\n")
         xs
       }
@@ -114,7 +117,7 @@ trait DataStruct extends DSL with UncheckedHelper {
     def update(x: Rep[Long], y: Rep[T]): Rep[Unit] =
       elems foreach { case (k,m,v:LegoBuffer[t]) => v(x) = record_select(y,k)(manifest[T],m.asInstanceOf[Manifest[t]]) }
     def resize(x: Rep[Long]): Rep[Unit] = {
-      printf("buffer.resize %d\n",x)
+      printf("buffer.resize %ld\n",x)
       elems foreach { case (k,m,v) => v.resize(x) }
     }
     def sort(comp: Function2[Rep[T],Rep[T],Rep[Int]], len: Rep[Long]): Rep[Unit] = {
@@ -388,11 +391,50 @@ trait DataStruct extends DSL with UncheckedHelper {
           bucketNext(dataPos) = next
       }
 
+      /* Safe to remove an element while iterating */
+      def -= (k: Rep[C], tuple: Rep[A]) = {
+        val h = calcHashCode(k)
+        val bucket = h & hashMask
+
+        /* Check data is not at the head */
+        var dataPos = bucketHash(bucket)
+        if (dataPos != -1) {
+          if (data(dataPos).equals(tuple)) {
+            bucketHash(bucket) = bucketNext(dataPos)
+          } else {
+            var prev = dataPos
+            dataPos = bucketNext(dataPos)
+            while (dataPos != -1) {
+              val bufElem = data(dataPos)
+              if (bufElem.equals(tuple)) {
+                bucketNext(prev) = bucketNext(dataPos)
+                dataPos = -1
+              } else {
+                dataPos = bucketNext(dataPos)
+              }
+            }
+          }
+        }
+      }
+
+      def foreach(f: Rep[A] => Rep[Unit]): Rep[Unit] = {
+        for (bucket <- 0L until hashSize) {
+          var dataPos = bucketHash(bucket)
+          while (dataPos != -1) {
+              val bufElem = data(dataPos)
+              dataPos = bucketNext(dataPos)
+              // NOTE: we only know that hash codes match:
+              // client needs to check full keys.
+              f(bufElem)
+          }
+        }
+      }
+
       def apply(k: Rep[C]) = new {
           def foreach(f: Rep[A] => Rep[Unit]): Rep[Unit] = {
               val h = calcHashCode(k)
               val bucket = h & hashMask
-              
+
               var dataPos = bucketHash(bucket)
               while (dataPos != -1) {
                   val bufElem = data(dataPos)

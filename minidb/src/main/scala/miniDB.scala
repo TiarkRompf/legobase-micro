@@ -227,7 +227,7 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         }
         return ((char *)s);
       }
-      char* strstr(const char *s1, const char *s2) {
+      char* strstr(char *s1, char *s2) {
         char* tmp;
         if ((tmp = strnstr(s1,s2,strlen(s1))) == NULL) {
           return s1 - (1 << 10); // Hack
