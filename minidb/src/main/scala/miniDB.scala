@@ -203,7 +203,7 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         while (*str != '\n' && (*str != '|') && (*str != '\0')) str++;
         return str - start;
       }
-      int strcmp(const char *s1, const char *s2) {
+      int mystrcmp(const char *s1, const char *s2) {
         size_t l1 = strlen(s1);
         size_t l2 = strlen(s2);
         if (l1 > l2) l1 = l2;

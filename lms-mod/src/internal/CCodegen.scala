@@ -141,12 +141,12 @@ trait CCodegen extends CLikeCodegen {
 					 "#include <glib.h>\n" +
 					 "#include <sys/time.h>")
 
-	  stream.println("int strcmp(const char *s1, const char *s2);")
+	  stream.println("int mystrcmp(const char *s1, const char *s2);")
 
 	  stream.println("int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1) {\n" +
     				 "\tlong int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);\n" +
 					 "\tresult->tv_sec = diff / 1000000;\n" +
-				     "\tresult->tv_usec = diff % 1000000;\n" + 
+				     "\tresult->tv_usec = diff % 1000000;\n" +
 					 "\treturn (diff<0);\n" +
 					 "}\n")
 

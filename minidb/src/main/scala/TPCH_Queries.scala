@@ -973,31 +973,31 @@ new plan:
                 val AIR = parseString("AIR")
                 val AIRREG = parseString("AIR REG")
 
-                val so1 = SelectOp(ScanOp2(partTable))(x => x.P_SIZE >= 1 &&
+                val so1 = SelectOp(ScanOp2(partTable))(x => x.P_SIZE >= 1 && (
                                 (x.P_SIZE<=5 && x.P_BRAND==Brand12 && (x.P_CONTAINER==SMBOX  || x.P_CONTAINER==SMCASE ||
                                                                        x.P_CONTAINER==SMPACK || x.P_CONTAINER==SMPKG)) ||
                                 (x.P_SIZE<=10 && x.P_BRAND==Brand23 && (x.P_CONTAINER==MEDBAG  || x.P_CONTAINER==MEDBOX ||
                                                                         x.P_CONTAINER==MEDPACK || x.P_CONTAINER==MEDPKG)) ||
                                 (x.P_SIZE<=15 && x.P_BRAND==Brand34 && (x.P_CONTAINER==LGBOX  || x.P_CONTAINER==LGCASE ||
-                                                                        x.P_CONTAINER==LGPACK || x.P_CONTAINER==LGPKG))
+                                                                        x.P_CONTAINER==LGPACK || x.P_CONTAINER==LGPKG)))
                 )
-                val so2 = SelectOp(ScanOp2(lineitemTable))(x =>
-                                ((x.L_QUANTITY<=30 && x.L_QUANTITY>=20) || (x.L_QUANTITY<=20 && x.L_QUANTITY>=10) ||
-                                 (x.L_QUANTITY<=11 && x.L_QUANTITY>=1)) && x.L_SHIPINSTRUCT == DELIVERINPERSON &&
-                                 (x.L_SHIPMODE==AIR || x.L_SHIPMODE==AIRREG)
-                )
-                val jo = SelectOp(MapCatOp(HashJoinOp2(so1, so2)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY)))(
-                    x => x.f.P_BRAND == Brand12 &&
-                         (x.f.P_CONTAINER==SMBOX || x.f.P_CONTAINER==SMCASE || x.f.P_CONTAINER==SMPACK || x.f.P_CONTAINER==SMPKG) &&
-                          x[Double]("L_QUANTITY")>=1 && x[Double]("L_QUANTITY")<=11 && x[Int]("P_SIZE")<=5 || x.f.P_BRAND==Brand23 &&
-                         (x.f.P_CONTAINER==MEDBAG || x.f.P_CONTAINER==MEDBOX || x.f.P_CONTAINER==MEDPACK || x.f.P_CONTAINER==MEDPKG) &&
-                          x[Double]("L_QUANTITY")>=10 && x[Double]("L_QUANTITY")<=20 && x[Int]("P_SIZE")<=10 || x.f.P_BRAND==Brand34 &&
-                         (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) &&
-                          x[Double]("L_QUANTITY")>=20 && x[Double]("L_QUANTITY")<=30 && x[Int]("P_SIZE")<=15)
-                val aggOp = AggOp1(jo)(x => "Total")(0.0)(
-                    (t,currAgg) => { currAgg + (t[Double]("L_EXTENDEDPRICE") * (1.0 - t.f.L_DISCOUNT)) }
-                )
-                val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs))
+                 val so2 = SelectOp(ScanOp2(lineitemTable))(x =>
+                                 ((x.L_QUANTITY<=30 && x.L_QUANTITY>=1) && x.L_SHIPINSTRUCT == DELIVERINPERSON &&
+                                  (x.L_SHIPMODE==AIR || x.L_SHIPMODE==AIRREG))
+                 )
+                 val jo = SelectOp(MapCatOp(HashJoinOp2(so1, so2)((x,y) => x.P_PARTKEY == y.L_PARTKEY)(x => x.P_PARTKEY)(x => x.L_PARTKEY)))(
+                     x => ((x.f.P_BRAND == Brand12 &&
+                          (x.f.P_CONTAINER==SMBOX || x.f.P_CONTAINER==SMCASE || x.f.P_CONTAINER==SMPACK || x.f.P_CONTAINER==SMPKG) &&
+                           x[Double]("L_QUANTITY")>=1 && x[Double]("L_QUANTITY")<=11 && x[Int]("P_SIZE")<=5) || (x.f.P_BRAND==Brand23 &&
+                          (x.f.P_CONTAINER==MEDBAG || x.f.P_CONTAINER==MEDBOX || x.f.P_CONTAINER==MEDPACK || x.f.P_CONTAINER==MEDPKG) &&
+                           x[Double]("L_QUANTITY")>=10 && x[Double]("L_QUANTITY")<=20 && x[Int]("P_SIZE")<=10) || (x.f.P_BRAND==Brand34 &&
+                          (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) &&
+                           x[Double]("L_QUANTITY")>=20 && x[Double]("L_QUANTITY")<=30 && x[Int]("P_SIZE")<=15))
+                 )
+                 val aggOp = AggOp1(jo)(x => "Total")(0.0)(
+                     (t,currAgg) => { currAgg + (t[Double]("L_EXTENDEDPRICE") * (1.0 - t.f.L_DISCOUNT)) }
+                 )
+                 val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs))
                 po
         }
     }

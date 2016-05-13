@@ -224,7 +224,7 @@ trait CGenStringOps extends CGenBase with CNestedCodegen {
     case StringContainsSlice(s1,s2) =>
       emitValDef(sym, "strstr(" + quote(s1) + "," + quote(s2) + ") >= " + quote(s1))
     case StringCompareTo(s1,s2) =>
-		emitValDef(sym, "strcmp(" + quote(s1) + "," + quote(s2) + ")")
+		emitValDef(sym, "mystrcmp(" + quote(s1) + "," + quote(s2) + ")")
     case StringIndexOfSlice(s1,s2,idx) =>
 		emitValDef(sym, "strstr(&(" + quote(s1) + "[" + quote(idx) + "])," + quote(s2) + ") - " + quote(s1))
 		stream.println("if (" + quote(sym) + " < 0) " + quote(sym) + " = -1;")
