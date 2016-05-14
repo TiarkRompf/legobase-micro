@@ -1016,7 +1016,7 @@ new plan:
                 val azure  = parseString("forest")
                 val scanPart = SelectOp(ScanOp2(partTable))(x => x.P_NAME startsWith azure)
                 val scanPartsupp = ScanOp2(partsuppTable)
-                val jo1 = MapCatOp(HashJoinOp2(scanPart, scanPartsupp)((x,y) => x.P_PARTKEY == y.PS_PARTKEY)(x=>x.P_PARTKEY)(x=>x.PS_PARTKEY))
+                val jo1 = LeftHashSemiJoinOp1(scanPartsupp, scanPart)((x,y) => y.P_PARTKEY == x.PS_PARTKEY)(x=>x.PS_PARTKEY)(x=>x.P_PARTKEY)
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2)
                 val jo2 = MapCatOp(HashJoinOp2(jo1, scanLineitem)((x,y) => x.f.PS_PARTKEY == y.L_PARTKEY && x.f.PS_SUPPKEY == y.L_SUPPKEY)(x=>x.f.PS_PARTKEY)(x=>x.L_PARTKEY))
                 val aggOp = AggOp1(jo2)(x => new Record {
@@ -1026,9 +1026,9 @@ new plan:
                 })(0.0)((t,currAgg) => { currAgg + t[Double]("L_QUANTITY") })
                 val selOp = SelectOp(aggOp)(x => x.key.PS_AVAILQTY > 0.5 * x.aggs)
                 val scanSupplier = ScanOp2(supplierTable)
-                val jo3 = MapCatOp(HashJoinOp2(selOp, scanSupplier)((x,y) => x.key.PS_SUPPKEY == y.S_SUPPKEY)(x => x.key.PS_SUPPKEY)(x => x.S_SUPPKEY))
                 val scanNation = SelectOp(ScanOp2(nationTable))(x => x.N_NAME == jordan)
-                val jo4 = MapCatOp(HashJoinOp2(scanNation, jo3)((x,y) => x.N_NATIONKEY == y.f.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.f.S_NATIONKEY))
+                val jo3 = MapCatOp(HashJoinOp2(scanNation, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY))
+                val jo4 = LeftHashSemiJoinOp1(jo3, selOp)((x,y) => x.f.S_SUPPKEY == y.key.PS_SUPPKEY)(x => x.f.S_SUPPKEY)(x => x.key.PS_SUPPKEY)
                 // FIXME useless but lead to compilation error
                 // val sortOp = SortOp(jo4)((x,y) => x[LegoString]("S_NAME") compareTo y.f.S_NAME)
                 val po = PrintOp(jo4)(kv => printf("%.*s|%.*s\n",
