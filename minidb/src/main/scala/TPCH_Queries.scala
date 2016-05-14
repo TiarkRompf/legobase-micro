@@ -1106,7 +1106,7 @@ new plan:
                     )
                 }))(x => new Record { val C_CUSTKEY = x.right.C_CUSTKEY; val C_ACCTBAL = x.right.C_ACCTBAL; val C_PHONE = x.right.C_PHONE })
                 val ordersScan = ScanOp2(ordersTable)
-                val jo = HashJoinAnti(customerScan2, ordersScan)((x,y) => x.C_CUSTKEY==y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY)
+                val jo = HashJoinAnti1(customerScan2, ordersScan)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY)
                 val aggOp2 = AggOp1(jo)(x => new Record { val _0 = infix_charAt(x.C_PHONE,0L); val _1 = infix_charAt(x.C_PHONE,1L)})(zero2)(
                     (t, currAgg) => new Record {
                         val _0 = {t.C_ACCTBAL + currAgg._0}
