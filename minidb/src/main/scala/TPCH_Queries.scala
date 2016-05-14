@@ -1002,7 +1002,6 @@ new plan:
         }
     }
 
-    // FIXME query has duplicate lines
    def Q20 = {
         val partTable = loadPart1()
         val nationTable = loadNation1()
@@ -1029,7 +1028,7 @@ new plan:
                 val scanNation = SelectOp(ScanOp2(nationTable))(x => x.N_NAME == jordan)
                 val jo3 = MapCatOp(HashJoinOp2(scanNation, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY))
                 val jo4 = LeftHashSemiJoinOp1(jo3, selOp)((x,y) => x.f.S_SUPPKEY == y.key.PS_SUPPKEY)(x => x.f.S_SUPPKEY)(x => x.key.PS_SUPPKEY)
-                // FIXME useless but lead to compilation error
+                // FIXME useless because data is already sorted but lead to compilation error
                 // val sortOp = SortOp(jo4)((x,y) => x[LegoString]("S_NAME") compareTo y.f.S_NAME)
                 val po = PrintOp(jo4)(kv => printf("%.*s|%.*s\n",
                     kv[LegoString]("S_NAME").length,(kv[LegoString]("S_NAME")),kv.f.S_ADDRESS.length,(kv.f.S_ADDRESS)))
@@ -1052,9 +1051,9 @@ new plan:
                 val ordersScan    = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERSTATUS == 'F')
                 val jo1 = MapCatOp(HashJoinOp2(nationScan, supplierScan)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(x => x.S_NATIONKEY))
                 val jo2 = MapCatOp(HashJoinOp2(jo1, lineitemScan1)((x,y) => x.f.S_SUPPKEY == y.L_SUPPKEY)(x => x.f.S_SUPPKEY)(x => x.L_SUPPKEY))
-                val jo3 = LeftHashSemiJoinOp1(jo2, lineitemScan2)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
+                val jo3 = MapCatOp(HashJoinOp2(jo2, ordersScan)((x,y) => y.O_ORDERKEY==x.f.L_ORDERKEY)(x => x.f.L_ORDERKEY)(x => x.O_ORDERKEY))
                 val jo4 = HashJoinAnti1(jo3, lineitemScan3)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
-                val jo5 = MapCatOp(HashJoinOp2(ordersScan,jo4)((x,y) => x.O_ORDERKEY==y.f.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.f.L_ORDERKEY))
+                val jo5 = LeftHashSemiJoinOp1(jo4, lineitemScan2)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
                 val aggOp = AggOp1(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0.0)((t,currAgg) => {currAgg + 1})
                 val sortOp = SortOp(aggOp)((x,y) => {
                     val a1 = x.aggs; val a2 = y.aggs

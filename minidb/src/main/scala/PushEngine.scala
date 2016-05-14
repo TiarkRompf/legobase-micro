@@ -230,8 +230,10 @@ trait PushEngine extends DSL with DataStruct {
         override def desc = parent.desc
         def reset { parent.reset }
         def open() { parent.child = this; parent.open }
-        def next() { parent.next }
-        def consume(tuple: Rep[Record]) { 
+        def next() {
+          parent.next
+        }
+        def consume(tuple: Rep[Record]) {
             child.consume(aggFuncs(tuple.asInstanceOf[Rep[A]]).asInstanceOf[Rep[Record]])
         }
     }
@@ -376,7 +378,7 @@ trait PushEngine extends DSL with DataStruct {
         val hashSize = defaultJoinHashSize
         val bucketSize = 1L
 
-        val hm = new LegoLinkedHashMap[C,A](hashSize, bucketSize)
+        val hm = new LegoLinkedHashMap[C,B](hashSize, bucketSize)
 
         def reset() { rightParent.reset; leftParent.reset; println("ERROR: hashjoin.reset not implemented")/*hm.clear;*/ }
         def open() = {
@@ -386,30 +388,22 @@ trait PushEngine extends DSL with DataStruct {
           rightParent.open
         }
         def next() {
-          leftParent.next
-          mode = 1
           rightParent.next
-
-          // Step 3: Return everything that left in the hash table
-          for (elem <- hm) {
-              child.consume(elem)
-          }
+          mode = 1
+          leftParent.next
         }
 
         def consume(tuple0: Rep[Record]) {
             if (mode == 0) {
-                val tuple = tuple0.asInstanceOf[Rep[A]]
-                val k = leftHash(tuple)
-                hm += (k,tuple) // leftStore(tuple) -- might reduce fields
-            } else {
                 val tuple = tuple0.asInstanceOf[Rep[B]]
                 val k = rightHash(tuple)
-                for (bufElem <- hm(k)) {
-                    if (joinCond(bufElem, tuple)) {
-                        // removeFromList
-                        hm -= (k, bufElem)
-                    }
-                }
+                hm += (k,tuple) // leftStore(tuple) -- might reduce fields
+            } else {
+                val tuple = tuple0.asInstanceOf[Rep[A]]
+                val k = leftHash(tuple)
+                val idx = hm(k).indexWhere(e => joinCond(tuple, e))
+                if (idx == -1)
+                    child.consume(tuple)
             }
         }
     }
