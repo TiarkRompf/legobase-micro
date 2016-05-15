@@ -306,36 +306,67 @@ trait PushEngine extends DSL with DataStruct {
     }
 
     // not used except in Q17 -- otherwise just use agg
-    case class WindowOp[A:Manifest,B:Manifest,C:Manifest](parent: Operator[A])(val grp: Function1[Rep[A], Rep[B]])(val wndf: Rep[ArrayBuffer[A]] => Rep[C]) extends Operator[ Record { val key: B; val wnd: C } ] {
-        val hm = HashMap[B,ArrayBuffer[A]]()
-        var keySet = hm.keySet
+    abstract class Window[A] {
+      def size: Rep[Long]
+      def foldLeft[B:Manifest](z: Rep[B])(f: (Rep[B],Rep[A])=>Rep[B]): Rep[B]
+    }
+    type Record1[A,B] = Record {val k: B; val data: A}
+
+    case class WindowOp[A:Manifest,B:Manifest,C:Manifest](parent: Operator[A])(val grp: Function1[Rep[A], Rep[B]])(val wndf: Window[A] => Rep[C]) extends Operator[ Record { val key: B; val wnd: C } ] {
+        val hashSize = defaultJoinHashSize
+        val bucketSize = 1L
+
+        val hm = new LegoLinkedHashMap[B,Record1[A,B]](hashSize, bucketSize)
+        val hk = new LegoLinkedHashMap[B,B](hashSize, bucketSize)
 
         def open() {
             parent.child = this
             parent.open
         }
-        def reset() { parent.reset; hm.clear; open } 
+        def reset() { parent.reset; open }
         def next() {
+
             parent.next
-            keySet = hm.keySet
-            while (hm.size != 0) {
-                val k = keySet.head
-                keySet.remove(k)
-                val elem = hashmap_remove(hm,k)
-                child.consume(new Record {
-                    val key = k
-                    val wnd = wndf(elem)
-                })
+
+            for (keyv <- hk) {
+              var length = var_new(0L)
+              for (value <- hm(keyv)) {
+                if (keyv == value.k)
+                  length += 1L
+              }
+
+              val window = new Window[A] {
+                def size = length
+                def foldLeft[B:Manifest](z: Rep[B])(f: (Rep[B],Rep[A])=>Rep[B]): Rep[B] = {
+                  var acc = z
+                  for (value <- hm(keyv)) {
+                    if (keyv == value.k)
+                      acc = f(acc, value.data)
+                  }
+                  acc
+                }
+              }
+              child.consume(new Record {
+                val key = keyv
+                val wnd = wndf(window)
+              })
             }
         }
         def consume(tuple: Rep[Record]) {
             val t = tuple.asInstanceOf[Rep[A]]
             val key = grp(t)
-            val v = hm.getOrElseUpdate(key, ArrayBuffer[A]())
-            v.append(t)
+
+            val idx = hk(key).indexWhere(v => v == key)
+            if (idx == -1)
+              hk += (key, key)
+
+            hm += (key, new Record1[A,B] {
+              val k = key
+              val data = t
+            })
         }
     }
-    
+
     case class ViewOp[A<:Record:Manifest](parent: Operator[A], n: Int) extends Operator[A] { self =>
         var init: Boolean = false // static variable! *generate* code for self.open only once
         val table = LegoCollect[A](defaultViewSize)

@@ -897,7 +897,7 @@ new plan:
                         else cnt
                     }) / 7.0
                 })
-                val aggOp = AggOp1(wo)(x => "Total")(0.0)((t, currAgg) => currAgg + t.wnd / 7.0)
+                val aggOp = AggOp1(wo)(x => "Total")(0.0)((t, currAgg) => currAgg + t.wnd)
                 val po = PrintOp(aggOp)(kv => printf("%.6f\n",kv.aggs))
                 po
         }
