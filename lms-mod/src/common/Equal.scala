@@ -69,7 +69,7 @@ trait EqualExpBridgeOpt extends EqualExp {
     case (Const(a),Const(b)) => Const(a == b)
     case _ => super.equals(a,b)
   }
-  
+
   override def notequals[A:Manifest,B:Manifest](a: Rep[A], b: Rep[B])(implicit pos: SourceContext): Rep[Boolean] = if (a == b) Const(false) else (a,b) match {
     case (Const(a),Const(b)) => Const(a != b)
     case _ => super.notequals(a,b)
@@ -82,13 +82,13 @@ trait EqualExpOpt extends EqualExp with EqualExpBridgeOpt
 trait ScalaGenEqual extends ScalaGenBase {
   val IR: EqualExp
   import IR._
-  
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case Equal(a,b) => 
+    case Equal(a,b) =>
 		if (a.tp == manifest[Array[Byte]] || b.tp == manifest[Array[Byte]])
 			emitValDef(sym, src"java.util.Arrays.equals($a,$b)")
 		else emitValDef(sym, src"$a == $b")
-    case NotEqual(a,b) =>  
+    case NotEqual(a,b) =>
 		if (a.tp == manifest[Array[Byte]] || b.tp == manifest[Array[Byte]])
 			emitValDef(sym, src"!java.util.Arrays.equals($a,$b)")
 		else emitValDef(sym, src"$a != $b")
@@ -108,12 +108,12 @@ trait CLikeGenEqual extends CLikeGenBase {
 			// the array field of the implicitly lowered array.
       // TR: disabled!
 			//emitValDef(sym, "strcmp(" + quote(a) + "->array," + quote(b) + ") == 0;")
-      emitValDef(sym, "mystrcmp(" + quote(a) + "," + quote(b) + ") == 0;")
+      emitValDef(sym, "tpch_strcmp(" + quote(a) + "," + quote(b) + ") == 0;")
           else emitValDef(sym, src"$a == $b")
         case NotEqual(a,b) =>
 		  if (b.tp == manifest[Array[Byte]] || b.tp == manifest[String])
       //emitValDef(sym, "strcmp(" + quote(a) + "->array," + quote(b) + ") != 0;")
-			emitValDef(sym, "mystrcmp(" + quote(a) + "," + quote(b) + ") != 0;")
+			emitValDef(sym, "tpch_strcmp(" + quote(a) + "," + quote(b) + ") != 0;")
           else emitValDef(sym, src"$a != $b")
         case _ => super.emitNode(sym, rhs)
       }
@@ -125,7 +125,7 @@ trait OpenCLGenEqual extends OpenCLGenBase with CLikeGenEqual
 trait CGenEqual extends CGenBase with CLikeGenEqual with CNestedCodegen {
   val IR: EqualExp
   import IR._
-  
+
   override def lowerNode[A:Manifest](sym: Sym[A], rhs: Def[A]) = rhs match {
 	case Equal(lhs,rhs) => sym.atPhase(LIRLowering) {
 		reflectEffect(Equal(LIRLowering(lhs),LIRLowering(rhs))).asInstanceOf[Exp[A]]

@@ -15,7 +15,7 @@ trait LiftString {
 trait StringOps extends Variables with OverloadHack {
   // NOTE: if something doesn't get lifted, this won't give you a compile time error,
   //       since string concat is defined on all objects
-  
+
   def infix_+(s1: String, s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(unit(s1), s2)
   def infix_+[T:Manifest](s1: String, s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(unit(s1), readVar(s2))
   def infix_+[T:Manifest](s1: Rep[String], s2: Rep[T])(implicit o: Overloaded1, pos: SourceContext): Rep[String] = {
@@ -29,24 +29,24 @@ trait StringOps extends Variables with OverloadHack {
   def infix_+(s1: Rep[Any], s2: Rep[String])(implicit o: Overloaded5, pos: SourceContext) = string_plus(s1, s2)
   def infix_+(s1: Rep[Any], s2: Var[String])(implicit o: Overloaded6, pos: SourceContext) = string_plus(s1, readVar(s2))
   def infix_+(s1: Rep[Any], s2: String)(implicit o: Overloaded7, pos: SourceContext) = string_plus(s1, unit(s2))
-  
-  def infix_+(s1: Var[String], s2: Rep[Any])(implicit o: Overloaded8, pos: SourceContext) = string_plus(readVar(s1), s2)  
+
+  def infix_+(s1: Var[String], s2: Rep[Any])(implicit o: Overloaded8, pos: SourceContext) = string_plus(readVar(s1), s2)
   def infix_+[T:Manifest](s1: Var[String], s2: Var[T])(implicit o: Overloaded9, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
-  def infix_+(s1: Var[String], s2: Rep[String])(implicit o: Overloaded10, pos: SourceContext) = string_plus(readVar(s1), s2)    
-  def infix_+(s1: Var[String], s2: Var[String])(implicit o: Overloaded11, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))    
+  def infix_+(s1: Var[String], s2: Rep[String])(implicit o: Overloaded10, pos: SourceContext) = string_plus(readVar(s1), s2)
+  def infix_+(s1: Var[String], s2: Var[String])(implicit o: Overloaded11, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
   def infix_+[T:Manifest](s1: Var[T], s2: Rep[String])(implicit o: Overloaded12, pos: SourceContext) = string_plus(readVar(s1), s2)
   def infix_+[T:Manifest](s1: Var[T], s2: Var[String])(implicit o: Overloaded13, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
   def infix_+[T:Manifest](s1: Var[T], s2: String)(implicit o: Overloaded14, pos: SourceContext) = string_plus(readVar(s1), unit(s2))
   def infix_getBytes(s1: Rep[String])(implicit pos: SourceContext) = string_getBytes(s1)
-  
+
   // these are necessary to be more specific than arithmetic/numeric +. is there a more generic form of this that will work?
-  //def infix_+[R:Manifest](s1: Rep[String], s2: R)(implicit c: R => Rep[Any], o: Overloaded15, pos: SourceContext) = string_plus(s1, c(s2))  
+  //def infix_+[R:Manifest](s1: Rep[String], s2: R)(implicit c: R => Rep[Any], o: Overloaded15, pos: SourceContext) = string_plus(s1, c(s2))
   def infix_+(s1: Rep[String], s2: Double)(implicit o: Overloaded15, pos: SourceContext) = string_plus(s1, unit(s2))
   def infix_+(s1: Rep[String], s2: Float)(implicit o: Overloaded16, pos: SourceContext) = string_plus(s1, unit(s2))
   def infix_+(s1: Rep[String], s2: Int)(implicit o: Overloaded17, pos: SourceContext) = string_plus(s1, unit(s2))
   def infix_+(s1: Rep[String], s2: Long)(implicit o: Overloaded18, pos: SourceContext) = string_plus(s1, unit(s2))
-  def infix_+(s1: Rep[String], s2: Short)(implicit o: Overloaded19, pos: SourceContext) = string_plus(s1, unit(s2))  
-  
+  def infix_+(s1: Rep[String], s2: Short)(implicit o: Overloaded19, pos: SourceContext) = string_plus(s1, unit(s2))
+
   def infix_startsWith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext) = string_startswith(s1,s2)
   def infix_endsWith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext) = string_endswith(s1,s2)
   def infix_replaceAll(s1: Rep[String], d1: Rep[String], d2: Rep[String])(implicit pos: SourceContext) = string_replaceAll(s1,d1,d2)
@@ -153,7 +153,7 @@ trait StringOpsExp extends StringOps with VariablesExp with Structs {
 trait ScalaGenStringOps extends ScalaGenBase {
   val IR: StringOpsExp
   import IR._
-  
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case StringNew(s1) => emitValDef(sym, src"new String($s1)")
     case StringPlus(s1,s2) => emitValDef(sym, src"$s1+$s2")
@@ -201,32 +201,32 @@ trait OpenCLGenStringOps extends OpenCLGenBase {
 trait CGenStringOps extends CGenBase with CNestedCodegen {
   val IR: StringOpsExp
   import IR._
-  
+
   override def lowerNode[A:Manifest](sym: Sym[A], rhs: Def[A]) = rhs match {
-	case StringNew(s) => sym.atPhase(LIRLowering) { 
+	case StringNew(s) => sym.atPhase(LIRLowering) {
 		// TODO: Find a better way than this. It assumes that the argument is an array of byte and it also assumes its implicit lowering
         val ar = field[Array[Byte]](LIRLowering(s), "array")
-		ar.asInstanceOf[Exp[A]] 
+		ar.asInstanceOf[Exp[A]]
 	}
 	case _ => super.lowerNode(sym,rhs)
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case StringNew(s1) => emitValDef(sym, src"$s1")
-    case StringLength(s1) => emitValDef(sym, src"strlen($s1)")
+    case StringLength(s1) => emitValDef(sym, src"tpch_strlen($s1)")
     case StringPlus(s1,s2) => emitValDef(sym,src"strcat($s1,$s2);")
-    case StringStartsWith(s1,s2) => emitValDef(sym, "strncmp(" + quote(s1) + "," + quote(s2) + ", strlen(" + quote(s2) + ")) == 0;")
+    case StringStartsWith(s1,s2) => emitValDef(sym, "strncmp(" + quote(s1) + "," + quote(s2) + ", tpch_strlen(" + quote(s2) + ")) == 0;")
     case sew@StringEndsWith(s1,s2) => {
-      emitValDef(sew.lenstr,"strlen("+quote(s1)+")")
-      emitValDef(sew.lensuf,"strlen("+quote(s2)+")")
+      emitValDef(sew.lenstr,"tpch_strlen("+quote(s1)+")")
+      emitValDef(sew.lensuf,"tpch_strlen("+quote(s2)+")")
       emitValDef(sym, "strncmp(" + quote(s1) + "+" + quote(sew.lenstr) + "-" + quote(sew.lensuf) + "," + quote(s2) + ", " + quote(sew.lensuf) + ") == 0;")
     }
     case StringContainsSlice(s1,s2) =>
-      emitValDef(sym, "strstr(" + quote(s1) + "," + quote(s2) + ") >= " + quote(s1))
+      emitValDef(sym, "tpch_strstr(" + quote(s1) + "," + quote(s2) + ") >= " + quote(s1))
     case StringCompareTo(s1,s2) =>
-		emitValDef(sym, "mystrcmp(" + quote(s1) + "," + quote(s2) + ")")
+		emitValDef(sym, "tpch_strcmp(" + quote(s1) + "," + quote(s2) + ")")
     case StringIndexOfSlice(s1,s2,idx) =>
-		emitValDef(sym, "strstr(&(" + quote(s1) + "[" + quote(idx) + "])," + quote(s2) + ") - " + quote(s1))
+		emitValDef(sym, "tpch_strstr(&(" + quote(s1) + "[" + quote(idx) + "])," + quote(s2) + ") - " + quote(s1))
 		stream.println("if (" + quote(sym) + " < 0) " + quote(sym) + " = -1;")
     case StringTrim(s) => throw new GenerationFailedException("CGenStringOps: StringTrim not implemented yet")
     case StringSplit(s, sep) => throw new GenerationFailedException("CGenStringOps: StringSplit not implemented yet")

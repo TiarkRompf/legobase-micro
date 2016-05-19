@@ -198,23 +198,23 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
 
         return hash;
       }
-      size_t strlen(const char* str) {
+      size_t tpch_strlen(const char* str) {
         const char* start = str;
         while (*str != '\n' && (*str != '|') && (*str != '\0')) str++;
         return str - start;
       }
-      int mystrcmp(const char *s1, const char *s2) {
-        size_t l1 = strlen(s1);
-        size_t l2 = strlen(s2);
+      int tpch_strcmp(const char *s1, const char *s2) {
+        size_t l1 = tpch_strlen(s1);
+        size_t l2 = tpch_strlen(s2);
         if (l1 > l2) l1 = l2;
         return strncmp(s1,s2,l1);
       }
-      char* strnstr(const char *s, const char *find, size_t slen) {
+      char* tpch_strnstr(const char *s, const char *find, size_t slen) {
         char c, sc;
         size_t len;
 
         if ((c = *find++) != '\0') {
-          len = strlen(find);
+          len = tpch_strlen(find);
           do {
             do {
               if (slen-- < 1 || (sc = *s++) == '\0')
@@ -227,9 +227,9 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         }
         return ((char *)s);
       }
-      char* strstr(char *s1, char *s2) {
+      char* tpch_strstr(char *s1, char *s2) {
         char* tmp;
-        if ((tmp = strnstr(s1,s2,strlen(s1))) == NULL) {
+        if ((tmp = tpch_strnstr(s1,s2,tpch_strlen(s1))) == NULL) {
           return s1 - (1 << 10); // Hack
         }
         return tmp;
@@ -294,8 +294,8 @@ class miniDBC extends CImpl with CSVLoader {
 //object miniDBScala extends miniDBScala with Queries {
 object miniDBC extends miniDBC with Queries {
   import utilities._
-  val numRuns: scala.Int = 5
-  
+  val numRuns: scala.Int = 1
+
   def cmain(argc: Rep[Int], args: Rep[Array[String]]) = {
     val q = currQuery match {
       case "Q1"  => Q1(numRuns)

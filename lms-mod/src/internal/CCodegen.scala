@@ -20,7 +20,7 @@ trait CCodegen extends CLikeCodegen {
   var hstream: PrintWriter = null
   var headerStream: PrintWriter = null
   var kernelsList = ListBuffer[Exp[Any]]()
-  
+
   override def hasMetaData: Boolean = true
   override def getMetaData: String = metaData.toString
   var metaData: CMetaData = null
@@ -118,7 +118,7 @@ trait CCodegen extends CLikeCodegen {
   def emitForwardDef[A:Manifest](args: List[Manifest[_]], functionName: String, out: PrintWriter) = {
     out.println(remap(manifest[A])+" "+functionName+"("+args.map(a => remap(a)).mkString(", ")+");")
   }
-      
+
   def allocStruct(sym: Sym[Any], structName: String, out: PrintWriter) {
     out.println(structName + " " + quote(sym)+ ";")
 		//out.println(structName + "* " + quote(sym) + " = (" + structName + "*)malloc(sizeof(" + structName + "));")
@@ -127,7 +127,7 @@ trait CCodegen extends CLikeCodegen {
   def getMemoryAllocString(count: String, memType: String): String = {
   		"(" + memType + "*)malloc(" + count + " * sizeof(" + memType + "));"
   }
- 
+
   def emitSource[A:Manifest](args: List[Sym[_]], b: Block[A], functionName: String, out: PrintWriter, dynamicReturnType: String = null, serializable: Boolean = false) = {
 	val body = runTransformations(b)
     val sA = if (dynamicReturnType != null) dynamicReturnType else remap(getBlockResult(body).tp)
@@ -141,7 +141,7 @@ trait CCodegen extends CLikeCodegen {
 					 "#include <glib.h>\n" +
 					 "#include <sys/time.h>")
 
-	  stream.println("int mystrcmp(const char *s1, const char *s2);")
+	  stream.println("int tpch_strcmp(const char *s1, const char *s2);")
 
 	  stream.println("int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1) {\n" +
     				 "\tlong int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);\n" +
@@ -175,7 +175,7 @@ trait CCodegen extends CLikeCodegen {
     printIndented(funs)(stream)
 	  stream.println("")
 	  stream.println("/************************ MAIN BODY **************************/")
-	  //stream.println(code) 
+	  //stream.println(code)
     printIndented(code)(stream)
       stream.println("/*****************************************\n"+
                      " *  End of C Generated Code              *\n"+
@@ -240,17 +240,17 @@ trait CCodegen extends CLikeCodegen {
     // TODO: check void type?
     stream.println(lhs + " = " + rhs + ";")
   }
-  
+
   override def emitKernelFooter(syms: List[Sym[Any]], vals: List[Sym[Any]], vars: List[Sym[Any]], resultType: String, resultIsVar: Boolean, external: Boolean): Unit = {
-    
+
     //Currently only allow single return value
     if(syms.size > 1) throw new GenerationFailedException("CLikeGen: Cannot have more than 1 results!\n");
     if(external) throw new GenerationFailedException("CLikeGen: Cannot have external libraries\n")
-    
+
     if(resultType != "void")
       stream.println("return " + quote(syms(0)) + ";")
     stream.println("}")
-    
+
     // Emit input copy helper functions for object type inputs
     for(v <- (vals++vars) if isObjectType(v.tp)) {
       helperFuncString.append(emitCopyInputHtoD(v, syms, copyInputHtoD(v)))
@@ -282,11 +282,11 @@ trait CCodegen extends CLikeCodegen {
 
   override def emitKernelHeader(syms: List[Sym[Any]], vals: List[Sym[Any]], vars: List[Sym[Any]], resultType: String, resultIsVar: Boolean, external: Boolean): Unit = {
     if(syms.size>1) throw new GenerationFailedException("CGen: Cannot have multiple kernel outputs!\n")
-    
+
     //if( (vars.length>0) || (resultIsVar) ) throw new GenerationFailedException("Var is not supported for CPP kernels")
-    
+
     val kernelName = syms.map(quote).mkString("")
-   
+
     /*
     if (resultIsVar){
       stream.print("PrimitiveRef<" + resultType + ">")
@@ -296,7 +296,7 @@ trait CCodegen extends CLikeCodegen {
     }
     */
     stream.print(resultType)
-     
+
     stream.print(" kernel_" + kernelName + "(")
     stream.print(vals.map(p=>remap(p.tp) + " " + quote(p)).mkString(", "))
     if (vals.length > 0 && vars.length > 0){
@@ -311,7 +311,7 @@ trait CCodegen extends CLikeCodegen {
 
   override def quote(x: Exp[Any]) : String = {
 	x match {
-		case Const(y: java.lang.Character) => 
+		case Const(y: java.lang.Character) =>
 			if (y == '\0') "'\\0'"
 			else "'" + y.toString + "'"
 		case Const(null) => "NULL"
@@ -334,12 +334,12 @@ trait CCodegen extends CLikeCodegen {
 		case _ => super.remap(m)
 	}
   }
-  
+
   /*******************************************************
    * Methods below are for emitting helper functions
    *******************************************************/
   // Yannis: Should these things be here? They do not seem to be general C, but
-  // rather CUDA like programming. 
+  // rather CUDA like programming.
   def emitCopyInputHtoD(sym: Sym[Any], ksym: List[Sym[Any]], contents: String) : String = {
     val out = new StringBuilder
     if(isObjectType(sym.tp)) {
@@ -416,7 +416,7 @@ trait CNestedCodegen extends GenericNestedCodegen with CCodegen {
 trait CFatCodegen extends GenericFatCodegen with CCodegen {
   val IR: Expressions with Effects with FatExpressions with LoweringTransform
 }
-  
+
 trait Pointer extends Base {
 	class PointerManifest[A:Manifest]
     def pointer_assign[A:Manifest](s: Rep[A], vl: Rep[A]): Rep[Unit]
@@ -431,7 +431,7 @@ trait PointerExp extends Pointer with BaseExp with Effects {
 trait CGenPointer extends GenericNestedCodegen {
 	val IR: PointerExp
 	import IR._
-	
+
     override def remap[A](m: Manifest[A]) = m match {
 		case s if m <:< manifest[PointerManifest[Any]] => remap(m.typeArguments.head) + "*"
         case _ => super.remap(m)
