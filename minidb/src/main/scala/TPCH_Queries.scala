@@ -45,7 +45,7 @@ trait Queries extends GenericQuery {
         runQuery {
                 val constantDate: Long = parseDate("1998-08-11")
                 val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE <= constantDate)
-                val aggOp = AggOp1(lineitemScan)(x => new Record {
+                val aggOp = AggOp2(lineitemScan)(x => new Record {
                     val L_RETURNFLAG = x.L_RETURNFLAG
                     val L_LINESTATUS = x.L_LINESTATUS
                 })(zero6)((t,currAgg) => new Record {
@@ -141,7 +141,7 @@ trait Queries extends GenericQuery {
                 }}
                 //val wo = WindowOp(jo4)(x => x.f.P_PARTKEY.asInstanceOf[Rep[Int]])(x => x.minBy(y => y.f.PS_SUPPLYCOST.asInstanceOf[Rep[Double]]))
 
-                val wo = MapOp1(AggOp1(jo4)(x => x.P_PARTKEY)(new Record { /*zero*/
+                val wo = MapOp1(AggOp2(jo4)(x => x.P_PARTKEY)(new Record { /*zero*/
                     val PS_SUPPLYCOST = 1e100 // Double.MaxValue ?
                     val S_ACCTBAL = 0.0
                     val S_NAME    = ""
@@ -195,7 +195,7 @@ trait Queries extends GenericQuery {
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE > constantDate)
                 val jo1 = MapCatOp(HashJoinOp2(scanCustomer, scanOrders)( (x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY))
                 val jo2 = MapCatOp(HashJoinOp2(jo1, scanLineitem)( (x,y) => x.f.O_ORDERKEY == y.L_ORDERKEY)(x => x.f.O_ORDERKEY)(x => x.L_ORDERKEY))
-                val aggOp = AggOp1(jo2)(x => new Record {
+                val aggOp = AggOp2(jo2)(x => new Record {
                     val L_ORDERKEY  = x[Int]("L_ORDERKEY")
                     val O_ORDERDATE = x[Long]("O_ORDERDATE")
                     val O_SHIPPRIORITY = x[Int]("O_SHIPPRIORITY")
@@ -233,7 +233,7 @@ trait Queries extends GenericQuery {
                 val scanOrders   = SelectOp(ScanOp2(ordersTable))(x => x.O_ORDERDATE < constantDate1 && x.O_ORDERDATE >= constantDate2)
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_COMMITDATE < x.L_RECEIPTDATE)
                 val hj = LeftHashSemiJoinOp1(scanOrders, scanLineitem)((x,y) => x.O_ORDERKEY == y.L_ORDERKEY)(x => x.O_ORDERKEY)(x => x.L_ORDERKEY)
-                val aggOp = AggOp1(hj)(x => x.O_ORDERPRIORITY)(zero1)(
+                val aggOp = AggOp2(hj)(x => x.O_ORDERPRIORITY)(zero1)(
                     (t,currAgg) => new Record { val _0 = currAgg._0 + 1 }
                 )
                 val sortOp = SortOp(aggOp)((kv1,kv2) => {
@@ -306,7 +306,7 @@ trait Queries extends GenericQuery {
                     x.left.S_NATIONKEY == x.right.N_NATIONKEY
                 }
 
-                val aggOp = AggOp1(jo5)(x => x.right.N_NAME)(new Record { val _0 = 0.0 })(
+                val aggOp = AggOp2(jo5)(x => x.right.N_NAME)(new Record { val _0 = 0.0 })(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + t.right.L_EXTENDEDPRICE * (1.0 - t.right.L_DISCOUNT) }
                 )
                 val sortOp = SortOp(aggOp)((x,y) => {
@@ -396,7 +396,7 @@ struct SUPPLIERRecord_REGIONRecord_NATIONRecord_CUSTOMERRecord_ORDERSRecord_LINE
                     x.left.C_NATIONKEY == x.right.N_NATIONKEY
                 }
 
-                val aggOp = AggOp1(jo5)(x => x.right.N_NAME)(new Record { val _0 = 0.0 })(
+                val aggOp = AggOp2(jo5)(x => x.right.N_NAME)(new Record { val _0 = 0.0 })(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + t.right.L_EXTENDEDPRICE * (1.0 - t.right.L_DISCOUNT) }
                 )
                 PrintOp(aggOp) { kv =>
@@ -455,7 +455,7 @@ new plan:
                                 })(x =>
                                 x.left.S_SUPPKEY == x.right.L_SUPPKEY)
 
-                val aggOp = AggOp1(jo5)(x => x.left.N_NAME)(new Record { val _0 = 0.0 })(
+                val aggOp = AggOp2(jo5)(x => x.left.N_NAME)(new Record { val _0 = 0.0 })(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + t.right.L_EXTENDEDPRICE * (1.0 - t.right.L_DISCOUNT) }
                 )
                 PrintOp(aggOp) { kv =>
@@ -470,7 +470,7 @@ new plan:
                 val constantDate1: Long = parseDate("1994-01-01")
                 val constantDate2: Long = parseDate("1995-01-01")
                 val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2 && x.L_DISCOUNT >= 0.05 && x.L_DISCOUNT <= 0.07 && x.L_QUANTITY < 24)
-                val aggOp = AggOp1(lineitemScan)(x => "Total")(zero1)((t,currAgg) => new Record{val _0 = (t.L_EXTENDEDPRICE * t.L_DISCOUNT) + currAgg._0})
+                val aggOp = AggOp2(lineitemScan)(x => "Total")(zero1)((t,currAgg) => new Record{val _0 = (t.L_EXTENDEDPRICE * t.L_DISCOUNT) + currAgg._0})
                 val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs._0))
                 po
         }
@@ -506,7 +506,7 @@ new plan:
                 val jo4 = MapCatOp(HashJoinOp2(jo3, scanOrders)((x,y) => x.f.L_ORDERKEY == y.O_ORDERKEY)(x => x.f.L_ORDERKEY)(x => x.O_ORDERKEY))
                 val scanCustomer = ScanOp2(customerTable)
                 val jo5 = MapCatOp(HashJoinOp2(scanCustomer, jo4)((x,y) => x.C_CUSTKEY == y.f.O_CUSTKEY && x.C_NATIONKEY == y.f.N2_N_NATIONKEY)(x => x.C_CUSTKEY)(x => x.f.O_CUSTKEY))
-                val gb = AggOp1(jo5)( x => new Record {
+                val gb = AggOp2(jo5)( x => new Record {
                     val SUPP_NATION = x[LegoString]("N1_N_NAME")
                     val CUST_NATION = x[LegoString]("N2_N_NAME")
                     val L_YEAR = newDate(x[Long]("L_SHIPDATE")).getYear.toInt
@@ -569,7 +569,7 @@ new plan:
                     val REC1_N_NATIONKEY     = x.N_NATIONKEY
                 }}
                 val jo7 = MapCatOp(HashJoinOp2(scanNation2, jo6, "REC1_","REC2_")((x,y) => x.REC1_N_NATIONKEY == y.f.REC2_S_NATIONKEY)(x => x.REC1_N_NATIONKEY)(x => x.f.REC2_S_NATIONKEY))
-                val aggOp = AggOp1(jo7)(x => newDate(x[Long]("REC2_O_ORDERDATE")).getYear.toInt)(zero2)(
+                val aggOp = AggOp2(jo7)(x => newDate(x[Long]("REC2_O_ORDERDATE")).getYear.toInt)(zero2)(
                     (t, currAgg) => new Record {
                         val _0 = { currAgg._0 + t.f.REC2_L_EXTENDEDPRICE * (1.0 - t[Double]("REC2_L_DISCOUNT")) }
                         val _1 = { if (t.f.REC1_N_NAME == indonesia) currAgg._1 + t.f.REC2_L_EXTENDEDPRICE * (1.0 - t[Double]("REC2_L_DISCOUNT"))
@@ -607,7 +607,7 @@ new plan:
                 val hj3 = MapCatOp(HashJoinOp2(soPart, hj2)((x,y) => x.P_PARTKEY == y.f.L_PARTKEY)(x => x.P_PARTKEY)(x => x.f.L_PARTKEY))
                 val hj4 = MapCatOp(HashJoinOp2(soPartsupp, hj3)((x,y) => x.PS_PARTKEY == y.f.L_PARTKEY && x.PS_SUPPKEY == y.f.L_SUPPKEY)(x => x.PS_PARTKEY)(x => x.f.L_PARTKEY))
                 val hj5 = MapCatOp(HashJoinOp2(hj4, soOrders)((x,y) => x.f.L_ORDERKEY == y.O_ORDERKEY)(x => x.f.L_ORDERKEY)(x => x.O_ORDERKEY))
-                val aggOp = AggOp1(hj5)(x => new Record {
+                val aggOp = AggOp2(hj5)(x => new Record {
                     val NATION = x[LegoString]("N_NAME")
                     val O_YEAR = newDate(x[Long]("O_ORDERDATE")).getYear.toInt
                 })(zero1)(
@@ -642,7 +642,7 @@ new plan:
                 val hj2 = MapCatOp(HashJoinOp2(so3,hj1)((x,y) => x.N_NATIONKEY == y.f.C_NATIONKEY)(x => x.N_NATIONKEY)(x => x.f.C_NATIONKEY))
                 val so4 = SelectOp(ScanOp2(lineitemTable))(x => x.L_RETURNFLAG == 'R')
                 val hj3 = MapCatOp(HashJoinOp2(hj2,so4)((x,y) => x.f.O_ORDERKEY == y.L_ORDERKEY)(x => x.f.O_ORDERKEY)(x => x.L_ORDERKEY))
-                val aggOp = AggOp1(hj3)(x => new Record {
+                val aggOp = AggOp2(hj3)(x => new Record {
                     val C_CUSTKEY = x[Int]("C_CUSTKEY")
                     val C_NAME = x[LegoString]("C_NAME")
                     val C_ACCTBAL = x[Double]("C_ACCTBAL")
@@ -681,13 +681,13 @@ new plan:
                 val jo1 = MapCatOp(HashJoinOp2[NATIONRecord,SUPPLIERRecord,Int](scanNation, scanSupplier)((x,y) => x.N_NATIONKEY == y.S_NATIONKEY)(x => x.N_NATIONKEY)(y => y.S_NATIONKEY))
                 val scanPartsupp = ScanOp2(partsuppTable)
                 val jo2 = MapCatOp(HashJoinOp2[CompositeRecord[NATIONRecord,SUPPLIERRecord],PARTSUPPRecord,Int](jo1, scanPartsupp)((x,y) => x.f.S_SUPPKEY == y.PS_SUPPKEY)(x => x.f.S_SUPPKEY)(x => x.PS_SUPPKEY))
-                val wo = AggOp1[CompositeRecord[CompositeRecord[NATIONRecord,SUPPLIERRecord],PARTSUPPRecord], Int, Record {val _0: Double}](jo2)(x => x[Int]("PS_PARTKEY"))(zero1)((e, cnt) =>
+                val wo = AggOp2[CompositeRecord[CompositeRecord[NATIONRecord,SUPPLIERRecord],PARTSUPPRecord], Int, Record {val _0: Double}](jo2)(x => x[Int]("PS_PARTKEY"))(zero1)((e, cnt) =>
                     new Record { val _0 = cnt._0 + (e[Double]("PS_SUPPLYCOST") * e.f.PS_AVAILQTY) }
                 )
 
                 val vo = ViewOp(wo,2)
                 // Calculate total sum
-                val total = MapOp1(AggOp1(vo.sub(0))(x => "Total")(zero1)( (t,cnt) => new Record { val _0 = cnt._0 + t.aggs._0 } ))(x => new Record { val total = x.aggs._0 * 0.0001 })
+                val total = MapOp1(AggOp2(vo.sub(0))(x => "Total")(zero1)( (t,cnt) => new Record { val _0 = cnt._0 + t.aggs._0 } ))(x => new Record { val total = x.aggs._0 * 0.0001 })
                 // Calculate final result
                 val nl = MapOp1(NestedLoopsJoinOp(total,vo.sub(1))((x,y) => y.aggs._0 > x.total))(x => new Record { val key = x.right.key; val wnd = x.right.aggs._0 })
                 val sortOp = SortOp(nl)((x,y) => {
@@ -715,7 +715,7 @@ new plan:
                 val jo = MapCatOp(HashJoinOp2(so1, so2)( (x,y) => x.O_ORDERKEY == y.L_ORDERKEY )(x => x.O_ORDERKEY)(x => x.L_ORDERKEY))
                 val URGENT = parseString("1-URGENT")
                 val HIGH = parseString("2-HIGH")
-                val aggOp = AggOp1(jo)(x => x[LegoString]("L_SHIPMODE"))(zero2)(
+                val aggOp = AggOp2(jo)(x => x[LegoString]("L_SHIPMODE"))(zero2)(
                     (t,currAgg) => new Record {
                         val _0 = { if (infix_||(t.f.O_ORDERPRIORITY == URGENT , t.f.O_ORDERPRIORITY == HIGH)) currAgg._0 + 1 else currAgg._0 }
                         val _1 = { if (infix_&&(t.f.O_ORDERPRIORITY != URGENT , t.f.O_ORDERPRIORITY != HIGH)) currAgg._1 + 1 else currAgg._1 }
@@ -744,10 +744,10 @@ new plan:
                     }
                 })
                 val jo = MapCatOp(LeftOuterJoinOp1(scanCustomer, scanOrders)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY))
-                val aggOp1 = AggOp1(jo)(x => x[Int]("C_CUSTKEY"))(zero1)(
+                val aggOp1 = AggOp2(jo)(x => x[Int]("C_CUSTKEY"))(zero1)(
                     (t, currAgg) => new Record { val _0 = if (t.f.O_ORDERKEY != 0.0) currAgg._0 + 1 else currAgg._0 }
                 )
-                val aggOp2 = AggOp1(aggOp1)(x => x.aggs._0)(zero1)(
+                val aggOp2 = AggOp2(aggOp1)(x => x.aggs._0)(zero1)(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + 1 }
                 )
                 val sortOp = SortOp(aggOp2)( (x,y) => {
@@ -774,7 +774,7 @@ new plan:
                 val so1 = ScanOp2(partTable)
                 val so2 = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate2 && x.L_SHIPDATE < constantDate)
                 val jo = MapCatOp(HashJoinOp2(so1, so2)( (x,y) => x.P_PARTKEY == y.L_PARTKEY )(x => x.P_PARTKEY)(x => x.L_PARTKEY))
-                val aggOp = AggOp1(jo)(x => "Total")(zero2)(
+                val aggOp = AggOp2(jo)(x => "Total")(zero2)(
                         (t,currAgg) => new Record {
                             val _0 = { if (string_startswith(t[LegoString]("P_TYPE") , promo))
                                          currAgg._0 + (t.f.L_EXTENDEDPRICE * (1.0 - t[Double]("L_DISCOUNT")))
@@ -794,13 +794,13 @@ new plan:
                 val constantDate = parseDate("1996-01-01")
                 val constantDate2 = parseDate("1996-04-01")
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate && x.L_SHIPDATE < constantDate2)
-                val aggOp1 = AggOp1(scanLineitem)(x => x.L_SUPPKEY)(zero1)(
+                val aggOp1 = AggOp2(scanLineitem)(x => x.L_SUPPKEY)(zero1)(
                     (t, currAgg) => new Record { val _0 = currAgg._0 + (t.L_EXTENDEDPRICE * (1.0 - t.L_DISCOUNT)) }
                 )
                 // Create view
                 val vo = ViewOp(aggOp1,2)
                 // Get max
-                val aggOp2 = AggOp1(vo.sub(0))(x => "MAXREVENUE")(zero1)(
+                val aggOp2 = AggOp2(vo.sub(0))(x => "MAXREVENUE")(zero1)(
                     (t, currAgg) => new Record { val _0 = if (currAgg._0 < t.aggs._0) t.aggs._0 else currAgg._0 }
                 )
 
@@ -842,13 +842,13 @@ new plan:
                     }
                 })
                 val jo2 = HashJoinAnti1(jo1, supplierScan)((x,y) => x[Int]("PS_SUPPKEY") == y[Int]("S_SUPPKEY"))(x => x[Int]("PS_SUPPKEY"))(x => x[Int]("S_SUPPKEY"))
-                val aggOp = AggOp1(jo2)(x => new Record {
+                val aggOp = AggOp2(jo2)(x => new Record {
                     val P_BRAND = x[LegoString]("P_BRAND")
                     val P_TYPE  = x[LegoString]("P_TYPE")
                     val P_SIZE  = x[Int]("P_SIZE")
                     val PS_SUPPKEY = x[Int]("PS_SUPPKEY")
                 })(zero1)((t,currAgg) => currAgg)
-                val aggOp2 = AggOp1(aggOp)(x => new Record {
+                val aggOp2 = AggOp2(aggOp)(x => new Record {
                     val P_BRAND = x.key.P_BRAND
                     val P_TYPE  = x.key.P_TYPE
                     val P_SIZE  = x.key.P_SIZE
@@ -897,7 +897,7 @@ new plan:
                         else cnt
                     }) / 7.0
                 })
-                val aggOp = AggOp1(wo)(x => "Total")(0.0)((t, currAgg) => currAgg + t.wnd)
+                val aggOp = AggOp2(wo)(x => "Total")(0.0)((t, currAgg) => currAgg + t.wnd)
                 val po = PrintOp(aggOp)(kv => printf("%.6f\n",kv.aggs))
                 po
         }
@@ -912,13 +912,13 @@ new plan:
                 val scanCustomer = ScanOp2(customerTable)
                 // Group aggregation on Lineitem
                 val scanLineitem1 = ScanOp2(lineitemTable)
-                val aggOp1 = SelectOp(AggOp1(scanLineitem1)(x => x.L_ORDERKEY)(zero1)(
+                val aggOp1 = SelectOp(AggOp2(scanLineitem1)(x => x.L_ORDERKEY)(zero1)(
                         (t,currAgg) => new Record { val _0 = currAgg._0 + t.L_QUANTITY }
                 ))(x => x.aggs._0 > 300)
                 // Hash Join with orders
                 val jo1 = MapCatOp(HashJoinOp2(aggOp1, scanOrders)( (x,y) => y.O_ORDERKEY == x.key )(x => x[Double]("key"))(x => x.O_ORDERKEY))
                 val jo2 = MapCatOp(HashJoinOp2(jo1, scanCustomer)( (x,y) => x.f.O_CUSTKEY == y.C_CUSTKEY)(x => x.f.O_CUSTKEY)(x => x.C_CUSTKEY))
-                val aggOp2 = AggOp1(jo2)(x => new Record {
+                val aggOp2 = AggOp2(jo2)(x => new Record {
                     val C_NAME = x[LegoString]("C_NAME")
                     val C_CUSTKEY = x[Int]("C_CUSTKEY")
                     val O_ORDERKEY = x[Int]("O_ORDERKEY")
@@ -994,7 +994,7 @@ new plan:
                           (x.f.P_CONTAINER==LGBOX || x.f.P_CONTAINER==LGCASE || x.f.P_CONTAINER==LGPACK || x.f.P_CONTAINER==LGPKG) &&
                            x[Double]("L_QUANTITY")>=20 && x[Double]("L_QUANTITY")<=30 && x[Int]("P_SIZE")<=15))
                  )
-                 val aggOp = AggOp1(jo)(x => "Total")(0.0)(
+                 val aggOp = AggOp2(jo)(x => "Total")(0.0)(
                      (t,currAgg) => { currAgg + (t[Double]("L_EXTENDEDPRICE") * (1.0 - t.f.L_DISCOUNT)) }
                  )
                  val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs))
@@ -1018,7 +1018,7 @@ new plan:
                 val jo1 = LeftHashSemiJoinOp1(scanPartsupp, scanPart)((x,y) => y.P_PARTKEY == x.PS_PARTKEY)(x=>x.PS_PARTKEY)(x=>x.P_PARTKEY)
                 val scanLineitem = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2)
                 val jo2 = MapCatOp(HashJoinOp2(jo1, scanLineitem)((x,y) => x.f.PS_PARTKEY == y.L_PARTKEY && x.f.PS_SUPPKEY == y.L_SUPPKEY)(x=>x.f.PS_PARTKEY)(x=>x.L_PARTKEY))
-                val aggOp = AggOp1(jo2)(x => new Record {
+                val aggOp = AggOp2(jo2)(x => new Record {
                     val PS_PARTKEY = x[Int]("PS_PARTKEY")
                     val PS_SUPPKEY = x[Int]("PS_SUPPKEY")
                     val PS_AVAILQTY = x[Double]("PS_AVAILQTY")
@@ -1054,7 +1054,7 @@ new plan:
                 val jo3 = MapCatOp(HashJoinOp2(jo2, ordersScan)((x,y) => y.O_ORDERKEY==x.f.L_ORDERKEY)(x => x.f.L_ORDERKEY)(x => x.O_ORDERKEY))
                 val jo4 = HashJoinAnti1(jo3, lineitemScan3)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
                 val jo5 = LeftHashSemiJoinOp1(jo4, lineitemScan2)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
-                val aggOp = AggOp1(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0.0)((t,currAgg) => {currAgg + 1})
+                val aggOp = AggOp2(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0.0)((t,currAgg) => {currAgg + 1})
                 val sortOp = SortOp(aggOp)((x,y) => {
                     val a1 = x.aggs; val a2 = y.aggs
                     if (a1 < a2) 1
@@ -1090,7 +1090,7 @@ new plan:
                         x.C_PHONE.startsWith(v25))))))
                     )
                 })
-                val aggOp1 = AggOp1(customerScan1)(x => "AVG_C_ACCTBAL")(zero2)(
+                val aggOp1 = AggOp2(customerScan1)(x => "AVG_C_ACCTBAL")(zero2)(
                     (t,currAgg) => new Record {
                         val _0 = {t.C_ACCTBAL + currAgg._0}
                         val _1 = {currAgg._1 + 1}
@@ -1107,7 +1107,7 @@ new plan:
                 }))(x => new Record { val C_CUSTKEY = x.right.C_CUSTKEY; val C_ACCTBAL = x.right.C_ACCTBAL; val C_PHONE = x.right.C_PHONE })
                 val ordersScan = ScanOp2(ordersTable)
                 val jo = HashJoinAnti1(customerScan2, ordersScan)((x,y) => x.C_CUSTKEY == y.O_CUSTKEY)(x => x.C_CUSTKEY)(x => x.O_CUSTKEY)
-                val aggOp2 = AggOp1(jo)(x => new Record { val _0 = infix_charAt(x.C_PHONE,0L); val _1 = infix_charAt(x.C_PHONE,1L)})(zero2)(
+                val aggOp2 = AggOp2(jo)(x => new Record { val _0 = infix_charAt(x.C_PHONE,0L); val _1 = infix_charAt(x.C_PHONE,1L)})(zero2)(
                     (t, currAgg) => new Record {
                         val _0 = {t.C_ACCTBAL + currAgg._0}
                         val _1 = {currAgg._1 + 1}

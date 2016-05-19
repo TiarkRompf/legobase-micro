@@ -24,7 +24,7 @@ trait PushEngine extends DSL with DataStruct {
         var child: Operator[Any] = this
         var stop = unit(false)
     }
-   
+
     case class ScanOp2[A<:Record:Manifest](table: LegoTable[A]) extends Operator[A] {
         override def desc = table.name
         var i = 0L
@@ -35,7 +35,7 @@ trait PushEngine extends DSL with DataStruct {
                 val v = table.data(i)
                 i+=1
                 child.consume(v)
-            } 
+            }
         }
         def reset() { i = 0L }
         def consume(tuple: Rep[Record]) { throw new Exception("PUSH ENGINE BUG:: Consume function in ScanOp should never be called!!!!\n") }
@@ -47,8 +47,8 @@ trait PushEngine extends DSL with DataStruct {
         def next() = parent.next
         def consume(tuple: Rep[Record]) {
             if (limit() == false) parent.stop = unit(true)
-            else { 
-                printFunc(tuple.asInstanceOf[Rep[A]]); 
+            else {
+                printFunc(tuple.asInstanceOf[Rep[A]]);
                 numRows += 1L
             }
         }
@@ -60,15 +60,15 @@ trait PushEngine extends DSL with DataStruct {
         def open() { parent.child = this; parent.open }
         def next() = parent.next
         def reset() { parent.reset }
-        def consume(tuple: Rep[Record]) { 
-            if (selectPred(tuple.asInstanceOf[Rep[A]])) child.consume(tuple) 
+        def consume(tuple: Rep[Record]) {
+            if (selectPred(tuple.asInstanceOf[Rep[A]])) child.consume(tuple)
         }
     }
-    
+
 
     case class AggOp3[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
         override def desc = s"AGG(${parent.desc})"
- 
+
         val elems = LegoCollect[AGGRecord1[B,C]](defaultAggHashSize)
         val hash = LegoHash[B](defaultAggHashSize)(i => elems.buf(i).key)
 
@@ -97,7 +97,7 @@ trait PushEngine extends DSL with DataStruct {
     // CURRENTLY UNUSED -- try linked hash table instead of open addressing
     case class AggOp2[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
         override def desc = s"AGG(${parent.desc})"
- 
+
         val hashSize = defaultAggHashSize
         val bucketSize = 1L
 
@@ -159,7 +159,7 @@ trait PushEngine extends DSL with DataStruct {
 
     case class AggOp1[A:Manifest, B:Manifest, C:Manifest](parent: Operator[A])(val grp: Rep[A] => Rep[B])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[B,C]] {
         override def desc = s"AGG(${parent.desc})"
- 
+
         val hashSize = defaultAggHashSize
         val bucketSize = 1L
         val dataSize = hashSize * bucketSize
@@ -209,7 +209,7 @@ trait PushEngine extends DSL with DataStruct {
                       dataHash(bucket) = newAGGRecord1(kcur,aggs)
                       false
                     } else {
-                      bucket = (bucket + 1L) % hashMask
+                      bucket = (bucket + 1L) & hashMask
                       cur = dataHash(bucket)
                       true
                     }
@@ -375,7 +375,7 @@ trait PushEngine extends DSL with DataStruct {
         for (i <- (0 until n):Range) {
             sub(i) = new Operator[A] {
                 def open() { self.open() }
-                def next() { 
+                def next() {
                     val data = table.result
                     for (idx <- 0L until data.length) {
                         val e = data(idx)
@@ -401,7 +401,7 @@ trait PushEngine extends DSL with DataStruct {
             table.append(tuple.asInstanceOf[Rep[A]])
         }
     }
- 
+
     case class HashJoinAnti1[A<:Record:Manifest,B<:Record:Manifest,C:Manifest](leftParent: Operator[A], rightParent: Operator[B])(joinCond: (Rep[A],Rep[B])=>Rep[Boolean])(leftHash: Rep[A]=>Rep[C])(rightHash: Rep[B]=>Rep[C]) extends Operator[A] {
         override def desc = s"(${leftParent.desc} HJA-X ${rightParent.desc})"
         var mode: scala.Int = 0
@@ -456,9 +456,9 @@ trait PushEngine extends DSL with DataStruct {
             e
         }
 
-        def open() { 
+        def open() {
             leftParent.child = this
-            leftParent.open 
+            leftParent.open
             rightParent.child = this
             rightParent.open
         }
@@ -473,7 +473,7 @@ trait PushEngine extends DSL with DataStruct {
                 val k = keySet.head
                 val elemList = hm(k)
                 child.consume(removeFromList(elemList, elemList(0), 0))
-            } 
+            }
         }
         def consume(tuple: Rep[Record]) {
             // Step 1: Prepare a hash table for the FROM side of the join
@@ -495,12 +495,12 @@ trait PushEngine extends DSL with DataStruct {
                     for (i <- 0 until elems.size: Rep[Range]) {
                         var idx = i - removed
                         val e = elems(idx)
-                        if (joinCond(e, t)) { 
+                        if (joinCond(e, t)) {
                             removeFromList(elems, e, idx);
                             removed += 1
                         }
                     }
-                } 
+                }
             }
         }
     }
@@ -534,7 +534,7 @@ trait PushEngine extends DSL with DataStruct {
           //}
 
           mode = 1
-  
+
           //printf(s"$desc: rightParent.next start\n");
           //timeGeneratedCode {
             rightParent.next
@@ -551,7 +551,7 @@ trait PushEngine extends DSL with DataStruct {
                 val k = rightHash(tuple)
                 for (bufElem <- hm(k)) {
                     if (joinCond(bufElem, tuple)) {
-                        val res = new CompositeRecord1[A,B] { 
+                        val res = new CompositeRecord1[A,B] {
                             val left = bufElem
                             val right = tuple
                         }
@@ -561,7 +561,7 @@ trait PushEngine extends DSL with DataStruct {
             }
         }
     }
-    
+
     case class LeftOuterJoinOp1[A<:Record:Manifest,B<:Record:Manifest,C:Manifest](leftParent: Operator[A], rightParent: Operator[B])(joinCond: (Rep[A],Rep[B])=>Rep[Boolean])(leftHash: Rep[A]=>Rep[C])(rightHash: Rep[B]=>Rep[C]) extends Operator[CompositeRecord1[A,B]] {
         override def desc = s"(${leftParent.desc} LO-X ${rightParent.desc})"
         var mode: scala.Int = 0
@@ -596,7 +596,7 @@ trait PushEngine extends DSL with DataStruct {
                 for (bufElem <- hm(k)) {
                     if (joinCond(tuple, bufElem)) {
                         hit = true
-                        val res = new CompositeRecord1[A,B] { 
+                        val res = new CompositeRecord1[A,B] {
                             val left = tuple
                             val right = bufElem
                         }
@@ -605,7 +605,7 @@ trait PushEngine extends DSL with DataStruct {
                 }
 
                 if (!hit) {
-                    val res = new CompositeRecord1[A,B] { 
+                    val res = new CompositeRecord1[A,B] {
                         val left = tuple
                         val right = defaultB
                     }
@@ -615,7 +615,7 @@ trait PushEngine extends DSL with DataStruct {
         }
     }
 
-    
+
     case class LeftHashSemiJoinOp1[A<:Record:Manifest,B<:Record:Manifest,C:Manifest](leftParent: Operator[A], rightParent: Operator[B])(joinCond: (Rep[A],Rep[B])=>Rep[Boolean])(leftHash: Rep[A]=>Rep[C])(rightHash: Rep[B]=>Rep[C]) extends Operator[A] {
         override def desc = s"(${leftParent.desc} LHS-X ${rightParent.desc})"
         var mode: scala.Int = 0
@@ -651,7 +651,7 @@ trait PushEngine extends DSL with DataStruct {
             }
         }
     }
-    
+
     case class NestedLoopsJoinOp[A<:Record:Manifest, B<:Record:Manifest](leftParent: Operator[A], rightParent: Operator[B], leftAlias: String = "", rightAlias: String = "")(joinCond: (Rep[A],Rep[B])=>Rep[Boolean]) extends Operator[CompositeRecord1[A,B]] {
         var mode: scala.Int = 0
         var leftTuple = defaultValue[A]
@@ -660,7 +660,7 @@ trait PushEngine extends DSL with DataStruct {
             rightParent.child = this
             leftParent.child = this
             rightParent.open
-            leftParent.open 
+            leftParent.open
         }
         def reset() = { rightParent.reset; leftParent.reset; leftTuple = defaultValue[A] }
         def next() { leftParent.next }
@@ -683,5 +683,5 @@ trait PushEngine extends DSL with DataStruct {
             }
         }
     }
-}    
+}
 

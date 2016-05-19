@@ -20,11 +20,11 @@ object utilities {
   }
 }
 
-trait DSL extends ScalaOpsPkg with Functions with UncheckedOps with LiftBoolean with LiftPrimitives 
+trait DSL extends ScalaOpsPkg with Functions with UncheckedOps with LiftBoolean with LiftPrimitives
             with LiftString with LiftVariables with Scanner with Structs with RangeOps
-            with HashMapOps with TupleOps with Loops with DateOps with While 
-            with IfThenElse with TreeSet with VariableImplicits with IOOps with 
-            BooleanOps with ArrayBufferOps with Timing with HashCodeOps with OrderingOps 
+            with HashMapOps with TupleOps with Loops with DateOps with While
+            with IfThenElse with TreeSet with VariableImplicits with IOOps with
+            BooleanOps with ArrayBufferOps with Timing with HashCodeOps with OrderingOps
             with TPCHRelations {
   var datapath: java.lang.String
   def parseDate(x: String): Long
@@ -35,27 +35,27 @@ trait DSL extends ScalaOpsPkg with Functions with UncheckedOps with LiftBoolean 
       def defaultViewSize:        Rep[Long] = uncheckedPure[Long]("DEFAULT_VIEW_SIZE")
       def defaultAggHashSize:     Rep[Long] = uncheckedPure[Long]("DEFAULT_AGG_HASH_SIZE ")
       def defaultJoinHashSize:    Rep[Long] = uncheckedPure[Long]("DEFAULT_JOIN_HASH_SIZE")
-  }  
+  }
 }
 
-trait DSLExp extends DSL with FunctionsExp with UncheckedOpsExp with ScannerExp 
-        with StructExp with RangeOpsExp with TupleOpsExp with DateExp 
-        with HashCodeOpsExp with ListBufferExp with TreeSetExp with IOOpsExp 
+trait DSLExp extends DSL with FunctionsExp with UncheckedOpsExp with ScannerExp
+        with StructExp with RangeOpsExp with TupleOpsExp with DateExp
+        with HashCodeOpsExp with ListBufferExp with TreeSetExp with IOOpsExp
         with StringOpsExp with ArrayBufferOpsExp with TimingExp with HashMapOpsExp {
 }
 
 trait Engine extends PushEngine { self => }
 
-trait ScalaImpl extends ScalaOpsPkgExp with FunctionsExp with UncheckedOpsExp with ScannerExp 
-        with StructExp with RangeOpsExp with ListOpsExp with TupleOpsExp with DateExp 
-        with HashCodeOpsExp with ScalaCompile with ListBufferExp with TreeSetExp with IOOpsExp 
-        with StringOpsExp with ArrayBufferOpsExp with TimingExp with HashMapOpsExp with Loader { self => 
-  val codegen = new ScalaCodeGenPkg with ScalaGenVariables with ScalaGenFunctions with ScalaGenUncheckedOps 
-          with ScalaGenScanner with ScalaGenRangeOps with ScalaGenListOps 
+trait ScalaImpl extends ScalaOpsPkgExp with FunctionsExp with UncheckedOpsExp with ScannerExp
+        with StructExp with RangeOpsExp with ListOpsExp with TupleOpsExp with DateExp
+        with HashCodeOpsExp with ScalaCompile with ListBufferExp with TreeSetExp with IOOpsExp
+        with StringOpsExp with ArrayBufferOpsExp with TimingExp with HashMapOpsExp with Loader { self =>
+  val codegen = new ScalaCodeGenPkg with ScalaGenVariables with ScalaGenFunctions with ScalaGenUncheckedOps
+          with ScalaGenScanner with ScalaGenRangeOps with ScalaGenListOps
           with ScalaGenHashCodeOps with ScalaGenTupleOps with ScalaGenHashMapOps
-          with ScalaGenListBuffer with ScalaGenTreeSet with ScalaGenIOOps with ScalaGenDate 
+          with ScalaGenListBuffer with ScalaGenTreeSet with ScalaGenIOOps with ScalaGenDate
           with ScalaGenArrayBufferOps with ScalaGenTiming with ScalaGenStruct {
-    override val IR: self.type = self 
+    override val IR: self.type = self
     override def emitFunctions() = {
       //if (checkResults)
         stream.println("Console.setOut(new java.io.PrintStream(\"" + getOutputName + "\"))")
@@ -76,8 +76,8 @@ trait ScalaImpl extends ScalaOpsPkgExp with FunctionsExp with UncheckedOpsExp wi
   def getClassName: String
   def getSourceName: String
   def getOutputName: String
-  val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")  
-  def parseDate(x: String): Long = { 
+  val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd")
+  def parseDate(x: String): Long = {
         sdf.parse(x).getTime
     //val d = x.split("-").map(x=> java.lang.Integer.parseInt(x))
     //d(0) * 10000 + d(1) * 100 + d(2)
@@ -118,16 +118,16 @@ trait ExtraDCE extends GenericNestedCodegen {
       for (TP(sym,rhs) <- start) {
         all += sym
         rhs match {
-          case Reflect(NewVar(s:Sym[_]),u,es) => 
+          case Reflect(NewVar(s:Sym[_]),u,es) =>
             if (alloc(s)) alloc += sym
-          case Reflect(ReadVar(Variable(s:Sym[_])),u,es) => 
+          case Reflect(ReadVar(Variable(s:Sym[_])),u,es) =>
             if (alloc(s)) alloc += sym
-          case Reflect(Assign(Variable(v:Sym[_]),s:Sym[_]),u,es) => 
+          case Reflect(Assign(Variable(v:Sym[_]),s:Sym[_]),u,es) =>
             if (alloc(s)) alloc += v
           case _ =>
         }
         rhs match {
-          case Reflect(d,u,es) => 
+          case Reflect(d,u,es) =>
             val realloc = d.toString.contains("realloc") // realloc should be reflectWrite, not reflectSimple
             if (maySimple(u) && !realloc) used += sym
             for (s <- u.mayWrite) {
@@ -135,10 +135,10 @@ trait ExtraDCE extends GenericNestedCodegen {
             }
             if (mustMutable(u)) if (used(sym)) alloc += sym
             if (used(sym)) used ++= syms(d)
-          case Reify(s: Sym[_],_,_) if s.tp != manifest[Unit] => 
+          case Reify(s: Sym[_],_,_) if s.tp != manifest[Unit] =>
             if (used(sym)) used += s
           case Reify(_,_,_) =>
-          case _ => 
+          case _ =>
             if (used(sym)) used ++= syms(rhs)
         }
       }
@@ -152,15 +152,15 @@ trait ExtraDCE extends GenericNestedCodegen {
   }
 }
 
-trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with ScannerExp with StructExp 
-    with RangeOpsExp with ListOpsExp with TupleOpsExp with ListBufferExp 
-    with TreeSetExp with TimingExp with HashMapOpsExp with HashCodeOpsExp 
+trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with ScannerExp with StructExp
+    with RangeOpsExp with ListOpsExp with TupleOpsExp with ListBufferExp
+    with TreeSetExp with TimingExp with HashMapOpsExp with HashCodeOpsExp
     with NumericOpsExpOpt
-    with IfThenElseExpOpt with VariablesExpOpt with StructFatExpOptCommon { self => 
+    with IfThenElseExpOpt with VariablesExpOpt with StructFatExpOptCommon { self =>
     val codegen = new CCodeGenPkg with CGenVariables with CGenFunctions with CGenUncheckedOps with CGenScanner
-   with CGenRangeOps with CGenListOps with CGenTupleOps with CGenObjectOps  
-   with CLikeGenIOOps with CGenTreeSet with CGenDate with CGenTiming with CGenHashMapOps with CGenHashCodeOps with ExtraDCE { 
-    override val IR: self.type = self 
+   with CGenRangeOps with CGenListOps with CGenTupleOps with CGenObjectOps
+   with CLikeGenIOOps with CGenTreeSet with CGenDate with CGenTiming with CGenHashMapOps with CGenHashCodeOps with ExtraDCE {
+    override val IR: self.type = self
     override def emitDataStructures(out: PrintWriter) {
       out.println("""
       #include <sys/mman.h>
@@ -193,7 +193,7 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         unsigned long hash = 5381;
         int c;
 
-        while ((c = *str++) && len--)
+        while ((c = *str++) != '|' && c != '\0' && len--)
           hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
         return hash;
@@ -325,8 +325,8 @@ object miniDBC extends miniDBC with Queries {
   }
 
   // TODO: should this be in LMS?
-  override def isPrimitiveType[T](m: Manifest[T]) = (m == manifest[String]) || 
-    (m == manifest[Character]) || (m.toString.contains("CompositeRecord")) || 
+  override def isPrimitiveType[T](m: Manifest[T]) = (m == manifest[String]) ||
+    (m == manifest[Character]) || (m.toString.contains("CompositeRecord")) ||
     super.isPrimitiveType(m)
 
 
@@ -338,9 +338,9 @@ object miniDBC extends miniDBC with Queries {
     }
 
     datapath = args(0)
-    ScalaCompile.dumpGeneratedCode = false 
+    ScalaCompile.dumpGeneratedCode = false
 
-    val queries: scala.collection.immutable.List[String] = 
+    val queries: scala.collection.immutable.List[String] =
       if (args.length == 2 && args(1) == "all") (for (i <- 1 to 22) yield "Q" + i).toList
       else (args.drop(1).toList)
     for (q <- queries) {
@@ -359,7 +359,7 @@ object miniDBC extends miniDBC with Queries {
           val resq = scala.io.Source.fromFile(getOutputName).mkString
           val resc = {
             val str = scala.io.Source.fromFile(getResultFileName).mkString
-            str * numRuns 
+            str * numRuns
           }
           if (resq != resc) {
             System.out.println("-----------------------------------------")

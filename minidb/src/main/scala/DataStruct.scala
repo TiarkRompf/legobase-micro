@@ -14,7 +14,7 @@ import scala.reflect.{SourceContext, RefinedManifest}
 trait UncheckedHelperExp extends DSL with UncheckedOpsExp {
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case Reflect(Unchecked(s), u, es) => 
+    case Reflect(Unchecked(s), u, es) =>
       def xform(x: Any): Any = x match {
         case e: Exp[Any] => f(e)
         case _ => x
@@ -92,6 +92,14 @@ trait UncheckedHelper extends DSL with UncheckedOps {
       }
     }
 
+    def string_hash(x: Rep[String], l: Rep[Long]): Rep[Long] = {
+      cg"hash($x, $l)".as[Long]
+    }
+
+    def double_to_long(x: Rep[Double]): Rep[Long] = {
+      cg"(long) $x".as[Long]
+    }
+
 }
 
 
@@ -147,7 +155,7 @@ trait DataStruct extends DSL with UncheckedHelper {
 
   def refinedManifest[T:Manifest]: RefinedManifest[T] = manifest[T] match {
     case m: RefinedManifest[T] => m
-    case m0 if m0 <:< manifest[Record] => 
+    case m0 if m0 <:< manifest[Record] =>
       new RefinedManifest[T] {
           val runtimeClass = classOf[Record]
           val fields = recordFieldTypes(m0)
@@ -220,7 +228,7 @@ trait DataStruct extends DSL with UncheckedHelper {
   }
 
 
-  def LegoBucketCollect[T:Manifest](): LegoBucketCollect[T] = ??? 
+  def LegoBucketCollect[T:Manifest](): LegoBucketCollect[T] = ???
 
   /* hash code and equality */
 
@@ -229,6 +237,7 @@ trait DataStruct extends DSL with UncheckedHelper {
     (unit(0L) /: elems) (_ * 41L + _)
   }
 
+  var next = 0L
   def calcHashCode[T:Manifest](x: Rep[T]): Rep[Long] = if (manifest[T] <:< manifest[Record]) {
     recordHashCode(x)(refinedManifest[T])
   } else if (manifest[T] == manifest[Character]) {
@@ -239,12 +248,11 @@ trait DataStruct extends DSL with UncheckedHelper {
     x.asInstanceOf[Rep[Long]]
   } else if (manifest[T] == manifest[String]) {
     // TODO: proper string hash ...
-    (((x.asInstanceOf[Rep[String]].charAt(0L).asInstanceOf[Rep[Long]] * 41L + 
-    x.asInstanceOf[Rep[String]].charAt(1L).asInstanceOf[Rep[Long]]) * 41L + 
-    x.asInstanceOf[Rep[String]].charAt(2L).asInstanceOf[Rep[Long]]) * 41L + 
-    x.asInstanceOf[Rep[String]].charAt(3L).asInstanceOf[Rep[Long]])
+    string_hash(x.asInstanceOf[Rep[String]], unit[Long](10L))
+  } else if (manifest[T] == manifest[Double]) {
+    double_to_long(x.asInstanceOf[Rep[Double]])
   } else {
-    unit(777L) // not the best default, but hey ... 
+    unit(777L) // not the best default, but hey ...
   }
 
 
@@ -261,7 +269,7 @@ trait DataStruct extends DSL with UncheckedHelper {
 
   def defaultValue[T:Manifest]: Rep[T] = (if (manifest[T] <:< manifest[Record]) {
     val elems = recordFieldTypes[T]
-    record_new[T](structName(manifest[T]), elems map { case (k,m) => (k,defaultValue(m)) })    
+    record_new[T](structName(manifest[T]), elems map { case (k,m) => (k,defaultValue(m)) })
   } else if (manifest[T] == manifest[Character]) {
     unit('\0')
   } else if (manifest[T] == manifest[Int]) {
@@ -310,14 +318,14 @@ trait DataStruct extends DSL with UncheckedHelper {
       var pos = (hc & mask)
       var currelem = hashtab(pos)
       var currhash = hashtab(pos + 1L)
-      
+
       while (currelem != -1L && (currhash != hc || !isEqual(keys(currelem), k))) {
         pos = (pos + 2L) & mask
         currelem = hashtab(pos)
         currhash = hashtab(pos + 1L)
         steps += 1L
       }
-      
+
       currelem: Rep[Long]
     }
 
@@ -330,20 +338,20 @@ trait DataStruct extends DSL with UncheckedHelper {
       var pos = (hc & mask)
       var currelem = hashtab(pos)
       var currhash = hashtab(pos + 1L)
-      
+
       while (currelem != -1L && (currhash != hc || !isEqual(keys(currelem), k))) {
         pos = (pos + 2L) & mask
         currelem = hashtab(pos)
         currhash = hashtab(pos + 1L)
         steps += 1L
       }
-      
+
       if (currelem == -1L) {
         val datapos: Rep[Long] = sz // read var!
         hashtab(pos) = datapos
         hashtab(pos + 1L) = hc
         sz += 1L
-        
+
         onInsert
 
         ensureSize()
@@ -357,7 +365,7 @@ trait DataStruct extends DSL with UncheckedHelper {
     def ensureSize() = {
       if (sz * 4L > cap) // grow
         println("ERROR: hash.resize not implemented") // TODO
-    }    
+    }
 
   }
 
@@ -447,7 +455,7 @@ trait DataStruct extends DSL with UncheckedHelper {
           def indexWhere(f: Rep[A] => Rep[Boolean]): Rep[Long] = {
               val h = calcHashCode(k)
               val bucket = h & hashMask
-              
+
               var dataPos = bucketHash(bucket)
               var done = dataPos == -1L
               while (!done) {
