@@ -294,7 +294,7 @@ class miniDBC extends CImpl with CSVLoader {
 //object miniDBScala extends miniDBScala with Queries {
 object miniDBC extends miniDBC with Queries {
   import utilities._
-  val numRuns: scala.Int = 1
+  val numRuns: scala.Int = 5
 
   def cmain(argc: Rep[Int], args: Rep[Array[String]]) = {
     val q = currQuery match {
