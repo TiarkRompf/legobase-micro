@@ -138,7 +138,6 @@ trait CCodegen extends CLikeCodegen {
                      "#include <stdio.h>\n" +
                      "#include <stdlib.h>\n" +
                      "#include <stdbool.h>\n" +
-					 "#include <glib.h>\n" +
 					 "#include <sys/time.h>")
 
 	  stream.println("int tpch_strcmp(const char *s1, const char *s2);")

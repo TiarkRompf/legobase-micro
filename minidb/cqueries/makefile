@@ -1,9 +1,9 @@
 # CC=clang
 # CC=/usr/local/Cellar/gcc/4.9.1/bin/gcc-4.9
-CC=/usr/bin/gcc-4.9
+CC=/usr/bin/gcc-4.8
 
-LIBS=`pkg-config --libs glib-2.0`
-CFLAGS=-g -O3 `pkg-config --cflags glib-2.0`
+LIBS=
+CFLAGS=-g -O3
 
  FILES=$(wildcard *.c)
 # FILES=Q1.c Q5.c
