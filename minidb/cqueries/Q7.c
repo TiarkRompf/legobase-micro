@@ -4,10 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
-#include <glib.h>
 #include <sys/time.h>
-int strcmp(const char *s1, const char *s2);
+int tpch_strcmp(const char *s1, const char *s2);
 int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1) {
 	long int diff = (t2->tv_usec + 1000000 * t2->tv_sec) - (t1->tv_usec + 1000000 * t1->tv_sec);
 	result->tv_sec = diff / 1000000;
@@ -47,24 +45,68 @@ int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval 
         unsigned long hash = 5381;
         int c;
 
-        while ((c = *str++) && len--)
+        while ((c = *str++) != '|' && c != '\0' && len--)
           hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
         return hash;
       }
-      size_t strlen(const char* str) {
+      size_t tpch_strlen(const char* str) {
         const char* start = str;
         while (*str != '\n' && (*str != '|') && (*str != '\0')) str++;
         return str - start;
       }
-      int strcmp(const char *s1, const char *s2) {
-        size_t l1 = strlen(s1);
-        size_t l2 = strlen(s2);
-        if (l1 != l2) return l2 - l1;
+      int tpch_strcmp(const char *s1, const char *s2) {
+        size_t l1 = tpch_strlen(s1);
+        size_t l2 = tpch_strlen(s2);
+        if (l1 > l2) l1 = l2;
         return strncmp(s1,s2,l1);
       }
-      char* strstr(const char *s1, const char *s2) {
-        return strnstr(s1,s2,strlen(s1));
+      char* tpch_strnstr(const char *s, const char *find, size_t slen) {
+        char c, sc;
+        size_t len;
+
+        if ((c = *find++) != '\0') {
+          len = tpch_strlen(find);
+          do {
+            do {
+              if (slen-- < 1 || (sc = *s++) == '\0')
+                return (NULL);
+            } while (sc != c);
+            if (len > slen)
+              return (NULL);
+          } while (strncmp(s, find, len) != 0);
+          s--;
+        }
+        return ((char *)s);
+      }
+      char* tpch_strstr_bak(char *s1, char *s2) {
+        char* tmp;
+        if ((tmp = tpch_strnstr(s1,s2,tpch_strlen(s1))) == NULL) {
+          return s1 - (1 << 10); // Hack
+        }
+        return tmp;
+      }
+      char* tpch_strstr(char* s, char* find) {
+        char c, sc;
+        char* wts, *wtf;
+
+        c = *find++;
+        do {
+          do {
+            if ((sc = *s++) == '|') {
+              return s - (1 << 10);
+            }
+          } while (sc != c);
+
+          wtf = find;
+          wts = s;
+          while (*wtf == *wts) {
+            wtf++;
+            wts++;
+          }
+          if (*wtf == '\0')
+              return s - 1;
+        } while (1);
       }
       
 
@@ -112,24 +154,6 @@ long L_RECEIPTDATE;
 char* L_SHIPINSTRUCT;
 char* L_SHIPMODE;
 char* L_COMMENT;
-};
-
-struct Anon1023322325 {
-double PS_SUPPLYCOST;
-double S_ACCTBAL;
-char* S_NAME;
-char* S_ADDRESS;
-char* S_PHONE;
-char* S_COMMENT;
-char* N_NAME;
-int P_PARTKEY;
-char* P_MFGR;
-};
-
-struct Anon842992833 {
-bool exists;
-int key;
-struct Anon1023322325 aggs;
 };
 
 struct Anon1296044246 {
@@ -181,26 +205,38 @@ int N2_N_REGIONKEY;
 char* N2_N_COMMENT;
 };
 
-struct Anon147418070 {
+struct Anon1023322325 {
+double PS_SUPPLYCOST;
+double S_ACCTBAL;
+char* S_NAME;
+char* S_ADDRESS;
+char* S_PHONE;
+char* S_COMMENT;
 char* N_NAME;
-int N_NATIONKEY;
-int C_CUSTKEY;
+int P_PARTKEY;
+char* P_MFGR;
 };
 
-struct Anon726278688 {
-char* SUPP_NATION;
-char* CUST_NATION;
-int L_YEAR;
+struct Anon1465150758 {
+int L_ORDERKEY;
+long O_ORDERDATE;
+int O_SHIPPRIORITY;
 };
 
 struct Anon2052879266 {
 double _0;
 };
 
-struct Anon1587544425 {
+struct Anon895445893 {
 bool exists;
-struct Anon726278688 key;
+struct Anon1465150758 key;
 struct Anon2052879266 aggs;
+};
+
+struct Anon147418070 {
+char* N_NAME;
+int N_NATIONKEY;
+int C_CUSTKEY;
 };
 
 struct Anon920667905Anon811555534Anon168903330 {
@@ -257,12 +293,6 @@ double S_ACCTBAL;
 char* S_COMMENT;
 };
 
-struct Anon1465150758 {
-int L_ORDERKEY;
-long O_ORDERDATE;
-int O_SHIPPRIORITY;
-};
-
 struct Anon713865179 {
 int N1_N_NATIONKEY;
 char* N1_N_NAME;
@@ -287,20 +317,9 @@ int N2_N_REGIONKEY;
 char* N2_N_COMMENT;
 };
 
-struct Anon532638341 {
-bool exists;
-struct Anon1465150758 key;
-struct Anon2052879266 aggs;
-};
-
 struct Anon1078540535 {
 char* N_NAME;
 int N_NATIONKEY;
-};
-
-struct Anon1285873738 {
-int key;
-struct Anon1023322325 wnd;
 };
 
 struct Anon713865179Anon72918141Anon1268892766Anon168903330Anon811555534 {
@@ -349,6 +368,17 @@ char* O_COMMENT;
 struct Anon0 {
 struct Anon920667905 left;
 struct Anon713865179Anon72918141Anon1268892766Anon168903330Anon811555534 right;
+};
+
+struct Anon1495587458 {
+int key;
+struct Anon1023322325 wnd;
+};
+
+struct Anon1042493154 {
+bool exists;
+char* key;
+struct Anon2052879266 aggs;
 };
 
 struct Anon15765642 {
@@ -420,17 +450,6 @@ char* L_SHIPMODE;
 char* L_COMMENT;
 };
 
-struct Anon625264174 {
-char L_RETURNFLAG;
-char L_LINESTATUS;
-};
-
-struct Anon1931420570 {
-bool exists;
-struct Anon625264174 key;
-struct Anon567626277 aggs;
-};
-
 struct Anon1268892766 {
 int S_SUPPKEY;
 char* S_NAME;
@@ -441,11 +460,39 @@ double S_ACCTBAL;
 char* S_COMMENT;
 };
 
+struct Anon625264174 {
+char L_RETURNFLAG;
+char L_LINESTATUS;
+};
+
+struct Anon631953537 {
+struct Anon625264174 key;
+struct Anon1296044246 aggs;
+};
+
 struct Anon72918141 {
 int N2_N_NATIONKEY;
 char* N2_N_NAME;
 int N2_N_REGIONKEY;
 char* N2_N_COMMENT;
+};
+
+struct Anon726278688 {
+char* SUPP_NATION;
+char* CUST_NATION;
+int L_YEAR;
+};
+
+struct Anon197435497 {
+bool exists;
+struct Anon726278688 key;
+struct Anon2052879266 aggs;
+};
+
+struct Anon600063274 {
+bool exists;
+struct Anon625264174 key;
+struct Anon567626277 aggs;
 };
 
 struct Anon327816002 {
@@ -493,6 +540,12 @@ long L_RECEIPTDATE;
 char* L_SHIPINSTRUCT;
 char* L_SHIPMODE;
 char* L_COMMENT;
+};
+
+struct Anon1052706553 {
+bool exists;
+int key;
+struct Anon1023322325 aggs;
 };
 
 struct Anon713865179Anon72918141Anon1268892766 {
@@ -564,11 +617,6 @@ int O_SHIPPRIORITY;
 char* O_COMMENT;
 };
 
-struct Anon1519494783 {
-struct Anon625264174 key;
-struct Anon1296044246 aggs;
-};
-
 struct Anon722854457 {
 double PS_SUPPLYCOST;
 int PS_PARTKEY;
@@ -617,1715 +665,1867 @@ double PS_SUPPLYCOST;
 char* PS_COMMENT;
 };
 
-struct Anon801061462 {
-bool exists;
-char* key;
-struct Anon2052879266 aggs;
-};
-
 /************************ FUNCTIONS **************************/
+int x12789(struct Anon197435497* x12764, struct Anon197435497* x12765);
+int x12789(struct Anon197435497* x12764, struct Anon197435497* x12765) {
+  struct Anon197435497 x12766 = (*x12764);
+  struct Anon197435497 x12767 = (*x12765);
+  struct Anon726278688 x12768 = x12766.key;;
+  char* x12770 = x12768.SUPP_NATION;;
+  struct Anon726278688 x12769 = x12767.key;;
+  char* x12771 = x12769.SUPP_NATION;;
+  int x12772 = tpch_strcmp(x12770,x12771);
+  bool x12774 = x12772 == 0;
+  int x12787;
+  if (x12774) {
+    char* x12775 = x12768.CUST_NATION;;
+    char* x12776 = x12769.CUST_NATION;;
+    int x12777 = tpch_strcmp(x12775,x12776);
+    bool x12779 = x12777 == 0;
+    int x12786;
+    if (x12779) {
+      int x12780 = x12768.L_YEAR;;
+      int x12781 = x12769.L_YEAR;;
+      bool x12782 = x12780 < x12781;
+      int x12785;
+      if (x12782) {
+        x12785 = -1;
+      } else {
+        bool x12783 = x12780 > x12781;
+        int x12784;
+        if (x12783) {
+          x12784 = 1;
+        } else {
+          x12784 = 0;
+        }
+        x12785 = x12784;
+      }
+      x12786 = x12785;
+    } else {
+      x12786 = x12777;
+    }
+    x12787 = x12786;
+  } else {
+    x12787 = x12772;
+  }
+  return x12787;
+}
 
 /************************ MAIN BODY **************************/
-int main(int x9410, char** x9411) {
-  long x9412 = 0L;
-  long x6 = DEFAULT_INPUT_SIZE;
-  long x9413 = x6;
-  long x9414 = 0L;
-  int* x9415 = (int*)malloc(x6 * sizeof(int));
-  int* x9416 = x9415;
-  char** x9417 = (char**)malloc(x6 * sizeof(char*));
-  char** x9418 = x9417;
-  int x1515 = open("../databases/sf2/nation.tbl",0);
-  long x1516 = fsize(x1515);
-  char* x1517 = mmap(0, x1516, PROT_READ, MAP_FILE | MAP_SHARED, x1515, 0);
+int main(int x9991, char** x9992) {
+  long x9993 = 0L;
+  long x7 = DEFAULT_INPUT_SIZE;
+  long x9994 = x7;
+  long x9995 = 0L;
+  int* x9996 = (int*)malloc(x7 * sizeof(int));
+  int* x9997 = x9996;
+  char** x9998 = (char**)malloc(x7 * sizeof(char*));
+  char** x9999 = x9998;
+  int x1633 = open("XXXXXnation.tbl",0);
+  long x1634 = fsize(x1633);
+  char* x1635 = mmap(0, x1634, PROT_READ, MAP_FILE | MAP_SHARED, x1633, 0);
   for (;;) {
-    long x9423 = x9412;
-    bool x9424 = x9423 < x1516;
-    if (!x9424) break;
-    int x9427 = 0;
+    long x10004 = x9993;
+    bool x10005 = x10004 < x1634;
+    if (!x10005) break;
+    int x10008 = 0;
     for (;;) {
-      long x9428 = x9412;
-      char x9429 = x1517[x9428];
-      bool x9430 = x9429 != '|';
-      bool x9435 = x9430;
-      if (x9430) {
-        long x9431 = x9412;
-        char x9432 = x1517[x9431];
-        bool x9433 = x9432 != '\n';
-        x9435 = x9433;
+      long x10009 = x9993;
+      char x10010 = x1635[x10009];
+      bool x10011 = x10010 != '|';
+      bool x10016 = x10011;
+      if (x10011) {
+        long x10012 = x9993;
+        char x10013 = x1635[x10012];
+        bool x10014 = x10013 != '\n';
+        x10016 = x10014;
       }
-      bool x9436 = x9435;
-      if (!x9436) break;
-      int x9438 = x9427;
-      long x9440 = x9412;
-      int x9439 = x9438 * 10;
-      char x9441 = x1517[x9440];
-      char x9442 = x9441 - '0';
-      int x9443 = x9439 + x9442;
-      x9427 = x9443;
-      x9412 = x9412 + 1;
+      bool x10017 = x10016;
+      if (!x10017) break;
+      int x10019 = x10008;
+      long x10021 = x9993;
+      int x10020 = x10019 * 10;
+      char x10022 = x1635[x10021];
+      char x10023 = x10022 - '0';
+      int x10024 = x10020 + x10023;
+      x10008 = x10024;
+      x9993 = x9993 + 1;
     }
-    x9412 = x9412 + 1;
-    int x9449 = x9427;
-    long x9450 = x9412;
+    x9993 = x9993 + 1;
+    int x10030 = x10008;
+    long x10031 = x9993;
     for (;;) {
-      long x9451 = x9412;
-      char x9452 = x1517[x9451];
-      bool x9453 = x9452 != '|';
-      bool x9458 = x9453;
-      if (x9453) {
-        long x9454 = x9412;
-        char x9455 = x1517[x9454];
-        bool x9456 = x9455 != '\n';
-        x9458 = x9456;
+      long x10032 = x9993;
+      char x10033 = x1635[x10032];
+      bool x10034 = x10033 != '|';
+      bool x10039 = x10034;
+      if (x10034) {
+        long x10035 = x9993;
+        char x10036 = x1635[x10035];
+        bool x10037 = x10036 != '\n';
+        x10039 = x10037;
       }
-      bool x9459 = x9458;
-      if (!x9459) break;
-      x9412 = x9412 + 1;
+      bool x10040 = x10039;
+      if (!x10040) break;
+      x9993 = x9993 + 1;
     }
-    x9412 = x9412 + 1;
+    x9993 = x9993 + 1;
     for (;;) {
-      long x9470 = x9412;
-      char x9471 = x1517[x9470];
-      bool x9472 = x9471 != '|';
-      bool x9477 = x9472;
-      if (x9472) {
-        long x9473 = x9412;
-        char x9474 = x1517[x9473];
-        bool x9475 = x9474 != '\n';
-        x9477 = x9475;
+      long x10051 = x9993;
+      char x10052 = x1635[x10051];
+      bool x10053 = x10052 != '|';
+      bool x10058 = x10053;
+      if (x10053) {
+        long x10054 = x9993;
+        char x10055 = x1635[x10054];
+        bool x10056 = x10055 != '\n';
+        x10058 = x10056;
       }
-      bool x9478 = x9477;
-      if (!x9478) break;
-      x9412 = x9412 + 1;
+      bool x10059 = x10058;
+      if (!x10059) break;
+      x9993 = x9993 + 1;
     }
-    x9412 = x9412 + 1;
+    x9993 = x9993 + 1;
     for (;;) {
-      long x9493 = x9412;
-      char x9494 = x1517[x9493];
-      bool x9495 = x9494 != '|';
-      bool x9500 = x9495;
-      if (x9495) {
-        long x9496 = x9412;
-        char x9497 = x1517[x9496];
-        bool x9498 = x9497 != '\n';
-        x9500 = x9498;
+      long x10074 = x9993;
+      char x10075 = x1635[x10074];
+      bool x10076 = x10075 != '|';
+      bool x10081 = x10076;
+      if (x10076) {
+        long x10077 = x9993;
+        char x10078 = x1635[x10077];
+        bool x10079 = x10078 != '\n';
+        x10081 = x10079;
       }
-      bool x9501 = x9500;
-      if (!x9501) break;
-      x9412 = x9412 + 1;
+      bool x10082 = x10081;
+      if (!x10082) break;
+      x9993 = x9993 + 1;
     }
-    x9412 = x9412 + 1;
-    long x9511 = x9414;
-    long x9512 = x9413;
-    bool x9513 = x9511 == x9512;
-    if (x9513) {
-      long x9514 = x9512 * 4L;
-      x9413 = x9514;
-      printf("buffer.resize %d\n",x9514);
-      int* x9517 = x9416;
-      int* x9518 = (int*)realloc(x9517,x9514 * sizeof(int));
-      x9416 = x9518;
-      char** x9520 = x9418;
-      char** x9521 = (char**)realloc(x9520,x9514 * sizeof(char*));
-      x9418 = x9521;
+    x9993 = x9993 + 1;
+    long x10092 = x9993;
+    bool x10093 = x10092 > 0L;
+    bool x10099 = x10093;
+    if (x10093) {
+      long x10094 = x9993;
+      long x10095 = x10094 - 1L;
+      char x10096 = x1635[x10095];
+      bool x10097 = x10096 != '\n';
+      x10099 = x10097;
+    }
+    bool x10100 = x10099;
+    if (x10100) {
+      for (;;) {
+        long x10101 = x9993;
+        char x10102 = x1635[x10101];
+        bool x10103 = x10102 != '\n';
+        if (!x10103) break;
+        x9993 = x9993 + 1;
+      }
     } else {
     }
-    int* x9531 = x9416;
-    x9531[x9511] = x9449;
-    char** x9533 = x9418;
-    char* x9467 = x1517+x9450;
-    x9533[x9511] = x9467;
-    x9414 = x9414 + 1;
+    x9993 = x9993 + 1;
+    long x10112 = x9995;
+    long x10113 = x9994;
+    bool x10114 = x10112 == x10113;
+    if (x10114) {
+      long x10115 = x10113 * 4L;
+      x9994 = x10115;
+      printf("buffer.resize %ld\n",x10115);
+      int* x10118 = x9997;
+      int* x10119 = (int*)realloc(x10118,x10115 * sizeof(int));
+      x9997 = x10119;
+      char** x10121 = x9999;
+      char** x10122 = (char**)realloc(x10121,x10115 * sizeof(char*));
+      x9999 = x10122;
+    } else {
+    }
+    int* x10132 = x9997;
+    x10132[x10112] = x10030;
+    char** x10134 = x9999;
+    char* x10048 = x1635+x10031;
+    x10134[x10112] = x10048;
+    x9995 = x9995 + 1;
   }
-  long x9542 = 0L;
-  long x9543 = x6;
-  long x9544 = 0L;
-  int* x9545 = (int*)malloc(x6 * sizeof(int));
-  int* x9546 = x9545;
-  int* x9547 = (int*)malloc(x6 * sizeof(int));
-  int* x9548 = x9547;
-  int x3371 = open("../databases/sf2/orders.tbl",0);
-  long x3372 = fsize(x3371);
-  char* x3373 = mmap(0, x3372, PROT_READ, MAP_FILE | MAP_SHARED, x3371, 0);
+  long x10143 = 0L;
+  long x10144 = x7;
+  long x10145 = 0L;
+  int* x10146 = (int*)malloc(x7 * sizeof(int));
+  int* x10147 = x10146;
+  int* x10148 = (int*)malloc(x7 * sizeof(int));
+  int* x10149 = x10148;
+  int x3633 = open("XXXXXorders.tbl",0);
+  long x3634 = fsize(x3633);
+  char* x3635 = mmap(0, x3634, PROT_READ, MAP_FILE | MAP_SHARED, x3633, 0);
   for (;;) {
-    long x9563 = x9542;
-    bool x9564 = x9563 < x3372;
-    if (!x9564) break;
-    int x9567 = 0;
+    long x10164 = x10143;
+    bool x10165 = x10164 < x3634;
+    if (!x10165) break;
+    int x10168 = 0;
     for (;;) {
-      long x9568 = x9542;
-      char x9569 = x3373[x9568];
-      bool x9570 = x9569 != '|';
-      bool x9575 = x9570;
-      if (x9570) {
-        long x9571 = x9542;
-        char x9572 = x3373[x9571];
-        bool x9573 = x9572 != '\n';
-        x9575 = x9573;
+      long x10169 = x10143;
+      char x10170 = x3635[x10169];
+      bool x10171 = x10170 != '|';
+      bool x10176 = x10171;
+      if (x10171) {
+        long x10172 = x10143;
+        char x10173 = x3635[x10172];
+        bool x10174 = x10173 != '\n';
+        x10176 = x10174;
       }
-      bool x9576 = x9575;
-      if (!x9576) break;
-      int x9578 = x9567;
-      long x9580 = x9542;
-      int x9579 = x9578 * 10;
-      char x9581 = x3373[x9580];
-      char x9582 = x9581 - '0';
-      int x9583 = x9579 + x9582;
-      x9567 = x9583;
-      x9542 = x9542 + 1;
+      bool x10177 = x10176;
+      if (!x10177) break;
+      int x10179 = x10168;
+      long x10181 = x10143;
+      int x10180 = x10179 * 10;
+      char x10182 = x3635[x10181];
+      char x10183 = x10182 - '0';
+      int x10184 = x10180 + x10183;
+      x10168 = x10184;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
-    int x9589 = x9567;
-    int x9591 = 0;
+    x10143 = x10143 + 1;
+    int x10190 = x10168;
+    int x10192 = 0;
     for (;;) {
-      long x9592 = x9542;
-      char x9593 = x3373[x9592];
-      bool x9594 = x9593 != '|';
-      bool x9599 = x9594;
-      if (x9594) {
-        long x9595 = x9542;
-        char x9596 = x3373[x9595];
-        bool x9597 = x9596 != '\n';
-        x9599 = x9597;
+      long x10193 = x10143;
+      char x10194 = x3635[x10193];
+      bool x10195 = x10194 != '|';
+      bool x10200 = x10195;
+      if (x10195) {
+        long x10196 = x10143;
+        char x10197 = x3635[x10196];
+        bool x10198 = x10197 != '\n';
+        x10200 = x10198;
       }
-      bool x9600 = x9599;
-      if (!x9600) break;
-      int x9602 = x9591;
-      long x9604 = x9542;
-      int x9603 = x9602 * 10;
-      char x9605 = x3373[x9604];
-      char x9606 = x9605 - '0';
-      int x9607 = x9603 + x9606;
-      x9591 = x9607;
-      x9542 = x9542 + 1;
+      bool x10201 = x10200;
+      if (!x10201) break;
+      int x10203 = x10192;
+      long x10205 = x10143;
+      int x10204 = x10203 * 10;
+      char x10206 = x3635[x10205];
+      char x10207 = x10206 - '0';
+      int x10208 = x10204 + x10207;
+      x10192 = x10208;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
-    int x9613 = x9591;
-    x9542 = x9542 + 2;
+    x10143 = x10143 + 1;
+    int x10214 = x10192;
+    x10143 = x10143 + 2;
     for (;;) {
-      long x9620 = x9542;
-      char x9621 = x3373[x9620];
-      bool x9622 = x9621 != '.';
-      bool x9627 = x9622;
-      if (x9622) {
-        long x9623 = x9542;
-        char x9624 = x3373[x9623];
-        bool x9625 = x9624 != '|';
-        x9627 = x9625;
+      long x10221 = x10143;
+      char x10222 = x3635[x10221];
+      bool x10223 = x10222 != '.';
+      bool x10228 = x10223;
+      if (x10223) {
+        long x10224 = x10143;
+        char x10225 = x3635[x10224];
+        bool x10226 = x10225 != '|';
+        x10228 = x10226;
       }
-      bool x9628 = x9627;
-      bool x9633 = x9628;
-      if (x9628) {
-        long x9629 = x9542;
-        char x9630 = x3373[x9629];
-        bool x9631 = x9630 != '\n';
-        x9633 = x9631;
+      bool x10229 = x10228;
+      bool x10234 = x10229;
+      if (x10229) {
+        long x10230 = x10143;
+        char x10231 = x3635[x10230];
+        bool x10232 = x10231 != '\n';
+        x10234 = x10232;
       }
-      bool x9634 = x9633;
-      if (!x9634) break;
-      x9542 = x9542 + 1;
+      bool x10235 = x10234;
+      if (!x10235) break;
+      x10143 = x10143 + 1;
     }
-    long x9646 = x9542;
-    char x9647 = x3373[x9646];
-    bool x9648 = x9647 == '.';
-    if (x9648) {
-      x9542 = x9542 + 1;
+    long x10247 = x10143;
+    char x10248 = x3635[x10247];
+    bool x10249 = x10248 == '.';
+    if (x10249) {
+      x10143 = x10143 + 1;
       for (;;) {
-        long x9650 = x9542;
-        char x9651 = x3373[x9650];
-        bool x9652 = x9651 != '|';
-        bool x9657 = x9652;
-        if (x9652) {
-          long x9653 = x9542;
-          char x9654 = x3373[x9653];
-          bool x9655 = x9654 != '\n';
-          x9657 = x9655;
+        long x10251 = x10143;
+        char x10252 = x3635[x10251];
+        bool x10253 = x10252 != '|';
+        bool x10258 = x10253;
+        if (x10253) {
+          long x10254 = x10143;
+          char x10255 = x3635[x10254];
+          bool x10256 = x10255 != '\n';
+          x10258 = x10256;
         }
-        bool x9658 = x9657;
-        if (!x9658) break;
-        x9542 = x9542 + 1;
+        bool x10259 = x10258;
+        if (!x10259) break;
+        x10143 = x10143 + 1;
       }
     } else {
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9684 = x9542;
-      char x9685 = x3373[x9684];
-      bool x9686 = x9685 != '-';
-      bool x9691 = x9686;
-      if (x9686) {
-        long x9687 = x9542;
-        char x9688 = x3373[x9687];
-        bool x9689 = x9688 != '\n';
-        x9691 = x9689;
+      long x10285 = x10143;
+      char x10286 = x3635[x10285];
+      bool x10287 = x10286 != '-';
+      bool x10292 = x10287;
+      if (x10287) {
+        long x10288 = x10143;
+        char x10289 = x3635[x10288];
+        bool x10290 = x10289 != '\n';
+        x10292 = x10290;
       }
-      bool x9692 = x9691;
-      if (!x9692) break;
-      x9542 = x9542 + 1;
+      bool x10293 = x10292;
+      if (!x10293) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9708 = x9542;
-      char x9709 = x3373[x9708];
-      bool x9710 = x9709 != '-';
-      bool x9715 = x9710;
-      if (x9710) {
-        long x9711 = x9542;
-        char x9712 = x3373[x9711];
-        bool x9713 = x9712 != '\n';
-        x9715 = x9713;
+      long x10309 = x10143;
+      char x10310 = x3635[x10309];
+      bool x10311 = x10310 != '-';
+      bool x10316 = x10311;
+      if (x10311) {
+        long x10312 = x10143;
+        char x10313 = x3635[x10312];
+        bool x10314 = x10313 != '\n';
+        x10316 = x10314;
       }
-      bool x9716 = x9715;
-      if (!x9716) break;
-      x9542 = x9542 + 1;
+      bool x10317 = x10316;
+      if (!x10317) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9732 = x9542;
-      char x9733 = x3373[x9732];
-      bool x9734 = x9733 != '|';
-      bool x9739 = x9734;
-      if (x9734) {
-        long x9735 = x9542;
-        char x9736 = x3373[x9735];
-        bool x9737 = x9736 != '\n';
-        x9739 = x9737;
+      long x10333 = x10143;
+      char x10334 = x3635[x10333];
+      bool x10335 = x10334 != '|';
+      bool x10340 = x10335;
+      if (x10335) {
+        long x10336 = x10143;
+        char x10337 = x3635[x10336];
+        bool x10338 = x10337 != '\n';
+        x10340 = x10338;
       }
-      bool x9740 = x9739;
-      if (!x9740) break;
-      x9542 = x9542 + 1;
+      bool x10341 = x10340;
+      if (!x10341) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9759 = x9542;
-      char x9760 = x3373[x9759];
-      bool x9761 = x9760 != '|';
-      bool x9766 = x9761;
-      if (x9761) {
-        long x9762 = x9542;
-        char x9763 = x3373[x9762];
-        bool x9764 = x9763 != '\n';
-        x9766 = x9764;
+      long x10360 = x10143;
+      char x10361 = x3635[x10360];
+      bool x10362 = x10361 != '|';
+      bool x10367 = x10362;
+      if (x10362) {
+        long x10363 = x10143;
+        char x10364 = x3635[x10363];
+        bool x10365 = x10364 != '\n';
+        x10367 = x10365;
       }
-      bool x9767 = x9766;
-      if (!x9767) break;
-      x9542 = x9542 + 1;
+      bool x10368 = x10367;
+      if (!x10368) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9777 = x9542;
-      char x9778 = x3373[x9777];
-      bool x9779 = x9778 != '|';
-      bool x9784 = x9779;
-      if (x9779) {
-        long x9780 = x9542;
-        char x9781 = x3373[x9780];
-        bool x9782 = x9781 != '\n';
-        x9784 = x9782;
+      long x10378 = x10143;
+      char x10379 = x3635[x10378];
+      bool x10380 = x10379 != '|';
+      bool x10385 = x10380;
+      if (x10380) {
+        long x10381 = x10143;
+        char x10382 = x3635[x10381];
+        bool x10383 = x10382 != '\n';
+        x10385 = x10383;
       }
-      bool x9785 = x9784;
-      if (!x9785) break;
-      x9542 = x9542 + 1;
+      bool x10386 = x10385;
+      if (!x10386) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9796 = x9542;
-      char x9797 = x3373[x9796];
-      bool x9798 = x9797 != '|';
-      bool x9803 = x9798;
-      if (x9798) {
-        long x9799 = x9542;
-        char x9800 = x3373[x9799];
-        bool x9801 = x9800 != '\n';
-        x9803 = x9801;
+      long x10397 = x10143;
+      char x10398 = x3635[x10397];
+      bool x10399 = x10398 != '|';
+      bool x10404 = x10399;
+      if (x10399) {
+        long x10400 = x10143;
+        char x10401 = x3635[x10400];
+        bool x10402 = x10401 != '\n';
+        x10404 = x10402;
       }
-      bool x9804 = x9803;
-      if (!x9804) break;
-      x9542 = x9542 + 1;
+      bool x10405 = x10404;
+      if (!x10405) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
+    x10143 = x10143 + 1;
     for (;;) {
-      long x9819 = x9542;
-      char x9820 = x3373[x9819];
-      bool x9821 = x9820 != '|';
-      bool x9826 = x9821;
-      if (x9821) {
-        long x9822 = x9542;
-        char x9823 = x3373[x9822];
-        bool x9824 = x9823 != '\n';
-        x9826 = x9824;
+      long x10420 = x10143;
+      char x10421 = x3635[x10420];
+      bool x10422 = x10421 != '|';
+      bool x10427 = x10422;
+      if (x10422) {
+        long x10423 = x10143;
+        char x10424 = x3635[x10423];
+        bool x10425 = x10424 != '\n';
+        x10427 = x10425;
       }
-      bool x9827 = x9826;
-      if (!x9827) break;
-      x9542 = x9542 + 1;
+      bool x10428 = x10427;
+      if (!x10428) break;
+      x10143 = x10143 + 1;
     }
-    x9542 = x9542 + 1;
-    long x9837 = x9544;
-    long x9838 = x9543;
-    bool x9839 = x9837 == x9838;
-    if (x9839) {
-      long x9840 = x9838 * 4L;
-      x9543 = x9840;
-      printf("buffer.resize %d\n",x9840);
-      int* x9843 = x9546;
-      int* x9844 = (int*)realloc(x9843,x9840 * sizeof(int));
-      x9546 = x9844;
-      int* x9846 = x9548;
-      int* x9847 = (int*)realloc(x9846,x9840 * sizeof(int));
-      x9548 = x9847;
+    x10143 = x10143 + 1;
+    long x10438 = x10143;
+    bool x10439 = x10438 > 0L;
+    bool x10445 = x10439;
+    if (x10439) {
+      long x10440 = x10143;
+      long x10441 = x10440 - 1L;
+      char x10442 = x3635[x10441];
+      bool x10443 = x10442 != '\n';
+      x10445 = x10443;
+    }
+    bool x10446 = x10445;
+    if (x10446) {
+      for (;;) {
+        long x10447 = x10143;
+        char x10448 = x3635[x10447];
+        bool x10449 = x10448 != '\n';
+        if (!x10449) break;
+        x10143 = x10143 + 1;
+      }
     } else {
     }
-    int* x9872 = x9546;
-    x9872[x9837] = x9589;
-    int* x9874 = x9548;
-    x9874[x9837] = x9613;
-    x9544 = x9544 + 1;
+    x10143 = x10143 + 1;
+    long x10458 = x10145;
+    long x10459 = x10144;
+    bool x10460 = x10458 == x10459;
+    if (x10460) {
+      long x10461 = x10459 * 4L;
+      x10144 = x10461;
+      printf("buffer.resize %ld\n",x10461);
+      int* x10464 = x10147;
+      int* x10465 = (int*)realloc(x10464,x10461 * sizeof(int));
+      x10147 = x10465;
+      int* x10467 = x10149;
+      int* x10468 = (int*)realloc(x10467,x10461 * sizeof(int));
+      x10149 = x10468;
+    } else {
+    }
+    int* x10493 = x10147;
+    x10493[x10458] = x10190;
+    int* x10495 = x10149;
+    x10495[x10458] = x10214;
+    x10145 = x10145 + 1;
   }
-  long x9893 = 0L;
-  long x9894 = x6;
-  long x9895 = 0L;
-  int* x9896 = (int*)malloc(x6 * sizeof(int));
-  int* x9897 = x9896;
-  int* x9900 = (int*)malloc(x6 * sizeof(int));
-  int* x9901 = x9900;
-  double* x9906 = (double*)malloc(x6 * sizeof(double));
-  double* x9907 = x9906;
-  double* x9908 = (double*)malloc(x6 * sizeof(double));
-  double* x9909 = x9908;
-  long* x9916 = (long*)malloc(x6 * sizeof(long));
-  long* x9917 = x9916;
-  int x2 = open("../databases/sf2/lineitem.tbl",0);
-  long x3 = fsize(x2);
-  char* x4 = mmap(0, x3, PROT_READ, MAP_FILE | MAP_SHARED, x2, 0);
+  long x10514 = 0L;
+  long x10515 = x7;
+  long x10516 = 0L;
+  int* x10517 = (int*)malloc(x7 * sizeof(int));
+  int* x10518 = x10517;
+  int* x10521 = (int*)malloc(x7 * sizeof(int));
+  int* x10522 = x10521;
+  double* x10527 = (double*)malloc(x7 * sizeof(double));
+  double* x10528 = x10527;
+  double* x10529 = (double*)malloc(x7 * sizeof(double));
+  double* x10530 = x10529;
+  long* x10537 = (long*)malloc(x7 * sizeof(long));
+  long* x10538 = x10537;
+  int x3 = open("XXXXXlineitem.tbl",0);
+  long x4 = fsize(x3);
+  char* x5 = mmap(0, x4, PROT_READ, MAP_FILE | MAP_SHARED, x3, 0);
   for (;;) {
-    long x9928 = x9893;
-    bool x9929 = x9928 < x3;
-    if (!x9929) break;
-    int x9932 = 0;
+    long x10549 = x10514;
+    bool x10550 = x10549 < x4;
+    if (!x10550) break;
+    int x10553 = 0;
     for (;;) {
-      long x9933 = x9893;
-      char x9934 = x4[x9933];
-      bool x9935 = x9934 != '|';
-      bool x9940 = x9935;
-      if (x9935) {
-        long x9936 = x9893;
-        char x9937 = x4[x9936];
-        bool x9938 = x9937 != '\n';
-        x9940 = x9938;
+      long x10554 = x10514;
+      char x10555 = x5[x10554];
+      bool x10556 = x10555 != '|';
+      bool x10561 = x10556;
+      if (x10556) {
+        long x10557 = x10514;
+        char x10558 = x5[x10557];
+        bool x10559 = x10558 != '\n';
+        x10561 = x10559;
       }
-      bool x9941 = x9940;
-      if (!x9941) break;
-      int x9943 = x9932;
-      long x9945 = x9893;
-      int x9944 = x9943 * 10;
-      char x9946 = x4[x9945];
-      char x9947 = x9946 - '0';
-      int x9948 = x9944 + x9947;
-      x9932 = x9948;
-      x9893 = x9893 + 1;
+      bool x10562 = x10561;
+      if (!x10562) break;
+      int x10564 = x10553;
+      long x10566 = x10514;
+      int x10565 = x10564 * 10;
+      char x10567 = x5[x10566];
+      char x10568 = x10567 - '0';
+      int x10569 = x10565 + x10568;
+      x10553 = x10569;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x9954 = x9932;
+    x10514 = x10514 + 1;
+    int x10575 = x10553;
     for (;;) {
-      long x9957 = x9893;
-      char x9958 = x4[x9957];
-      bool x9959 = x9958 != '|';
-      bool x9964 = x9959;
-      if (x9959) {
-        long x9960 = x9893;
-        char x9961 = x4[x9960];
-        bool x9962 = x9961 != '\n';
-        x9964 = x9962;
+      long x10578 = x10514;
+      char x10579 = x5[x10578];
+      bool x10580 = x10579 != '|';
+      bool x10585 = x10580;
+      if (x10580) {
+        long x10581 = x10514;
+        char x10582 = x5[x10581];
+        bool x10583 = x10582 != '\n';
+        x10585 = x10583;
       }
-      bool x9965 = x9964;
-      if (!x9965) break;
-      x9893 = x9893 + 1;
+      bool x10586 = x10585;
+      if (!x10586) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x9980 = 0;
+    x10514 = x10514 + 1;
+    int x10601 = 0;
     for (;;) {
-      long x9981 = x9893;
-      char x9982 = x4[x9981];
-      bool x9983 = x9982 != '|';
-      bool x9988 = x9983;
-      if (x9983) {
-        long x9984 = x9893;
-        char x9985 = x4[x9984];
-        bool x9986 = x9985 != '\n';
-        x9988 = x9986;
+      long x10602 = x10514;
+      char x10603 = x5[x10602];
+      bool x10604 = x10603 != '|';
+      bool x10609 = x10604;
+      if (x10604) {
+        long x10605 = x10514;
+        char x10606 = x5[x10605];
+        bool x10607 = x10606 != '\n';
+        x10609 = x10607;
       }
-      bool x9989 = x9988;
-      if (!x9989) break;
-      int x9991 = x9980;
-      long x9993 = x9893;
-      int x9992 = x9991 * 10;
-      char x9994 = x4[x9993];
-      char x9995 = x9994 - '0';
-      int x9996 = x9992 + x9995;
-      x9980 = x9996;
-      x9893 = x9893 + 1;
+      bool x10610 = x10609;
+      if (!x10610) break;
+      int x10612 = x10601;
+      long x10614 = x10514;
+      int x10613 = x10612 * 10;
+      char x10615 = x5[x10614];
+      char x10616 = x10615 - '0';
+      int x10617 = x10613 + x10616;
+      x10601 = x10617;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x10002 = x9980;
+    x10514 = x10514 + 1;
+    int x10623 = x10601;
     for (;;) {
-      long x10005 = x9893;
-      char x10006 = x4[x10005];
-      bool x10007 = x10006 != '|';
-      bool x10012 = x10007;
-      if (x10007) {
-        long x10008 = x9893;
-        char x10009 = x4[x10008];
-        bool x10010 = x10009 != '\n';
-        x10012 = x10010;
+      long x10626 = x10514;
+      char x10627 = x5[x10626];
+      bool x10628 = x10627 != '|';
+      bool x10633 = x10628;
+      if (x10628) {
+        long x10629 = x10514;
+        char x10630 = x5[x10629];
+        bool x10631 = x10630 != '\n';
+        x10633 = x10631;
       }
-      bool x10013 = x10012;
-      if (!x10013) break;
-      x9893 = x9893 + 1;
+      bool x10634 = x10633;
+      if (!x10634) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10030 = x9893;
-      char x10031 = x4[x10030];
-      bool x10032 = x10031 != '.';
-      bool x10037 = x10032;
-      if (x10032) {
-        long x10033 = x9893;
-        char x10034 = x4[x10033];
-        bool x10035 = x10034 != '|';
-        x10037 = x10035;
+      long x10651 = x10514;
+      char x10652 = x5[x10651];
+      bool x10653 = x10652 != '.';
+      bool x10658 = x10653;
+      if (x10653) {
+        long x10654 = x10514;
+        char x10655 = x5[x10654];
+        bool x10656 = x10655 != '|';
+        x10658 = x10656;
       }
-      bool x10038 = x10037;
-      bool x10043 = x10038;
-      if (x10038) {
-        long x10039 = x9893;
-        char x10040 = x4[x10039];
-        bool x10041 = x10040 != '\n';
-        x10043 = x10041;
+      bool x10659 = x10658;
+      bool x10664 = x10659;
+      if (x10659) {
+        long x10660 = x10514;
+        char x10661 = x5[x10660];
+        bool x10662 = x10661 != '\n';
+        x10664 = x10662;
       }
-      bool x10044 = x10043;
-      if (!x10044) break;
-      x9893 = x9893 + 1;
+      bool x10665 = x10664;
+      if (!x10665) break;
+      x10514 = x10514 + 1;
     }
-    long x10056 = x9893;
-    char x10057 = x4[x10056];
-    bool x10058 = x10057 == '.';
-    if (x10058) {
-      x9893 = x9893 + 1;
+    long x10677 = x10514;
+    char x10678 = x5[x10677];
+    bool x10679 = x10678 == '.';
+    if (x10679) {
+      x10514 = x10514 + 1;
       for (;;) {
-        long x10060 = x9893;
-        char x10061 = x4[x10060];
-        bool x10062 = x10061 != '|';
-        bool x10067 = x10062;
-        if (x10062) {
-          long x10063 = x9893;
-          char x10064 = x4[x10063];
-          bool x10065 = x10064 != '\n';
-          x10067 = x10065;
+        long x10681 = x10514;
+        char x10682 = x5[x10681];
+        bool x10683 = x10682 != '|';
+        bool x10688 = x10683;
+        if (x10683) {
+          long x10684 = x10514;
+          char x10685 = x5[x10684];
+          bool x10686 = x10685 != '\n';
+          x10688 = x10686;
         }
-        bool x10068 = x10067;
-        if (!x10068) break;
-        x9893 = x9893 + 1;
+        bool x10689 = x10688;
+        if (!x10689) break;
+        x10514 = x10514 + 1;
       }
     } else {
     }
-    x9893 = x9893 + 1;
-    int x10093 = 0;
-    int x10094 = 1;
+    x10514 = x10514 + 1;
+    int x10714 = 0;
+    int x10715 = 1;
     for (;;) {
-      long x10095 = x9893;
-      char x10096 = x4[x10095];
-      bool x10097 = x10096 != '.';
-      bool x10102 = x10097;
-      if (x10097) {
-        long x10098 = x9893;
-        char x10099 = x4[x10098];
-        bool x10100 = x10099 != '|';
-        x10102 = x10100;
+      long x10716 = x10514;
+      char x10717 = x5[x10716];
+      bool x10718 = x10717 != '.';
+      bool x10723 = x10718;
+      if (x10718) {
+        long x10719 = x10514;
+        char x10720 = x5[x10719];
+        bool x10721 = x10720 != '|';
+        x10723 = x10721;
       }
-      bool x10103 = x10102;
-      bool x10108 = x10103;
-      if (x10103) {
-        long x10104 = x9893;
-        char x10105 = x4[x10104];
-        bool x10106 = x10105 != '\n';
-        x10108 = x10106;
+      bool x10724 = x10723;
+      bool x10729 = x10724;
+      if (x10724) {
+        long x10725 = x10514;
+        char x10726 = x5[x10725];
+        bool x10727 = x10726 != '\n';
+        x10729 = x10727;
       }
-      bool x10109 = x10108;
-      if (!x10109) break;
-      int x10111 = x10093;
-      long x10113 = x9893;
-      int x10112 = x10111 * 10;
-      char x10114 = x4[x10113];
-      char x10115 = x10114 - '0';
-      int x10116 = x10112 + x10115;
-      x10093 = x10116;
-      x9893 = x9893 + 1;
+      bool x10730 = x10729;
+      if (!x10730) break;
+      int x10732 = x10714;
+      long x10734 = x10514;
+      int x10733 = x10732 * 10;
+      char x10735 = x5[x10734];
+      char x10736 = x10735 - '0';
+      int x10737 = x10733 + x10736;
+      x10714 = x10737;
+      x10514 = x10514 + 1;
     }
-    long x10121 = x9893;
-    char x10122 = x4[x10121];
-    bool x10123 = x10122 == '.';
-    if (x10123) {
-      x9893 = x9893 + 1;
+    long x10742 = x10514;
+    char x10743 = x5[x10742];
+    bool x10744 = x10743 == '.';
+    if (x10744) {
+      x10514 = x10514 + 1;
       for (;;) {
-        long x10125 = x9893;
-        char x10126 = x4[x10125];
-        bool x10127 = x10126 != '|';
-        bool x10132 = x10127;
-        if (x10127) {
-          long x10128 = x9893;
-          char x10129 = x4[x10128];
-          bool x10130 = x10129 != '\n';
-          x10132 = x10130;
+        long x10746 = x10514;
+        char x10747 = x5[x10746];
+        bool x10748 = x10747 != '|';
+        bool x10753 = x10748;
+        if (x10748) {
+          long x10749 = x10514;
+          char x10750 = x5[x10749];
+          bool x10751 = x10750 != '\n';
+          x10753 = x10751;
         }
-        bool x10133 = x10132;
-        if (!x10133) break;
-        int x10135 = x10093;
-        long x10137 = x9893;
-        int x10136 = x10135 * 10;
-        char x10138 = x4[x10137];
-        char x10139 = x10138 - '0';
-        int x10140 = x10136 + x10139;
-        x10093 = x10140;
-        int x10142 = x10094;
-        int x10143 = x10142 * 10;
-        x10094 = x10143;
-        x9893 = x9893 + 1;
+        bool x10754 = x10753;
+        if (!x10754) break;
+        int x10756 = x10714;
+        long x10758 = x10514;
+        int x10757 = x10756 * 10;
+        char x10759 = x5[x10758];
+        char x10760 = x10759 - '0';
+        int x10761 = x10757 + x10760;
+        x10714 = x10761;
+        int x10763 = x10715;
+        int x10764 = x10763 * 10;
+        x10715 = x10764;
+        x10514 = x10514 + 1;
       }
     } else {
     }
-    x9893 = x9893 + 1;
-    int x10152 = x10093;
-    int x10154 = x10094;
-    int x10158 = 0;
-    int x10159 = 1;
+    x10514 = x10514 + 1;
+    int x10773 = x10714;
+    int x10775 = x10715;
+    int x10779 = 0;
+    int x10780 = 1;
     for (;;) {
-      long x10160 = x9893;
-      char x10161 = x4[x10160];
-      bool x10162 = x10161 != '.';
-      bool x10167 = x10162;
-      if (x10162) {
-        long x10163 = x9893;
-        char x10164 = x4[x10163];
-        bool x10165 = x10164 != '|';
-        x10167 = x10165;
+      long x10781 = x10514;
+      char x10782 = x5[x10781];
+      bool x10783 = x10782 != '.';
+      bool x10788 = x10783;
+      if (x10783) {
+        long x10784 = x10514;
+        char x10785 = x5[x10784];
+        bool x10786 = x10785 != '|';
+        x10788 = x10786;
       }
-      bool x10168 = x10167;
-      bool x10173 = x10168;
-      if (x10168) {
-        long x10169 = x9893;
-        char x10170 = x4[x10169];
-        bool x10171 = x10170 != '\n';
-        x10173 = x10171;
+      bool x10789 = x10788;
+      bool x10794 = x10789;
+      if (x10789) {
+        long x10790 = x10514;
+        char x10791 = x5[x10790];
+        bool x10792 = x10791 != '\n';
+        x10794 = x10792;
       }
-      bool x10174 = x10173;
-      if (!x10174) break;
-      int x10176 = x10158;
-      long x10178 = x9893;
-      int x10177 = x10176 * 10;
-      char x10179 = x4[x10178];
-      char x10180 = x10179 - '0';
-      int x10181 = x10177 + x10180;
-      x10158 = x10181;
-      x9893 = x9893 + 1;
+      bool x10795 = x10794;
+      if (!x10795) break;
+      int x10797 = x10779;
+      long x10799 = x10514;
+      int x10798 = x10797 * 10;
+      char x10800 = x5[x10799];
+      char x10801 = x10800 - '0';
+      int x10802 = x10798 + x10801;
+      x10779 = x10802;
+      x10514 = x10514 + 1;
     }
-    long x10186 = x9893;
-    char x10187 = x4[x10186];
-    bool x10188 = x10187 == '.';
-    if (x10188) {
-      x9893 = x9893 + 1;
+    long x10807 = x10514;
+    char x10808 = x5[x10807];
+    bool x10809 = x10808 == '.';
+    if (x10809) {
+      x10514 = x10514 + 1;
       for (;;) {
-        long x10190 = x9893;
-        char x10191 = x4[x10190];
-        bool x10192 = x10191 != '|';
-        bool x10197 = x10192;
-        if (x10192) {
-          long x10193 = x9893;
-          char x10194 = x4[x10193];
-          bool x10195 = x10194 != '\n';
-          x10197 = x10195;
+        long x10811 = x10514;
+        char x10812 = x5[x10811];
+        bool x10813 = x10812 != '|';
+        bool x10818 = x10813;
+        if (x10813) {
+          long x10814 = x10514;
+          char x10815 = x5[x10814];
+          bool x10816 = x10815 != '\n';
+          x10818 = x10816;
         }
-        bool x10198 = x10197;
-        if (!x10198) break;
-        int x10200 = x10158;
-        long x10202 = x9893;
-        int x10201 = x10200 * 10;
-        char x10203 = x4[x10202];
-        char x10204 = x10203 - '0';
-        int x10205 = x10201 + x10204;
-        x10158 = x10205;
-        int x10207 = x10159;
-        int x10208 = x10207 * 10;
-        x10159 = x10208;
-        x9893 = x9893 + 1;
+        bool x10819 = x10818;
+        if (!x10819) break;
+        int x10821 = x10779;
+        long x10823 = x10514;
+        int x10822 = x10821 * 10;
+        char x10824 = x5[x10823];
+        char x10825 = x10824 - '0';
+        int x10826 = x10822 + x10825;
+        x10779 = x10826;
+        int x10828 = x10780;
+        int x10829 = x10828 * 10;
+        x10780 = x10829;
+        x10514 = x10514 + 1;
       }
     } else {
     }
-    x9893 = x9893 + 1;
-    int x10217 = x10158;
-    int x10219 = x10159;
+    x10514 = x10514 + 1;
+    int x10838 = x10779;
+    int x10840 = x10780;
     for (;;) {
-      long x10225 = x9893;
-      char x10226 = x4[x10225];
-      bool x10227 = x10226 != '.';
-      bool x10232 = x10227;
-      if (x10227) {
-        long x10228 = x9893;
-        char x10229 = x4[x10228];
-        bool x10230 = x10229 != '|';
-        x10232 = x10230;
+      long x10846 = x10514;
+      char x10847 = x5[x10846];
+      bool x10848 = x10847 != '.';
+      bool x10853 = x10848;
+      if (x10848) {
+        long x10849 = x10514;
+        char x10850 = x5[x10849];
+        bool x10851 = x10850 != '|';
+        x10853 = x10851;
       }
-      bool x10233 = x10232;
-      bool x10238 = x10233;
-      if (x10233) {
-        long x10234 = x9893;
-        char x10235 = x4[x10234];
-        bool x10236 = x10235 != '\n';
-        x10238 = x10236;
+      bool x10854 = x10853;
+      bool x10859 = x10854;
+      if (x10854) {
+        long x10855 = x10514;
+        char x10856 = x5[x10855];
+        bool x10857 = x10856 != '\n';
+        x10859 = x10857;
       }
-      bool x10239 = x10238;
-      if (!x10239) break;
-      x9893 = x9893 + 1;
+      bool x10860 = x10859;
+      if (!x10860) break;
+      x10514 = x10514 + 1;
     }
-    long x10251 = x9893;
-    char x10252 = x4[x10251];
-    bool x10253 = x10252 == '.';
-    if (x10253) {
-      x9893 = x9893 + 1;
+    long x10872 = x10514;
+    char x10873 = x5[x10872];
+    bool x10874 = x10873 == '.';
+    if (x10874) {
+      x10514 = x10514 + 1;
       for (;;) {
-        long x10255 = x9893;
-        char x10256 = x4[x10255];
-        bool x10257 = x10256 != '|';
-        bool x10262 = x10257;
-        if (x10257) {
-          long x10258 = x9893;
-          char x10259 = x4[x10258];
-          bool x10260 = x10259 != '\n';
-          x10262 = x10260;
+        long x10876 = x10514;
+        char x10877 = x5[x10876];
+        bool x10878 = x10877 != '|';
+        bool x10883 = x10878;
+        if (x10878) {
+          long x10879 = x10514;
+          char x10880 = x5[x10879];
+          bool x10881 = x10880 != '\n';
+          x10883 = x10881;
         }
-        bool x10263 = x10262;
-        if (!x10263) break;
-        x9893 = x9893 + 1;
+        bool x10884 = x10883;
+        if (!x10884) break;
+        x10514 = x10514 + 1;
       }
     } else {
     }
-    x9893 = x9893 + 1;
-    x9893 = x9893 + 2;
-    x9893 = x9893 + 2;
-    int x10294 = 0;
+    x10514 = x10514 + 1;
+    x10514 = x10514 + 2;
+    x10514 = x10514 + 2;
+    int x10915 = 0;
     for (;;) {
-      long x10295 = x9893;
-      char x10296 = x4[x10295];
-      bool x10297 = x10296 != '-';
-      bool x10302 = x10297;
-      if (x10297) {
-        long x10298 = x9893;
-        char x10299 = x4[x10298];
-        bool x10300 = x10299 != '\n';
-        x10302 = x10300;
+      long x10916 = x10514;
+      char x10917 = x5[x10916];
+      bool x10918 = x10917 != '-';
+      bool x10923 = x10918;
+      if (x10918) {
+        long x10919 = x10514;
+        char x10920 = x5[x10919];
+        bool x10921 = x10920 != '\n';
+        x10923 = x10921;
       }
-      bool x10303 = x10302;
-      if (!x10303) break;
-      int x10305 = x10294;
-      long x10307 = x9893;
-      int x10306 = x10305 * 10;
-      char x10308 = x4[x10307];
-      char x10309 = x10308 - '0';
-      int x10310 = x10306 + x10309;
-      x10294 = x10310;
-      x9893 = x9893 + 1;
+      bool x10924 = x10923;
+      if (!x10924) break;
+      int x10926 = x10915;
+      long x10928 = x10514;
+      int x10927 = x10926 * 10;
+      char x10929 = x5[x10928];
+      char x10930 = x10929 - '0';
+      int x10931 = x10927 + x10930;
+      x10915 = x10931;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x10316 = x10294;
-    int x10318 = 0;
+    x10514 = x10514 + 1;
+    int x10937 = x10915;
+    int x10939 = 0;
     for (;;) {
-      long x10319 = x9893;
-      char x10320 = x4[x10319];
-      bool x10321 = x10320 != '-';
-      bool x10326 = x10321;
-      if (x10321) {
-        long x10322 = x9893;
-        char x10323 = x4[x10322];
-        bool x10324 = x10323 != '\n';
-        x10326 = x10324;
+      long x10940 = x10514;
+      char x10941 = x5[x10940];
+      bool x10942 = x10941 != '-';
+      bool x10947 = x10942;
+      if (x10942) {
+        long x10943 = x10514;
+        char x10944 = x5[x10943];
+        bool x10945 = x10944 != '\n';
+        x10947 = x10945;
       }
-      bool x10327 = x10326;
-      if (!x10327) break;
-      int x10329 = x10318;
-      long x10331 = x9893;
-      int x10330 = x10329 * 10;
-      char x10332 = x4[x10331];
-      char x10333 = x10332 - '0';
-      int x10334 = x10330 + x10333;
-      x10318 = x10334;
-      x9893 = x9893 + 1;
+      bool x10948 = x10947;
+      if (!x10948) break;
+      int x10950 = x10939;
+      long x10952 = x10514;
+      int x10951 = x10950 * 10;
+      char x10953 = x5[x10952];
+      char x10954 = x10953 - '0';
+      int x10955 = x10951 + x10954;
+      x10939 = x10955;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x10340 = x10318;
-    int x10342 = 0;
+    x10514 = x10514 + 1;
+    int x10961 = x10939;
+    int x10963 = 0;
     for (;;) {
-      long x10343 = x9893;
-      char x10344 = x4[x10343];
-      bool x10345 = x10344 != '|';
-      bool x10350 = x10345;
-      if (x10345) {
-        long x10346 = x9893;
-        char x10347 = x4[x10346];
-        bool x10348 = x10347 != '\n';
-        x10350 = x10348;
+      long x10964 = x10514;
+      char x10965 = x5[x10964];
+      bool x10966 = x10965 != '|';
+      bool x10971 = x10966;
+      if (x10966) {
+        long x10967 = x10514;
+        char x10968 = x5[x10967];
+        bool x10969 = x10968 != '\n';
+        x10971 = x10969;
       }
-      bool x10351 = x10350;
-      if (!x10351) break;
-      int x10353 = x10342;
-      long x10355 = x9893;
-      int x10354 = x10353 * 10;
-      char x10356 = x4[x10355];
-      char x10357 = x10356 - '0';
-      int x10358 = x10354 + x10357;
-      x10342 = x10358;
-      x9893 = x9893 + 1;
+      bool x10972 = x10971;
+      if (!x10972) break;
+      int x10974 = x10963;
+      long x10976 = x10514;
+      int x10975 = x10974 * 10;
+      char x10977 = x5[x10976];
+      char x10978 = x10977 - '0';
+      int x10979 = x10975 + x10978;
+      x10963 = x10979;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    int x10364 = x10342;
+    x10514 = x10514 + 1;
+    int x10985 = x10963;
     for (;;) {
-      long x10371 = x9893;
-      char x10372 = x4[x10371];
-      bool x10373 = x10372 != '-';
-      bool x10378 = x10373;
-      if (x10373) {
-        long x10374 = x9893;
-        char x10375 = x4[x10374];
-        bool x10376 = x10375 != '\n';
-        x10378 = x10376;
+      long x10992 = x10514;
+      char x10993 = x5[x10992];
+      bool x10994 = x10993 != '-';
+      bool x10999 = x10994;
+      if (x10994) {
+        long x10995 = x10514;
+        char x10996 = x5[x10995];
+        bool x10997 = x10996 != '\n';
+        x10999 = x10997;
       }
-      bool x10379 = x10378;
-      if (!x10379) break;
-      x9893 = x9893 + 1;
+      bool x11000 = x10999;
+      if (!x11000) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10395 = x9893;
-      char x10396 = x4[x10395];
-      bool x10397 = x10396 != '-';
-      bool x10402 = x10397;
-      if (x10397) {
-        long x10398 = x9893;
-        char x10399 = x4[x10398];
-        bool x10400 = x10399 != '\n';
-        x10402 = x10400;
+      long x11016 = x10514;
+      char x11017 = x5[x11016];
+      bool x11018 = x11017 != '-';
+      bool x11023 = x11018;
+      if (x11018) {
+        long x11019 = x10514;
+        char x11020 = x5[x11019];
+        bool x11021 = x11020 != '\n';
+        x11023 = x11021;
       }
-      bool x10403 = x10402;
-      if (!x10403) break;
-      x9893 = x9893 + 1;
+      bool x11024 = x11023;
+      if (!x11024) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10419 = x9893;
-      char x10420 = x4[x10419];
-      bool x10421 = x10420 != '|';
-      bool x10426 = x10421;
-      if (x10421) {
-        long x10422 = x9893;
-        char x10423 = x4[x10422];
-        bool x10424 = x10423 != '\n';
-        x10426 = x10424;
+      long x11040 = x10514;
+      char x11041 = x5[x11040];
+      bool x11042 = x11041 != '|';
+      bool x11047 = x11042;
+      if (x11042) {
+        long x11043 = x10514;
+        char x11044 = x5[x11043];
+        bool x11045 = x11044 != '\n';
+        x11047 = x11045;
       }
-      bool x10427 = x10426;
-      if (!x10427) break;
-      x9893 = x9893 + 1;
+      bool x11048 = x11047;
+      if (!x11048) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10447 = x9893;
-      char x10448 = x4[x10447];
-      bool x10449 = x10448 != '-';
-      bool x10454 = x10449;
-      if (x10449) {
-        long x10450 = x9893;
-        char x10451 = x4[x10450];
-        bool x10452 = x10451 != '\n';
-        x10454 = x10452;
+      long x11068 = x10514;
+      char x11069 = x5[x11068];
+      bool x11070 = x11069 != '-';
+      bool x11075 = x11070;
+      if (x11070) {
+        long x11071 = x10514;
+        char x11072 = x5[x11071];
+        bool x11073 = x11072 != '\n';
+        x11075 = x11073;
       }
-      bool x10455 = x10454;
-      if (!x10455) break;
-      x9893 = x9893 + 1;
+      bool x11076 = x11075;
+      if (!x11076) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10471 = x9893;
-      char x10472 = x4[x10471];
-      bool x10473 = x10472 != '-';
-      bool x10478 = x10473;
-      if (x10473) {
-        long x10474 = x9893;
-        char x10475 = x4[x10474];
-        bool x10476 = x10475 != '\n';
-        x10478 = x10476;
+      long x11092 = x10514;
+      char x11093 = x5[x11092];
+      bool x11094 = x11093 != '-';
+      bool x11099 = x11094;
+      if (x11094) {
+        long x11095 = x10514;
+        char x11096 = x5[x11095];
+        bool x11097 = x11096 != '\n';
+        x11099 = x11097;
       }
-      bool x10479 = x10478;
-      if (!x10479) break;
-      x9893 = x9893 + 1;
+      bool x11100 = x11099;
+      if (!x11100) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10495 = x9893;
-      char x10496 = x4[x10495];
-      bool x10497 = x10496 != '|';
-      bool x10502 = x10497;
-      if (x10497) {
-        long x10498 = x9893;
-        char x10499 = x4[x10498];
-        bool x10500 = x10499 != '\n';
-        x10502 = x10500;
+      long x11116 = x10514;
+      char x11117 = x5[x11116];
+      bool x11118 = x11117 != '|';
+      bool x11123 = x11118;
+      if (x11118) {
+        long x11119 = x10514;
+        char x11120 = x5[x11119];
+        bool x11121 = x11120 != '\n';
+        x11123 = x11121;
       }
-      bool x10503 = x10502;
-      if (!x10503) break;
-      x9893 = x9893 + 1;
+      bool x11124 = x11123;
+      if (!x11124) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10522 = x9893;
-      char x10523 = x4[x10522];
-      bool x10524 = x10523 != '|';
-      bool x10529 = x10524;
-      if (x10524) {
-        long x10525 = x9893;
-        char x10526 = x4[x10525];
-        bool x10527 = x10526 != '\n';
-        x10529 = x10527;
+      long x11143 = x10514;
+      char x11144 = x5[x11143];
+      bool x11145 = x11144 != '|';
+      bool x11150 = x11145;
+      if (x11145) {
+        long x11146 = x10514;
+        char x11147 = x5[x11146];
+        bool x11148 = x11147 != '\n';
+        x11150 = x11148;
       }
-      bool x10530 = x10529;
-      if (!x10530) break;
-      x9893 = x9893 + 1;
+      bool x11151 = x11150;
+      if (!x11151) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10540 = x9893;
-      char x10541 = x4[x10540];
-      bool x10542 = x10541 != '|';
-      bool x10547 = x10542;
-      if (x10542) {
-        long x10543 = x9893;
-        char x10544 = x4[x10543];
-        bool x10545 = x10544 != '\n';
-        x10547 = x10545;
+      long x11161 = x10514;
+      char x11162 = x5[x11161];
+      bool x11163 = x11162 != '|';
+      bool x11168 = x11163;
+      if (x11163) {
+        long x11164 = x10514;
+        char x11165 = x5[x11164];
+        bool x11166 = x11165 != '\n';
+        x11168 = x11166;
       }
-      bool x10548 = x10547;
-      if (!x10548) break;
-      x9893 = x9893 + 1;
+      bool x11169 = x11168;
+      if (!x11169) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
+    x10514 = x10514 + 1;
     for (;;) {
-      long x10558 = x9893;
-      char x10559 = x4[x10558];
-      bool x10560 = x10559 != '|';
-      bool x10565 = x10560;
-      if (x10560) {
-        long x10561 = x9893;
-        char x10562 = x4[x10561];
-        bool x10563 = x10562 != '\n';
-        x10565 = x10563;
+      long x11179 = x10514;
+      char x11180 = x5[x11179];
+      bool x11181 = x11180 != '|';
+      bool x11186 = x11181;
+      if (x11181) {
+        long x11182 = x10514;
+        char x11183 = x5[x11182];
+        bool x11184 = x11183 != '\n';
+        x11186 = x11184;
       }
-      bool x10566 = x10565;
-      if (!x10566) break;
-      x9893 = x9893 + 1;
+      bool x11187 = x11186;
+      if (!x11187) break;
+      x10514 = x10514 + 1;
     }
-    x9893 = x9893 + 1;
-    long x10576 = x9895;
-    long x10577 = x9894;
-    bool x10578 = x10576 == x10577;
-    if (x10578) {
-      long x10579 = x10577 * 4L;
-      x9894 = x10579;
-      printf("buffer.resize %d\n",x10579);
-      int* x10582 = x9897;
-      int* x10583 = (int*)realloc(x10582,x10579 * sizeof(int));
-      x9897 = x10583;
-      int* x10588 = x9901;
-      int* x10589 = (int*)realloc(x10588,x10579 * sizeof(int));
-      x9901 = x10589;
-      double* x10597 = x9907;
-      double* x10598 = (double*)realloc(x10597,x10579 * sizeof(double));
-      x9907 = x10598;
-      double* x10600 = x9909;
-      double* x10601 = (double*)realloc(x10600,x10579 * sizeof(double));
-      x9909 = x10601;
-      long* x10612 = x9917;
-      long* x10613 = (long*)realloc(x10612,x10579 * sizeof(long));
-      x9917 = x10613;
+    x10514 = x10514 + 1;
+    long x11197 = x10514;
+    bool x11198 = x11197 > 0L;
+    bool x11204 = x11198;
+    if (x11198) {
+      long x11199 = x10514;
+      long x11200 = x11199 - 1L;
+      char x11201 = x5[x11200];
+      bool x11202 = x11201 != '\n';
+      x11204 = x11202;
+    }
+    bool x11205 = x11204;
+    if (x11205) {
+      for (;;) {
+        long x11206 = x10514;
+        char x11207 = x5[x11206];
+        bool x11208 = x11207 != '\n';
+        if (!x11208) break;
+        x10514 = x10514 + 1;
+      }
     } else {
     }
-    int* x10632 = x9897;
-    x10632[x10576] = x9954;
-    int* x10636 = x9901;
-    x10636[x10576] = x10002;
-    double* x10642 = x9907;
-    double x10153 = (double)x10152;
-    double x10155 = (double)x10154;
-    double x10156 = x10153 / x10155;
-    x10642[x10576] = x10156;
-    double* x10644 = x9909;
-    double x10218 = (double)x10217;
-    double x10220 = (double)x10219;
-    double x10221 = x10218 / x10220;
-    x10644[x10576] = x10221;
-    long* x10652 = x9917;
-    long x10365 = x10316 * 10000L;
-    long x10366 = x10340 * 100L;
-    long x10367 = x10365 + x10366;
-    long x10368 = x10367 + x10364;
-    x10652[x10576] = x10368;
-    x9895 = x9895 + 1;
+    x10514 = x10514 + 1;
+    long x11217 = x10516;
+    long x11218 = x10515;
+    bool x11219 = x11217 == x11218;
+    if (x11219) {
+      long x11220 = x11218 * 4L;
+      x10515 = x11220;
+      printf("buffer.resize %ld\n",x11220);
+      int* x11223 = x10518;
+      int* x11224 = (int*)realloc(x11223,x11220 * sizeof(int));
+      x10518 = x11224;
+      int* x11229 = x10522;
+      int* x11230 = (int*)realloc(x11229,x11220 * sizeof(int));
+      x10522 = x11230;
+      double* x11238 = x10528;
+      double* x11239 = (double*)realloc(x11238,x11220 * sizeof(double));
+      x10528 = x11239;
+      double* x11241 = x10530;
+      double* x11242 = (double*)realloc(x11241,x11220 * sizeof(double));
+      x10530 = x11242;
+      long* x11253 = x10538;
+      long* x11254 = (long*)realloc(x11253,x11220 * sizeof(long));
+      x10538 = x11254;
+    } else {
+    }
+    int* x11273 = x10518;
+    x11273[x11217] = x10575;
+    int* x11277 = x10522;
+    x11277[x11217] = x10623;
+    double* x11283 = x10528;
+    double x10774 = (double)x10773;
+    double x10776 = (double)x10775;
+    double x10777 = x10774 / x10776;
+    x11283[x11217] = x10777;
+    double* x11285 = x10530;
+    double x10839 = (double)x10838;
+    double x10841 = (double)x10840;
+    double x10842 = x10839 / x10841;
+    x11285[x11217] = x10842;
+    long* x11293 = x10538;
+    long x10986 = x10937 * 10000L;
+    long x10987 = x10961 * 100L;
+    long x10988 = x10986 + x10987;
+    long x10989 = x10988 + x10985;
+    x11293[x11217] = x10989;
+    x10516 = x10516 + 1;
   }
-  long x10667 = 0L;
-  long x10668 = x6;
-  long x10669 = 0L;
-  int* x10670 = (int*)malloc(x6 * sizeof(int));
-  int* x10671 = x10670;
-  int* x10676 = (int*)malloc(x6 * sizeof(int));
-  int* x10677 = x10676;
-  int x3725 = open("../databases/sf2/customer.tbl",0);
-  long x3726 = fsize(x3725);
-  char* x3727 = mmap(0, x3726, PROT_READ, MAP_FILE | MAP_SHARED, x3725, 0);
+  long x11308 = 0L;
+  long x11309 = x7;
+  long x11310 = 0L;
+  int* x11311 = (int*)malloc(x7 * sizeof(int));
+  int* x11312 = x11311;
+  int* x11317 = (int*)malloc(x7 * sizeof(int));
+  int* x11318 = x11317;
+  int x4007 = open("XXXXXcustomer.tbl",0);
+  long x4008 = fsize(x4007);
+  char* x4009 = mmap(0, x4008, PROT_READ, MAP_FILE | MAP_SHARED, x4007, 0);
   for (;;) {
-    long x10686 = x10667;
-    bool x10687 = x10686 < x3726;
-    if (!x10687) break;
-    int x10690 = 0;
+    long x11327 = x11308;
+    bool x11328 = x11327 < x4008;
+    if (!x11328) break;
+    int x11331 = 0;
     for (;;) {
-      long x10691 = x10667;
-      char x10692 = x3727[x10691];
-      bool x10693 = x10692 != '|';
-      bool x10698 = x10693;
-      if (x10693) {
-        long x10694 = x10667;
-        char x10695 = x3727[x10694];
-        bool x10696 = x10695 != '\n';
-        x10698 = x10696;
+      long x11332 = x11308;
+      char x11333 = x4009[x11332];
+      bool x11334 = x11333 != '|';
+      bool x11339 = x11334;
+      if (x11334) {
+        long x11335 = x11308;
+        char x11336 = x4009[x11335];
+        bool x11337 = x11336 != '\n';
+        x11339 = x11337;
       }
-      bool x10699 = x10698;
-      if (!x10699) break;
-      int x10701 = x10690;
-      long x10703 = x10667;
-      int x10702 = x10701 * 10;
-      char x10704 = x3727[x10703];
-      char x10705 = x10704 - '0';
-      int x10706 = x10702 + x10705;
-      x10690 = x10706;
-      x10667 = x10667 + 1;
+      bool x11340 = x11339;
+      if (!x11340) break;
+      int x11342 = x11331;
+      long x11344 = x11308;
+      int x11343 = x11342 * 10;
+      char x11345 = x4009[x11344];
+      char x11346 = x11345 - '0';
+      int x11347 = x11343 + x11346;
+      x11331 = x11347;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
-    int x10712 = x10690;
+    x11308 = x11308 + 1;
+    int x11353 = x11331;
     for (;;) {
-      long x10714 = x10667;
-      char x10715 = x3727[x10714];
-      bool x10716 = x10715 != '|';
-      bool x10721 = x10716;
-      if (x10716) {
-        long x10717 = x10667;
-        char x10718 = x3727[x10717];
-        bool x10719 = x10718 != '\n';
-        x10721 = x10719;
+      long x11355 = x11308;
+      char x11356 = x4009[x11355];
+      bool x11357 = x11356 != '|';
+      bool x11362 = x11357;
+      if (x11357) {
+        long x11358 = x11308;
+        char x11359 = x4009[x11358];
+        bool x11360 = x11359 != '\n';
+        x11362 = x11360;
       }
-      bool x10722 = x10721;
-      if (!x10722) break;
-      x10667 = x10667 + 1;
+      bool x11363 = x11362;
+      if (!x11363) break;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
+    x11308 = x11308 + 1;
     for (;;) {
-      long x10732 = x10667;
-      char x10733 = x3727[x10732];
-      bool x10734 = x10733 != '|';
-      bool x10739 = x10734;
-      if (x10734) {
-        long x10735 = x10667;
-        char x10736 = x3727[x10735];
-        bool x10737 = x10736 != '\n';
-        x10739 = x10737;
+      long x11373 = x11308;
+      char x11374 = x4009[x11373];
+      bool x11375 = x11374 != '|';
+      bool x11380 = x11375;
+      if (x11375) {
+        long x11376 = x11308;
+        char x11377 = x4009[x11376];
+        bool x11378 = x11377 != '\n';
+        x11380 = x11378;
       }
-      bool x10740 = x10739;
-      if (!x10740) break;
-      x10667 = x10667 + 1;
+      bool x11381 = x11380;
+      if (!x11381) break;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
-    int x10750 = 0;
+    x11308 = x11308 + 1;
+    int x11391 = 0;
     for (;;) {
-      long x10751 = x10667;
-      char x10752 = x3727[x10751];
-      bool x10753 = x10752 != '|';
-      bool x10758 = x10753;
-      if (x10753) {
-        long x10754 = x10667;
-        char x10755 = x3727[x10754];
-        bool x10756 = x10755 != '\n';
-        x10758 = x10756;
+      long x11392 = x11308;
+      char x11393 = x4009[x11392];
+      bool x11394 = x11393 != '|';
+      bool x11399 = x11394;
+      if (x11394) {
+        long x11395 = x11308;
+        char x11396 = x4009[x11395];
+        bool x11397 = x11396 != '\n';
+        x11399 = x11397;
       }
-      bool x10759 = x10758;
-      if (!x10759) break;
-      int x10761 = x10750;
-      long x10763 = x10667;
-      int x10762 = x10761 * 10;
-      char x10764 = x3727[x10763];
-      char x10765 = x10764 - '0';
-      int x10766 = x10762 + x10765;
-      x10750 = x10766;
-      x10667 = x10667 + 1;
+      bool x11400 = x11399;
+      if (!x11400) break;
+      int x11402 = x11391;
+      long x11404 = x11308;
+      int x11403 = x11402 * 10;
+      char x11405 = x4009[x11404];
+      char x11406 = x11405 - '0';
+      int x11407 = x11403 + x11406;
+      x11391 = x11407;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
-    int x10772 = x10750;
+    x11308 = x11308 + 1;
+    int x11413 = x11391;
     for (;;) {
-      long x10774 = x10667;
-      char x10775 = x3727[x10774];
-      bool x10776 = x10775 != '|';
-      bool x10781 = x10776;
-      if (x10776) {
-        long x10777 = x10667;
-        char x10778 = x3727[x10777];
-        bool x10779 = x10778 != '\n';
-        x10781 = x10779;
+      long x11415 = x11308;
+      char x11416 = x4009[x11415];
+      bool x11417 = x11416 != '|';
+      bool x11422 = x11417;
+      if (x11417) {
+        long x11418 = x11308;
+        char x11419 = x4009[x11418];
+        bool x11420 = x11419 != '\n';
+        x11422 = x11420;
       }
-      bool x10782 = x10781;
-      if (!x10782) break;
-      x10667 = x10667 + 1;
+      bool x11423 = x11422;
+      if (!x11423) break;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
+    x11308 = x11308 + 1;
     for (;;) {
-      long x10794 = x10667;
-      char x10795 = x3727[x10794];
-      bool x10796 = x10795 != '.';
-      bool x10801 = x10796;
-      if (x10796) {
-        long x10797 = x10667;
-        char x10798 = x3727[x10797];
-        bool x10799 = x10798 != '|';
-        x10801 = x10799;
+      long x11435 = x11308;
+      char x11436 = x4009[x11435];
+      bool x11437 = x11436 != '.';
+      bool x11442 = x11437;
+      if (x11437) {
+        long x11438 = x11308;
+        char x11439 = x4009[x11438];
+        bool x11440 = x11439 != '|';
+        x11442 = x11440;
       }
-      bool x10802 = x10801;
-      bool x10807 = x10802;
-      if (x10802) {
-        long x10803 = x10667;
-        char x10804 = x3727[x10803];
-        bool x10805 = x10804 != '\n';
-        x10807 = x10805;
+      bool x11443 = x11442;
+      bool x11448 = x11443;
+      if (x11443) {
+        long x11444 = x11308;
+        char x11445 = x4009[x11444];
+        bool x11446 = x11445 != '\n';
+        x11448 = x11446;
       }
-      bool x10808 = x10807;
-      if (!x10808) break;
-      x10667 = x10667 + 1;
+      bool x11449 = x11448;
+      if (!x11449) break;
+      x11308 = x11308 + 1;
     }
-    long x10820 = x10667;
-    char x10821 = x3727[x10820];
-    bool x10822 = x10821 == '.';
-    if (x10822) {
-      x10667 = x10667 + 1;
+    long x11461 = x11308;
+    char x11462 = x4009[x11461];
+    bool x11463 = x11462 == '.';
+    if (x11463) {
+      x11308 = x11308 + 1;
       for (;;) {
-        long x10824 = x10667;
-        char x10825 = x3727[x10824];
-        bool x10826 = x10825 != '|';
-        bool x10831 = x10826;
-        if (x10826) {
-          long x10827 = x10667;
-          char x10828 = x3727[x10827];
-          bool x10829 = x10828 != '\n';
-          x10831 = x10829;
+        long x11465 = x11308;
+        char x11466 = x4009[x11465];
+        bool x11467 = x11466 != '|';
+        bool x11472 = x11467;
+        if (x11467) {
+          long x11468 = x11308;
+          char x11469 = x4009[x11468];
+          bool x11470 = x11469 != '\n';
+          x11472 = x11470;
         }
-        bool x10832 = x10831;
-        if (!x10832) break;
-        x10667 = x10667 + 1;
+        bool x11473 = x11472;
+        if (!x11473) break;
+        x11308 = x11308 + 1;
       }
     } else {
     }
-    x10667 = x10667 + 1;
+    x11308 = x11308 + 1;
     for (;;) {
-      long x10857 = x10667;
-      char x10858 = x3727[x10857];
-      bool x10859 = x10858 != '|';
-      bool x10864 = x10859;
-      if (x10859) {
-        long x10860 = x10667;
-        char x10861 = x3727[x10860];
-        bool x10862 = x10861 != '\n';
-        x10864 = x10862;
+      long x11498 = x11308;
+      char x11499 = x4009[x11498];
+      bool x11500 = x11499 != '|';
+      bool x11505 = x11500;
+      if (x11500) {
+        long x11501 = x11308;
+        char x11502 = x4009[x11501];
+        bool x11503 = x11502 != '\n';
+        x11505 = x11503;
       }
-      bool x10865 = x10864;
-      if (!x10865) break;
-      x10667 = x10667 + 1;
+      bool x11506 = x11505;
+      if (!x11506) break;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
+    x11308 = x11308 + 1;
     for (;;) {
-      long x10875 = x10667;
-      char x10876 = x3727[x10875];
-      bool x10877 = x10876 != '|';
-      bool x10882 = x10877;
-      if (x10877) {
-        long x10878 = x10667;
-        char x10879 = x3727[x10878];
-        bool x10880 = x10879 != '\n';
-        x10882 = x10880;
+      long x11516 = x11308;
+      char x11517 = x4009[x11516];
+      bool x11518 = x11517 != '|';
+      bool x11523 = x11518;
+      if (x11518) {
+        long x11519 = x11308;
+        char x11520 = x4009[x11519];
+        bool x11521 = x11520 != '\n';
+        x11523 = x11521;
       }
-      bool x10883 = x10882;
-      if (!x10883) break;
-      x10667 = x10667 + 1;
+      bool x11524 = x11523;
+      if (!x11524) break;
+      x11308 = x11308 + 1;
     }
-    x10667 = x10667 + 1;
-    long x10893 = x10669;
-    long x10894 = x10668;
-    bool x10895 = x10893 == x10894;
-    if (x10895) {
-      long x10896 = x10894 * 4L;
-      x10668 = x10896;
-      printf("buffer.resize %d\n",x10896);
-      int* x10899 = x10671;
-      int* x10900 = (int*)realloc(x10899,x10896 * sizeof(int));
-      x10671 = x10900;
-      int* x10908 = x10677;
-      int* x10909 = (int*)realloc(x10908,x10896 * sizeof(int));
-      x10677 = x10909;
+    x11308 = x11308 + 1;
+    long x11534 = x11308;
+    bool x11535 = x11534 > 0L;
+    bool x11541 = x11535;
+    if (x11535) {
+      long x11536 = x11308;
+      long x11537 = x11536 - 1L;
+      char x11538 = x4009[x11537];
+      bool x11539 = x11538 != '\n';
+      x11541 = x11539;
+    }
+    bool x11542 = x11541;
+    if (x11542) {
+      for (;;) {
+        long x11543 = x11308;
+        char x11544 = x4009[x11543];
+        bool x11545 = x11544 != '\n';
+        if (!x11545) break;
+        x11308 = x11308 + 1;
+      }
     } else {
     }
-    int* x10925 = x10671;
-    x10925[x10893] = x10712;
-    int* x10931 = x10677;
-    x10931[x10893] = x10772;
-    x10669 = x10669 + 1;
+    x11308 = x11308 + 1;
+    long x11554 = x11310;
+    long x11555 = x11309;
+    bool x11556 = x11554 == x11555;
+    if (x11556) {
+      long x11557 = x11555 * 4L;
+      x11309 = x11557;
+      printf("buffer.resize %ld\n",x11557);
+      int* x11560 = x11312;
+      int* x11561 = (int*)realloc(x11560,x11557 * sizeof(int));
+      x11312 = x11561;
+      int* x11569 = x11318;
+      int* x11570 = (int*)realloc(x11569,x11557 * sizeof(int));
+      x11318 = x11570;
+    } else {
+    }
+    int* x11586 = x11312;
+    x11586[x11554] = x11353;
+    int* x11592 = x11318;
+    x11592[x11554] = x11413;
+    x11310 = x11310 + 1;
   }
-  long x10944 = 0L;
-  long x10945 = x6;
-  long x10946 = 0L;
-  int* x10947 = (int*)malloc(x6 * sizeof(int));
-  int* x10948 = x10947;
-  int* x10953 = (int*)malloc(x6 * sizeof(int));
-  int* x10954 = x10953;
-  int x1750 = open("../databases/sf2/supplier.tbl",0);
-  long x1751 = fsize(x1750);
-  char* x1752 = mmap(0, x1751, PROT_READ, MAP_FILE | MAP_SHARED, x1750, 0);
+  long x11605 = 0L;
+  long x11606 = x7;
+  long x11607 = 0L;
+  int* x11608 = (int*)malloc(x7 * sizeof(int));
+  int* x11609 = x11608;
+  int* x11614 = (int*)malloc(x7 * sizeof(int));
+  int* x11615 = x11614;
+  int x1908 = open("XXXXXsupplier.tbl",0);
+  long x1909 = fsize(x1908);
+  char* x1910 = mmap(0, x1909, PROT_READ, MAP_FILE | MAP_SHARED, x1908, 0);
   for (;;) {
-    long x10961 = x10944;
-    bool x10962 = x10961 < x1751;
-    if (!x10962) break;
-    int x10965 = 0;
+    long x11622 = x11605;
+    bool x11623 = x11622 < x1909;
+    if (!x11623) break;
+    int x11626 = 0;
     for (;;) {
-      long x10966 = x10944;
-      char x10967 = x1752[x10966];
-      bool x10968 = x10967 != '|';
-      bool x10973 = x10968;
-      if (x10968) {
-        long x10969 = x10944;
-        char x10970 = x1752[x10969];
-        bool x10971 = x10970 != '\n';
-        x10973 = x10971;
+      long x11627 = x11605;
+      char x11628 = x1910[x11627];
+      bool x11629 = x11628 != '|';
+      bool x11634 = x11629;
+      if (x11629) {
+        long x11630 = x11605;
+        char x11631 = x1910[x11630];
+        bool x11632 = x11631 != '\n';
+        x11634 = x11632;
       }
-      bool x10974 = x10973;
-      if (!x10974) break;
-      int x10976 = x10965;
-      long x10978 = x10944;
-      int x10977 = x10976 * 10;
-      char x10979 = x1752[x10978];
-      char x10980 = x10979 - '0';
-      int x10981 = x10977 + x10980;
-      x10965 = x10981;
-      x10944 = x10944 + 1;
+      bool x11635 = x11634;
+      if (!x11635) break;
+      int x11637 = x11626;
+      long x11639 = x11605;
+      int x11638 = x11637 * 10;
+      char x11640 = x1910[x11639];
+      char x11641 = x11640 - '0';
+      int x11642 = x11638 + x11641;
+      x11626 = x11642;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
-    int x10987 = x10965;
+    x11605 = x11605 + 1;
+    int x11648 = x11626;
     for (;;) {
-      long x10989 = x10944;
-      char x10990 = x1752[x10989];
-      bool x10991 = x10990 != '|';
-      bool x10996 = x10991;
-      if (x10991) {
-        long x10992 = x10944;
-        char x10993 = x1752[x10992];
-        bool x10994 = x10993 != '\n';
-        x10996 = x10994;
+      long x11650 = x11605;
+      char x11651 = x1910[x11650];
+      bool x11652 = x11651 != '|';
+      bool x11657 = x11652;
+      if (x11652) {
+        long x11653 = x11605;
+        char x11654 = x1910[x11653];
+        bool x11655 = x11654 != '\n';
+        x11657 = x11655;
       }
-      bool x10997 = x10996;
-      if (!x10997) break;
-      x10944 = x10944 + 1;
+      bool x11658 = x11657;
+      if (!x11658) break;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
+    x11605 = x11605 + 1;
     for (;;) {
-      long x11007 = x10944;
-      char x11008 = x1752[x11007];
-      bool x11009 = x11008 != '|';
-      bool x11014 = x11009;
-      if (x11009) {
-        long x11010 = x10944;
-        char x11011 = x1752[x11010];
-        bool x11012 = x11011 != '\n';
-        x11014 = x11012;
+      long x11668 = x11605;
+      char x11669 = x1910[x11668];
+      bool x11670 = x11669 != '|';
+      bool x11675 = x11670;
+      if (x11670) {
+        long x11671 = x11605;
+        char x11672 = x1910[x11671];
+        bool x11673 = x11672 != '\n';
+        x11675 = x11673;
       }
-      bool x11015 = x11014;
-      if (!x11015) break;
-      x10944 = x10944 + 1;
+      bool x11676 = x11675;
+      if (!x11676) break;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
-    int x11025 = 0;
+    x11605 = x11605 + 1;
+    int x11686 = 0;
     for (;;) {
-      long x11026 = x10944;
-      char x11027 = x1752[x11026];
-      bool x11028 = x11027 != '|';
-      bool x11033 = x11028;
-      if (x11028) {
-        long x11029 = x10944;
-        char x11030 = x1752[x11029];
-        bool x11031 = x11030 != '\n';
-        x11033 = x11031;
+      long x11687 = x11605;
+      char x11688 = x1910[x11687];
+      bool x11689 = x11688 != '|';
+      bool x11694 = x11689;
+      if (x11689) {
+        long x11690 = x11605;
+        char x11691 = x1910[x11690];
+        bool x11692 = x11691 != '\n';
+        x11694 = x11692;
       }
-      bool x11034 = x11033;
-      if (!x11034) break;
-      int x11036 = x11025;
-      long x11038 = x10944;
-      int x11037 = x11036 * 10;
-      char x11039 = x1752[x11038];
-      char x11040 = x11039 - '0';
-      int x11041 = x11037 + x11040;
-      x11025 = x11041;
-      x10944 = x10944 + 1;
+      bool x11695 = x11694;
+      if (!x11695) break;
+      int x11697 = x11686;
+      long x11699 = x11605;
+      int x11698 = x11697 * 10;
+      char x11700 = x1910[x11699];
+      char x11701 = x11700 - '0';
+      int x11702 = x11698 + x11701;
+      x11686 = x11702;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
-    int x11047 = x11025;
+    x11605 = x11605 + 1;
+    int x11708 = x11686;
     for (;;) {
-      long x11049 = x10944;
-      char x11050 = x1752[x11049];
-      bool x11051 = x11050 != '|';
-      bool x11056 = x11051;
-      if (x11051) {
-        long x11052 = x10944;
-        char x11053 = x1752[x11052];
-        bool x11054 = x11053 != '\n';
-        x11056 = x11054;
+      long x11710 = x11605;
+      char x11711 = x1910[x11710];
+      bool x11712 = x11711 != '|';
+      bool x11717 = x11712;
+      if (x11712) {
+        long x11713 = x11605;
+        char x11714 = x1910[x11713];
+        bool x11715 = x11714 != '\n';
+        x11717 = x11715;
       }
-      bool x11057 = x11056;
-      if (!x11057) break;
-      x10944 = x10944 + 1;
+      bool x11718 = x11717;
+      if (!x11718) break;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
+    x11605 = x11605 + 1;
     for (;;) {
-      long x11069 = x10944;
-      char x11070 = x1752[x11069];
-      bool x11071 = x11070 != '.';
-      bool x11076 = x11071;
-      if (x11071) {
-        long x11072 = x10944;
-        char x11073 = x1752[x11072];
-        bool x11074 = x11073 != '|';
-        x11076 = x11074;
+      long x11730 = x11605;
+      char x11731 = x1910[x11730];
+      bool x11732 = x11731 != '.';
+      bool x11737 = x11732;
+      if (x11732) {
+        long x11733 = x11605;
+        char x11734 = x1910[x11733];
+        bool x11735 = x11734 != '|';
+        x11737 = x11735;
       }
-      bool x11077 = x11076;
-      bool x11082 = x11077;
-      if (x11077) {
-        long x11078 = x10944;
-        char x11079 = x1752[x11078];
-        bool x11080 = x11079 != '\n';
-        x11082 = x11080;
+      bool x11738 = x11737;
+      bool x11743 = x11738;
+      if (x11738) {
+        long x11739 = x11605;
+        char x11740 = x1910[x11739];
+        bool x11741 = x11740 != '\n';
+        x11743 = x11741;
       }
-      bool x11083 = x11082;
-      if (!x11083) break;
-      x10944 = x10944 + 1;
+      bool x11744 = x11743;
+      if (!x11744) break;
+      x11605 = x11605 + 1;
     }
-    long x11095 = x10944;
-    char x11096 = x1752[x11095];
-    bool x11097 = x11096 == '.';
-    if (x11097) {
-      x10944 = x10944 + 1;
+    long x11756 = x11605;
+    char x11757 = x1910[x11756];
+    bool x11758 = x11757 == '.';
+    if (x11758) {
+      x11605 = x11605 + 1;
       for (;;) {
-        long x11099 = x10944;
-        char x11100 = x1752[x11099];
-        bool x11101 = x11100 != '|';
-        bool x11106 = x11101;
-        if (x11101) {
-          long x11102 = x10944;
-          char x11103 = x1752[x11102];
-          bool x11104 = x11103 != '\n';
-          x11106 = x11104;
+        long x11760 = x11605;
+        char x11761 = x1910[x11760];
+        bool x11762 = x11761 != '|';
+        bool x11767 = x11762;
+        if (x11762) {
+          long x11763 = x11605;
+          char x11764 = x1910[x11763];
+          bool x11765 = x11764 != '\n';
+          x11767 = x11765;
         }
-        bool x11107 = x11106;
-        if (!x11107) break;
-        x10944 = x10944 + 1;
+        bool x11768 = x11767;
+        if (!x11768) break;
+        x11605 = x11605 + 1;
       }
     } else {
     }
-    x10944 = x10944 + 1;
+    x11605 = x11605 + 1;
     for (;;) {
-      long x11132 = x10944;
-      char x11133 = x1752[x11132];
-      bool x11134 = x11133 != '|';
-      bool x11139 = x11134;
-      if (x11134) {
-        long x11135 = x10944;
-        char x11136 = x1752[x11135];
-        bool x11137 = x11136 != '\n';
-        x11139 = x11137;
+      long x11793 = x11605;
+      char x11794 = x1910[x11793];
+      bool x11795 = x11794 != '|';
+      bool x11800 = x11795;
+      if (x11795) {
+        long x11796 = x11605;
+        char x11797 = x1910[x11796];
+        bool x11798 = x11797 != '\n';
+        x11800 = x11798;
       }
-      bool x11140 = x11139;
-      if (!x11140) break;
-      x10944 = x10944 + 1;
+      bool x11801 = x11800;
+      if (!x11801) break;
+      x11605 = x11605 + 1;
     }
-    x10944 = x10944 + 1;
-    long x11150 = x10946;
-    long x11151 = x10945;
-    bool x11152 = x11150 == x11151;
-    if (x11152) {
-      long x11153 = x11151 * 4L;
-      x10945 = x11153;
-      printf("buffer.resize %d\n",x11153);
-      int* x11156 = x10948;
-      int* x11157 = (int*)realloc(x11156,x11153 * sizeof(int));
-      x10948 = x11157;
-      int* x11165 = x10954;
-      int* x11166 = (int*)realloc(x11165,x11153 * sizeof(int));
-      x10954 = x11166;
+    x11605 = x11605 + 1;
+    long x11811 = x11605;
+    bool x11812 = x11811 > 0L;
+    bool x11818 = x11812;
+    if (x11812) {
+      long x11813 = x11605;
+      long x11814 = x11813 - 1L;
+      char x11815 = x1910[x11814];
+      bool x11816 = x11815 != '\n';
+      x11818 = x11816;
+    }
+    bool x11819 = x11818;
+    if (x11819) {
+      for (;;) {
+        long x11820 = x11605;
+        char x11821 = x1910[x11820];
+        bool x11822 = x11821 != '\n';
+        if (!x11822) break;
+        x11605 = x11605 + 1;
+      }
     } else {
     }
-    int* x11179 = x10948;
-    x11179[x11150] = x10987;
-    int* x11185 = x10954;
-    x11185[x11150] = x11047;
-    x10946 = x10946 + 1;
+    x11605 = x11605 + 1;
+    long x11831 = x11607;
+    long x11832 = x11606;
+    bool x11833 = x11831 == x11832;
+    if (x11833) {
+      long x11834 = x11832 * 4L;
+      x11606 = x11834;
+      printf("buffer.resize %ld\n",x11834);
+      int* x11837 = x11609;
+      int* x11838 = (int*)realloc(x11837,x11834 * sizeof(int));
+      x11609 = x11838;
+      int* x11846 = x11615;
+      int* x11847 = (int*)realloc(x11846,x11834 * sizeof(int));
+      x11615 = x11847;
+    } else {
+    }
+    int* x11860 = x11609;
+    x11860[x11831] = x11648;
+    int* x11866 = x11615;
+    x11866[x11831] = x11708;
+    x11607 = x11607 + 1;
   }
-  long x2011 = DEFAULT_JOIN_HASH_SIZE;
-  long x787 = DEFAULT_AGG_HASH_SIZE ;
-  long x2034 = x2011 - 1L;
-  long x802 = x787 - 1L;
-  bool x975 = true == false;
-  int x11196;
-  for(x11196=0; x11196 < 5; x11196++) {
-    bool x11197 = false;
-    long x11198 = 0L;
-    bool x11200 = false;
-    long x11201 = 0L;
-    int x11205 = 0;
-    char* x11206 = "";
-    bool x11211 = false;
-    long x11212 = 0L;
-    int* x11214 = (int*)malloc(x2011 * sizeof(int));
-    int* x11215 = x11214;
-    char** x11216 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11217 = x11216;
-    int* x11222 = (int*)malloc(x2011 * sizeof(int));
-    int* x11223 = x11222;
-    char** x11224 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11225 = x11224;
-    long x11230 = 0L;
-    long* x11231 = (long*)malloc(x2011 * sizeof(long));
-    long* x11232 = (long*)malloc(x2011 * sizeof(long));
-    long x11233;
-    for(x11233=0L; x11233 < x2011; x11233++) {
-      x11231[x11233] = -1L;
+  long x2189 = DEFAULT_JOIN_HASH_SIZE;
+  long x808 = DEFAULT_AGG_HASH_SIZE ;
+  long x2212 = x2189 - 1L;
+  long x823 = x808 - 1L;
+  bool x1043 = true == false;
+  int x11877;
+  for(x11877=0; x11877 < 5; x11877++) {
+    bool x11878 = false;
+    long x11879 = 0L;
+    bool x11881 = false;
+    long x11882 = 0L;
+    int x11886 = 0;
+    char* x11887 = "";
+    bool x11892 = false;
+    long x11893 = 0L;
+    int* x11895 = (int*)malloc(x2189 * sizeof(int));
+    int* x11896 = x11895;
+    char** x11897 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11898 = x11897;
+    int* x11903 = (int*)malloc(x2189 * sizeof(int));
+    int* x11904 = x11903;
+    char** x11905 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11906 = x11905;
+    long x11911 = 0L;
+    long* x11912 = (long*)malloc(x2189 * sizeof(long));
+    long* x11913 = (long*)malloc(x2189 * sizeof(long));
+    long x11914;
+    for(x11914=0L; x11914 < x2189; x11914++) {
+      x11912[x11914] = -1L;
     }
-    bool x11238 = false;
-    long x11239 = 0L;
-    char** x11244 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11245 = x11244;
-    int* x11250 = (int*)malloc(x2011 * sizeof(int));
-    int* x11251 = x11250;
-    char** x11252 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11253 = x11252;
-    int* x11258 = (int*)malloc(x2011 * sizeof(int));
-    int* x11259 = x11258;
-    long x11272 = 0L;
-    long* x11273 = (long*)malloc(x2011 * sizeof(long));
-    long* x11274 = (long*)malloc(x2011 * sizeof(long));
-    long x11275;
-    for(x11275=0L; x11275 < x2011; x11275++) {
-      x11273[x11275] = -1L;
+    bool x11919 = false;
+    long x11920 = 0L;
+    char** x11925 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11926 = x11925;
+    int* x11931 = (int*)malloc(x2189 * sizeof(int));
+    int* x11932 = x11931;
+    char** x11933 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11934 = x11933;
+    int* x11939 = (int*)malloc(x2189 * sizeof(int));
+    int* x11940 = x11939;
+    long x11953 = 0L;
+    long* x11954 = (long*)malloc(x2189 * sizeof(long));
+    long* x11955 = (long*)malloc(x2189 * sizeof(long));
+    long x11956;
+    for(x11956=0L; x11956 < x2189; x11956++) {
+      x11954[x11956] = -1L;
     }
-    bool x11280 = false;
-    long x11281 = 0L;
-    char** x11285 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11286 = x11285;
-    int* x11291 = (int*)malloc(x2011 * sizeof(int));
-    int* x11292 = x11291;
-    char** x11293 = (char**)malloc(x2011 * sizeof(char*));
-    char** x11294 = x11293;
-    int* x11313 = (int*)malloc(x2011 * sizeof(int));
-    int* x11314 = x11313;
-    double* x11323 = (double*)malloc(x2011 * sizeof(double));
-    double* x11324 = x11323;
-    double* x11325 = (double*)malloc(x2011 * sizeof(double));
-    double* x11326 = x11325;
-    long* x11333 = (long*)malloc(x2011 * sizeof(long));
-    long* x11334 = x11333;
-    long x11345 = 0L;
-    long* x11346 = (long*)malloc(x2011 * sizeof(long));
-    long* x11347 = (long*)malloc(x2011 * sizeof(long));
-    long x11348;
-    for(x11348=0L; x11348 < x2011; x11348++) {
-      x11346[x11348] = -1L;
+    bool x11961 = false;
+    long x11962 = 0L;
+    char** x11966 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11967 = x11966;
+    int* x11972 = (int*)malloc(x2189 * sizeof(int));
+    int* x11973 = x11972;
+    char** x11974 = (char**)malloc(x2189 * sizeof(char*));
+    char** x11975 = x11974;
+    int* x11994 = (int*)malloc(x2189 * sizeof(int));
+    int* x11995 = x11994;
+    double* x12004 = (double*)malloc(x2189 * sizeof(double));
+    double* x12005 = x12004;
+    double* x12006 = (double*)malloc(x2189 * sizeof(double));
+    double* x12007 = x12006;
+    long* x12014 = (long*)malloc(x2189 * sizeof(long));
+    long* x12015 = x12014;
+    long x12026 = 0L;
+    long* x12027 = (long*)malloc(x2189 * sizeof(long));
+    long* x12028 = (long*)malloc(x2189 * sizeof(long));
+    long x12029;
+    for(x12029=0L; x12029 < x2189; x12029++) {
+      x12027[x12029] = -1L;
     }
-    bool x11353 = false;
-    long x11354 = 0L;
-    int* x11356 = (int*)malloc(x2011 * sizeof(int));
-    int* x11357 = x11356;
-    int* x11362 = (int*)malloc(x2011 * sizeof(int));
-    int* x11363 = x11362;
-    long x11372 = 0L;
-    long* x11373 = (long*)malloc(x2011 * sizeof(long));
-    long* x11374 = (long*)malloc(x2011 * sizeof(long));
-    long x11375;
-    for(x11375=0L; x11375 < x2011; x11375++) {
-      x11373[x11375] = -1L;
+    bool x12034 = false;
+    long x12035 = 0L;
+    int* x12037 = (int*)malloc(x2189 * sizeof(int));
+    int* x12038 = x12037;
+    int* x12043 = (int*)malloc(x2189 * sizeof(int));
+    int* x12044 = x12043;
+    long x12053 = 0L;
+    long* x12054 = (long*)malloc(x2189 * sizeof(long));
+    long* x12055 = (long*)malloc(x2189 * sizeof(long));
+    long x12056;
+    for(x12056=0L; x12056 < x2189; x12056++) {
+      x12054[x12056] = -1L;
     }
-    struct Anon1587544425* x11381 = (struct Anon1587544425*)malloc(x787 * sizeof(struct Anon1587544425));
-    struct Anon1587544425* x11382 = x11381;
-    long x11383 = 0L;
-    long* x11384 = (long*)malloc(x787 * sizeof(long));
-    long x11385;
-    for(x11385=0L; x11385 < x787; x11385++) {
-      struct Anon1587544425* x11386 = x11382;
-      struct Anon1587544425 x11387 = x11386[x11385];
-      struct Anon726278688 x11388 = x11387.key;;
-      struct Anon2052879266 x11389 = x11387.aggs;;
-      struct Anon1587544425 x11390;
-      x11390.exists = false;
-      x11390.key = x11388;
-      x11390.aggs = x11389;
-      x11386[x11385] = x11390;
+    struct Anon197435497* x12062 = (struct Anon197435497*)malloc(x808 * sizeof(struct Anon197435497));
+    struct Anon197435497* x12063 = x12062;
+    long x12064 = 0L;
+    long* x12065 = (long*)malloc(x808 * sizeof(long));
+    long x12066;
+    for(x12066=0L; x12066 < x808; x12066++) {
+      struct Anon197435497* x12067 = x12063;
+      struct Anon197435497 x12068 = x12067[x12066];
+      struct Anon726278688 x12069 = x12068.key;;
+      struct Anon2052879266 x12070 = x12068.aggs;;
+      struct Anon197435497 x12071;
+      x12071.exists = false;
+      x12071.key = x12069;
+      x12071.aggs = x12070;
+      x12067[x12066] = x12071;
     }
-    long x11395 = 0L;
-    struct timeval x12098, x12099, x12100;
-    gettimeofday(&x12098, NULL);
+    long x12076 = 1024L;
+    long x12077 = 0L;
+    struct Anon197435497* x12078 = (struct Anon197435497*)malloc(1024L * sizeof(struct Anon197435497));
+    struct Anon197435497* x12079 = x12078;
+    long x12081 = 0L;
+    struct timeval x12814, x12815, x12816;
+    gettimeofday(&x12814, NULL);
     printf("%s\n","begin scan CUSTOMER");
     for (;;) {
-      bool x11397 = x11353;
-      bool x11398 = !x11397;
-      bool x11403 = x11398;
-      if (x11398) {
-        long x11399 = x11354;
-        long x11400 = x10669;
-        bool x11401 = x11399 < x11400;
-        x11403 = x11401;
+      bool x12083 = x12034;
+      bool x12084 = !x12083;
+      bool x12089 = x12084;
+      if (x12084) {
+        long x12085 = x12035;
+        long x12086 = x11310;
+        bool x12087 = x12085 < x12086;
+        x12089 = x12087;
       }
-      bool x11404 = x11403;
-      if (!x11404) break;
-      long x11406 = x11354;
-      int* x11407 = x10671;
-      int x11408 = x11407[x11406];
-      int* x11413 = x10677;
-      int x11414 = x11413[x11406];
-      x11354 = x11354 + 1;
-      long x11425 = x11372;
-      int* x11426 = x11357;
-      x11426[x11425] = x11408;
-      int* x11432 = x11363;
-      x11432[x11425] = x11414;
-      x11372 = x11372 + 1L;
-      long x11443 = x11408 & x2034;
-      long x11444 = x11373[x11443];
-      x11373[x11443] = x11425;
-      x11374[x11425] = x11444;
+      bool x12090 = x12089;
+      if (!x12090) break;
+      long x12092 = x12035;
+      int* x12093 = x11312;
+      int x12094 = x12093[x12092];
+      int* x12099 = x11318;
+      int x12100 = x12099[x12092];
+      x12035 = x12035 + 1;
+      long x12111 = x12053;
+      int* x12112 = x12038;
+      x12112[x12111] = x12094;
+      int* x12118 = x12044;
+      x12118[x12111] = x12100;
+      x12053 = x12053 + 1L;
+      long x12129 = x12094 & x2212;
+      long x12130 = x12054[x12129];
+      x12054[x12129] = x12111;
+      x12055[x12111] = x12130;
     }
     printf("%s\n","begin scan NATION");
     for (;;) {
-      bool x11450 = x11197;
-      bool x11451 = !x11450;
-      bool x11456 = x11451;
-      if (x11451) {
-        long x11452 = x11198;
-        long x11453 = x9414;
-        bool x11454 = x11452 < x11453;
-        x11456 = x11454;
+      bool x12136 = x11878;
+      bool x12137 = !x12136;
+      bool x12142 = x12137;
+      if (x12137) {
+        long x12138 = x11879;
+        long x12139 = x9995;
+        bool x12140 = x12138 < x12139;
+        x12142 = x12140;
       }
-      bool x11457 = x11456;
-      if (!x11457) break;
-      long x11459 = x11198;
-      int* x11460 = x9416;
-      int x11461 = x11460[x11459];
-      char** x11462 = x9418;
-      char* x11463 = x11462[x11459];
-      x11198 = x11198 + 1;
-      x11205 = x11461;
-      x11206 = x11463;
+      bool x12143 = x12142;
+      if (!x12143) break;
+      long x12145 = x11879;
+      int* x12146 = x9997;
+      int x12147 = x12146[x12145];
+      char** x12148 = x9999;
+      char* x12149 = x12148[x12145];
+      x11879 = x11879 + 1;
+      x11886 = x12147;
+      x11887 = x12149;
       printf("%s\n","begin scan NATION");
       for (;;) {
-        bool x11476 = x11200;
-        bool x11477 = !x11476;
-        bool x11482 = x11477;
-        if (x11477) {
-          long x11478 = x11201;
-          long x11479 = x9414;
-          bool x11480 = x11478 < x11479;
-          x11482 = x11480;
+        bool x12162 = x11881;
+        bool x12163 = !x12162;
+        bool x12168 = x12163;
+        if (x12163) {
+          long x12164 = x11882;
+          long x12165 = x9995;
+          bool x12166 = x12164 < x12165;
+          x12168 = x12166;
         }
-        bool x11483 = x11482;
-        if (!x11483) break;
-        long x11485 = x11201;
-        int* x11486 = x9416;
-        int x11487 = x11486[x11485];
-        char** x11488 = x9418;
-        char* x11489 = x11488[x11485];
-        x11201 = x11201 + 1;
-        int x11497 = x11205;
-        char* x11498 = x11206;
-        bool x11502 = strcmp(x11498,"UNITED STATES") == 0;;
-        bool x11504 = x11502;
-        if (x11502) {
-          bool x11503 = strcmp(x11489,"INDONESIA") == 0;;
-          x11504 = x11503;
+        bool x12169 = x12168;
+        if (!x12169) break;
+        long x12171 = x11882;
+        int* x12172 = x9997;
+        int x12173 = x12172[x12171];
+        char** x12174 = x9999;
+        char* x12175 = x12174[x12171];
+        x11882 = x11882 + 1;
+        int x12183 = x11886;
+        char* x12184 = x11887;
+        bool x12188 = tpch_strcmp(x12184,"FRANCE") == 0;;
+        bool x12190 = x12188;
+        if (x12188) {
+          bool x12189 = tpch_strcmp(x12175,"GERMANY") == 0;;
+          x12190 = x12189;
         }
-        bool x11505 = x11504;
-        bool x11510 = x11505;
-        if (x11505 == false) {
-          bool x11506 = strcmp(x11498,"INDONESIA") == 0;;
-          bool x11508 = x11506;
-          if (x11506) {
-            bool x11507 = strcmp(x11489,"UNITED STATES") == 0;;
-            x11508 = x11507;
+        bool x12191 = x12190;
+        bool x12196 = x12191;
+        if (x12191 == false) {
+          bool x12192 = tpch_strcmp(x12184,"GERMANY") == 0;;
+          bool x12194 = x12192;
+          if (x12192) {
+            bool x12193 = tpch_strcmp(x12175,"FRANCE") == 0;;
+            x12194 = x12193;
           }
-          bool x11509 = x11508;
-          x11510 = x11509;
+          bool x12195 = x12194;
+          x12196 = x12195;
         }
-        bool x11511 = x11510;
-        if (x11511) {
-          long x11515 = x11230;
-          int* x11516 = x11215;
-          x11516[x11515] = x11497;
-          char** x11518 = x11217;
-          x11518[x11515] = x11498;
-          int* x11524 = x11223;
-          x11524[x11515] = x11487;
-          char** x11526 = x11225;
-          x11526[x11515] = x11489;
-          x11230 = x11230 + 1L;
-          long x11533 = x11497 & x2034;
-          long x11534 = x11231[x11533];
-          x11231[x11533] = x11515;
-          x11232[x11515] = x11534;
+        bool x12197 = x12196;
+        if (x12197) {
+          long x12201 = x11911;
+          int* x12202 = x11896;
+          x12202[x12201] = x12183;
+          char** x12204 = x11898;
+          x12204[x12201] = x12184;
+          int* x12210 = x11904;
+          x12210[x12201] = x12173;
+          char** x12212 = x11906;
+          x12212[x12201] = x12175;
+          x11911 = x11911 + 1L;
+          long x12219 = x12183 & x2212;
+          long x12220 = x11912[x12219];
+          x11912[x12219] = x12201;
+          x11913[x12201] = x12220;
         } else {
         }
       }
-      x11201 = 0L;
+      x11882 = 0L;
     }
     printf("%s\n","begin scan SUPPLIER");
     for (;;) {
-      bool x11545 = x11211;
-      bool x11546 = !x11545;
-      bool x11551 = x11546;
-      if (x11546) {
-        long x11547 = x11212;
-        long x11548 = x10946;
-        bool x11549 = x11547 < x11548;
-        x11551 = x11549;
+      bool x12231 = x11892;
+      bool x12232 = !x12231;
+      bool x12237 = x12232;
+      if (x12232) {
+        long x12233 = x11893;
+        long x12234 = x11607;
+        bool x12235 = x12233 < x12234;
+        x12237 = x12235;
       }
-      bool x11552 = x11551;
-      if (!x11552) break;
-      long x11554 = x11212;
-      int* x11555 = x10948;
-      int x11556 = x11555[x11554];
-      int* x11561 = x10954;
-      int x11562 = x11561[x11554];
-      x11212 = x11212 + 1;
-      long x11571 = x11562 & x2034;
-      long x11572 = x11231[x11571];
-      long x11573 = x11572;
-      long x11633 = x11556 & x2034;
+      bool x12238 = x12237;
+      if (!x12238) break;
+      long x12240 = x11893;
+      int* x12241 = x11609;
+      int x12242 = x12241[x12240];
+      int* x12247 = x11615;
+      int x12248 = x12247[x12240];
+      x11893 = x11893 + 1;
+      long x12257 = x12248 & x2212;
+      long x12258 = x11912[x12257];
+      long x12259 = x12258;
+      long x12319 = x12242 & x2212;
       for (;;) {
-        long x11574 = x11573;
-        bool x11575 = x11574 != -1;
-        if (!x11575) break;
-        long x11577 = x11573;
-        int* x11578 = x11215;
-        int x11579 = x11578[x11577];
-        char** x11580 = x11217;
-        char* x11581 = x11580[x11577];
-        int* x11586 = x11223;
-        int x11587 = x11586[x11577];
-        char** x11588 = x11225;
-        char* x11589 = x11588[x11577];
-        long x11595 = x11232[x11577];
-        x11573 = x11595;
-        bool x11597 = x11579 == x11562;
-        if (x11597) {
-          long x11601 = x11272;
-          char** x11604 = x11245;
-          x11604[x11601] = x11581;
-          int* x11610 = x11251;
-          x11610[x11601] = x11587;
-          char** x11612 = x11253;
-          x11612[x11601] = x11589;
-          int* x11618 = x11259;
-          x11618[x11601] = x11556;
-          x11272 = x11272 + 1L;
-          long x11634 = x11273[x11633];
-          x11273[x11633] = x11601;
-          x11274[x11601] = x11634;
+        long x12260 = x12259;
+        bool x12261 = x12260 != -1;
+        if (!x12261) break;
+        long x12263 = x12259;
+        int* x12264 = x11896;
+        int x12265 = x12264[x12263];
+        char** x12266 = x11898;
+        char* x12267 = x12266[x12263];
+        int* x12272 = x11904;
+        int x12273 = x12272[x12263];
+        char** x12274 = x11906;
+        char* x12275 = x12274[x12263];
+        long x12281 = x11913[x12263];
+        x12259 = x12281;
+        bool x12283 = x12265 == x12248;
+        if (x12283) {
+          long x12287 = x11953;
+          char** x12290 = x11926;
+          x12290[x12287] = x12267;
+          int* x12296 = x11932;
+          x12296[x12287] = x12273;
+          char** x12298 = x11934;
+          x12298[x12287] = x12275;
+          int* x12304 = x11940;
+          x12304[x12287] = x12242;
+          x11953 = x11953 + 1L;
+          long x12320 = x11954[x12319];
+          x11954[x12319] = x12287;
+          x11955[x12287] = x12320;
         } else {
         }
       }
     }
     printf("%s\n","begin scan LINEITEM");
     for (;;) {
-      bool x11644 = x11238;
-      bool x11645 = !x11644;
-      bool x11650 = x11645;
-      if (x11645) {
-        long x11646 = x11239;
-        long x11647 = x9895;
-        bool x11648 = x11646 < x11647;
-        x11650 = x11648;
+      bool x12330 = x11919;
+      bool x12331 = !x12330;
+      bool x12336 = x12331;
+      if (x12331) {
+        long x12332 = x11920;
+        long x12333 = x10516;
+        bool x12334 = x12332 < x12333;
+        x12336 = x12334;
       }
-      bool x11651 = x11650;
-      if (!x11651) break;
-      long x11653 = x11239;
-      int* x11654 = x9897;
-      int x11655 = x11654[x11653];
-      int* x11658 = x9901;
-      int x11659 = x11658[x11653];
-      double* x11664 = x9907;
-      double x11665 = x11664[x11653];
-      double* x11666 = x9909;
-      double x11667 = x11666[x11653];
-      long* x11674 = x9917;
-      long x11675 = x11674[x11653];
-      x11239 = x11239 + 1;
-      bool x11688 = x11675 >= 19950101L;
-      bool x11690 = x11688;
-      if (x11688) {
-        bool x11689 = x11675 <= 19961231L;
-        x11690 = x11689;
+      bool x12337 = x12336;
+      if (!x12337) break;
+      long x12339 = x11920;
+      int* x12340 = x10518;
+      int x12341 = x12340[x12339];
+      int* x12344 = x10522;
+      int x12345 = x12344[x12339];
+      double* x12350 = x10528;
+      double x12351 = x12350[x12339];
+      double* x12352 = x10530;
+      double x12353 = x12352[x12339];
+      long* x12360 = x10538;
+      long x12361 = x12360[x12339];
+      x11920 = x11920 + 1;
+      bool x12374 = x12361 >= 19950101L;
+      bool x12376 = x12374;
+      if (x12374) {
+        bool x12375 = x12361 <= 19961231L;
+        x12376 = x12375;
       }
-      bool x11691 = x11690;
-      if (x11691) {
-        long x11692 = x11659 & x2034;
-        long x11693 = x11273[x11692];
-        long x11694 = x11693;
-        long x11800 = x11655 & x2034;
+      bool x12377 = x12376;
+      if (x12377) {
+        long x12378 = x12345 & x2212;
+        long x12379 = x11954[x12378];
+        long x12380 = x12379;
+        long x12486 = x12341 & x2212;
         for (;;) {
-          long x11695 = x11694;
-          bool x11696 = x11695 != -1;
-          if (!x11696) break;
-          long x11698 = x11694;
-          char** x11701 = x11245;
-          char* x11702 = x11701[x11698];
-          int* x11707 = x11251;
-          int x11708 = x11707[x11698];
-          char** x11709 = x11253;
-          char* x11710 = x11709[x11698];
-          int* x11715 = x11259;
-          int x11716 = x11715[x11698];
-          long x11730 = x11274[x11698];
-          x11694 = x11730;
-          bool x11732 = x11716 == x11659;
-          if (x11732) {
-            long x11736 = x11345;
-            char** x11739 = x11286;
-            x11739[x11736] = x11702;
-            int* x11745 = x11292;
-            x11745[x11736] = x11708;
-            char** x11747 = x11294;
-            x11747[x11736] = x11710;
-            int* x11767 = x11314;
-            x11767[x11736] = x11655;
-            double* x11777 = x11324;
-            x11777[x11736] = x11665;
-            double* x11779 = x11326;
-            x11779[x11736] = x11667;
-            long* x11787 = x11334;
-            x11787[x11736] = x11675;
-            x11345 = x11345 + 1L;
-            long x11801 = x11346[x11800];
-            x11346[x11800] = x11736;
-            x11347[x11736] = x11801;
+          long x12381 = x12380;
+          bool x12382 = x12381 != -1;
+          if (!x12382) break;
+          long x12384 = x12380;
+          char** x12387 = x11926;
+          char* x12388 = x12387[x12384];
+          int* x12393 = x11932;
+          int x12394 = x12393[x12384];
+          char** x12395 = x11934;
+          char* x12396 = x12395[x12384];
+          int* x12401 = x11940;
+          int x12402 = x12401[x12384];
+          long x12416 = x11955[x12384];
+          x12380 = x12416;
+          bool x12418 = x12402 == x12345;
+          if (x12418) {
+            long x12422 = x12026;
+            char** x12425 = x11967;
+            x12425[x12422] = x12388;
+            int* x12431 = x11973;
+            x12431[x12422] = x12394;
+            char** x12433 = x11975;
+            x12433[x12422] = x12396;
+            int* x12453 = x11995;
+            x12453[x12422] = x12341;
+            double* x12463 = x12005;
+            x12463[x12422] = x12351;
+            double* x12465 = x12007;
+            x12465[x12422] = x12353;
+            long* x12473 = x12015;
+            x12473[x12422] = x12361;
+            x12026 = x12026 + 1L;
+            long x12487 = x12027[x12486];
+            x12027[x12486] = x12422;
+            x12028[x12422] = x12487;
           } else {
           }
         }
@@ -2334,210 +2534,192 @@ int main(int x9410, char** x9411) {
     }
     printf("%s\n","begin scan ORDERS");
     for (;;) {
-      bool x11813 = x11280;
-      bool x11814 = !x11813;
-      bool x11819 = x11814;
-      if (x11814) {
-        long x11815 = x11281;
-        long x11816 = x9544;
-        bool x11817 = x11815 < x11816;
-        x11819 = x11817;
+      bool x12499 = x11961;
+      bool x12500 = !x12499;
+      bool x12505 = x12500;
+      if (x12500) {
+        long x12501 = x11962;
+        long x12502 = x10145;
+        bool x12503 = x12501 < x12502;
+        x12505 = x12503;
       }
-      bool x11820 = x11819;
-      if (!x11820) break;
-      long x11822 = x11281;
-      int* x11823 = x9546;
-      int x11824 = x11823[x11822];
-      int* x11825 = x9548;
-      int x11826 = x11825[x11822];
-      x11281 = x11281 + 1;
-      long x11843 = x11824 & x2034;
-      long x11844 = x11346[x11843];
-      long x11845 = x11844;
-      long x11919 = x11826 & x2034;
+      bool x12506 = x12505;
+      if (!x12506) break;
+      long x12508 = x11962;
+      int* x12509 = x10147;
+      int x12510 = x12509[x12508];
+      int* x12511 = x10149;
+      int x12512 = x12511[x12508];
+      x11962 = x11962 + 1;
+      long x12529 = x12510 & x2212;
+      long x12530 = x12027[x12529];
+      long x12531 = x12530;
+      long x12605 = x12512 & x2212;
       for (;;) {
-        long x11846 = x11845;
-        bool x11847 = x11846 != -1;
-        if (!x11847) break;
-        long x11849 = x11845;
-        char** x11852 = x11286;
-        char* x11853 = x11852[x11849];
-        int* x11858 = x11292;
-        int x11859 = x11858[x11849];
-        char** x11860 = x11294;
-        char* x11861 = x11860[x11849];
-        int* x11880 = x11314;
-        int x11881 = x11880[x11849];
-        double* x11890 = x11324;
-        double x11891 = x11890[x11849];
-        double* x11892 = x11326;
-        double x11893 = x11892[x11849];
-        long* x11900 = x11334;
-        long x11901 = x11900[x11849];
-        long x11913 = x11347[x11849];
-        x11845 = x11913;
-        bool x11915 = x11881 == x11824;
-        if (x11915) {
-          long x11920 = x11373[x11919];
-          long x11921 = x11920;
-          char x11966 = x11853[0L];
-          long x11967 = x11966 * 41L;
-          char x11968 = x11853[1L];
-          long x11969 = x11967 + x11968;
-          long x11970 = x11969 * 41L;
-          char x11971 = x11853[2L];
-          long x11972 = x11970 + x11971;
-          long x11973 = x11972 * 41L;
-          char x11974 = x11853[3L];
-          long x11975 = x11973 + x11974;
-          long x11952 = x11901; // date
-          long x11953 = x11952/10000;
-          int x11954 = (int)x11953;
-          char x11956 = x11861[0L];
-          long x11957 = x11956 * 41L;
-          char x11958 = x11861[1L];
-          long x11959 = x11957 + x11958;
-          long x11960 = x11959 * 41L;
-          char x11961 = x11861[2L];
-          long x11962 = x11960 + x11961;
-          long x11963 = x11962 * 41L;
-          char x11964 = x11861[3L];
-          long x11965 = x11963 + x11964;
-          long x11976 = x11965 * 41L;
-          long x11977 = x11976 + x11954;
-          long x11978 = x11977 * 41L;
-          long x11979 = x11978 + x11975;
-          long x11980 = x11979 & x802;
-          double x12003 = 1.0 - x11893;
-          double x12004 = x11891 * x12003;
-          struct Anon726278688 x11955;
-          x11955.SUPP_NATION = x11853;
-          x11955.CUST_NATION = x11861;
-          x11955.L_YEAR = x11954;
-          struct Anon2052879266 x12046;
-          x12046._0 = x12004;
-          struct Anon1587544425 x12047;
-          x12047.exists = true;
-          x12047.key = x11955;
-          x12047.aggs = x12046;
+        long x12532 = x12531;
+        bool x12533 = x12532 != -1;
+        if (!x12533) break;
+        long x12535 = x12531;
+        char** x12538 = x11967;
+        char* x12539 = x12538[x12535];
+        int* x12544 = x11973;
+        int x12545 = x12544[x12535];
+        char** x12546 = x11975;
+        char* x12547 = x12546[x12535];
+        int* x12566 = x11995;
+        int x12567 = x12566[x12535];
+        double* x12576 = x12005;
+        double x12577 = x12576[x12535];
+        double* x12578 = x12007;
+        double x12579 = x12578[x12535];
+        long* x12586 = x12015;
+        long x12587 = x12586[x12535];
+        long x12599 = x12028[x12535];
+        x12531 = x12599;
+        bool x12601 = x12567 == x12510;
+        if (x12601) {
+          long x12606 = x12054[x12605];
+          long x12607 = x12606;
+          long x12638 = x12587; // date
+          long x12639 = x12638/10000;
+          int x12640 = (int)x12639;
+          double x12671 = 1.0 - x12579;
+          double x12672 = x12577 * x12671;
+          struct Anon726278688 x12641;
+          x12641.SUPP_NATION = x12539;
+          x12641.CUST_NATION = x12547;
+          x12641.L_YEAR = x12640;
+          struct Anon2052879266 x12714;
+          x12714._0 = x12672;
+          struct Anon197435497 x12715;
+          x12715.exists = true;
+          x12715.key = x12641;
+          x12715.aggs = x12714;
           for (;;) {
-            long x11922 = x11921;
-            bool x11923 = x11922 != -1;
-            if (!x11923) break;
-            long x11925 = x11921;
-            int* x11926 = x11357;
-            int x11927 = x11926[x11925];
-            int* x11932 = x11363;
-            int x11933 = x11932[x11925];
-            long x11943 = x11374[x11925];
-            x11921 = x11943;
-            bool x11945 = x11927 == x11826;
-            bool x11947 = x11945;
-            if (x11945) {
-              bool x11946 = x11933 == x11859;
-              x11947 = x11946;
+            long x12608 = x12607;
+            bool x12609 = x12608 != -1;
+            if (!x12609) break;
+            long x12611 = x12607;
+            int* x12612 = x12038;
+            int x12613 = x12612[x12611];
+            int* x12618 = x12044;
+            int x12619 = x12618[x12611];
+            long x12629 = x12055[x12611];
+            x12607 = x12629;
+            bool x12631 = x12613 == x12512;
+            bool x12633 = x12631;
+            if (x12631) {
+              bool x12632 = x12619 == x12545;
+              x12633 = x12632;
             }
-            bool x11948 = x11947;
-            if (x11948) {
-              long x11981 = x11980;
-              struct Anon1587544425* x11982 = x11382;
-              struct Anon1587544425 x11983 = x11982[x11980];
-              struct Anon1587544425 x11984 = x11983;
-              bool x11985 = x11983.exists;;
-              bool x11999 = x11985;
-              if (x11985) {
-                struct Anon1587544425 x11986 = x11984;
-                struct Anon726278688 x11987 = x11986.key;;
-                char* x11988 = x11987.SUPP_NATION;;
-                bool x11989 = strcmp(x11988,x11853) == 0;;
-                bool x11994 = x11989;
-                if (x11989) {
-                  char* x11990 = x11987.CUST_NATION;;
-                  bool x11991 = strcmp(x11990,x11861) == 0;;
-                  x11994 = x11991;
+            bool x12634 = x12633;
+            if (x12634) {
+              long x12642 = hash(x12547, 10L);
+              long x12643 = hash(x12539, 10L);
+              long x12644 = x12642 * 41L;
+              long x12645 = x12644 + x12640;
+              long x12646 = x12645 * 41L;
+              long x12647 = x12646 + x12643;
+              long x12648 = x12647 & x823;
+              long x12649 = x12648;
+              struct Anon197435497* x12650 = x12063;
+              struct Anon197435497 x12651 = x12650[x12648];
+              struct Anon197435497 x12652 = x12651;
+              bool x12653 = x12651.exists;;
+              bool x12667 = x12653;
+              if (x12653) {
+                struct Anon197435497 x12654 = x12652;
+                struct Anon726278688 x12655 = x12654.key;;
+                char* x12656 = x12655.SUPP_NATION;;
+                bool x12657 = tpch_strcmp(x12656,x12539) == 0;;
+                bool x12662 = x12657;
+                if (x12657) {
+                  char* x12658 = x12655.CUST_NATION;;
+                  bool x12659 = tpch_strcmp(x12658,x12547) == 0;;
+                  x12662 = x12659;
                 }
-                bool x11995 = x11994;
-                bool x11996 = x11995;
-                if (x11995) {
-                  int x11992 = x11987.L_YEAR;;
-                  bool x11993 = x11992 == x11954;
-                  x11996 = x11993;
+                bool x12663 = x12662;
+                bool x12664 = x12663;
+                if (x12663) {
+                  int x12660 = x12655.L_YEAR;;
+                  bool x12661 = x12660 == x12640;
+                  x12664 = x12661;
                 }
-                bool x11997 = x11996;
-                x11999 = x11997;
+                bool x12665 = x12664;
+                x12667 = x12665;
               }
-              bool x12000 = x11999;
-              if (x12000) {
-                struct Anon2052879266 x12001 = x11983.aggs;;
-                struct Anon726278688 x12007 = x11983.key;;
-                double x12002 = x12001._0;;
-                double x12005 = x12002 + x12004;
-                struct Anon2052879266 x12006;
-                x12006._0 = x12005;
-                struct Anon1587544425 x12008;
-                x12008.exists = true;
-                x12008.key = x12007;
-                x12008.aggs = x12006;
-                x11982[x11980] = x12008;
+              bool x12668 = x12667;
+              if (x12668) {
+                struct Anon2052879266 x12669 = x12651.aggs;;
+                struct Anon726278688 x12675 = x12651.key;;
+                double x12670 = x12669._0;;
+                double x12673 = x12670 + x12672;
+                struct Anon2052879266 x12674;
+                x12674._0 = x12673;
+                struct Anon197435497 x12676;
+                x12676.exists = true;
+                x12676.key = x12675;
+                x12676.aggs = x12674;
+                x12650[x12648] = x12676;
               } else {
                 for (;;) {
-                  struct Anon1587544425 x12011 = x11984;
-                  bool x12012 = x12011.exists;;
-                  bool x12056;
-                  if (x12012) {
-                    struct Anon726278688 x12013 = x12011.key;;
-                    char* x12014 = x12013.SUPP_NATION;;
-                    bool x12015 = strcmp(x12014,x11853) == 0;;
-                    bool x12020 = x12015;
-                    if (x12015) {
-                      char* x12016 = x12013.CUST_NATION;;
-                      bool x12017 = strcmp(x12016,x11861) == 0;;
-                      x12020 = x12017;
+                  struct Anon197435497 x12679 = x12652;
+                  bool x12680 = x12679.exists;;
+                  bool x12724;
+                  if (x12680) {
+                    struct Anon726278688 x12681 = x12679.key;;
+                    char* x12682 = x12681.SUPP_NATION;;
+                    bool x12683 = tpch_strcmp(x12682,x12539) == 0;;
+                    bool x12688 = x12683;
+                    if (x12683) {
+                      char* x12684 = x12681.CUST_NATION;;
+                      bool x12685 = tpch_strcmp(x12684,x12547) == 0;;
+                      x12688 = x12685;
                     }
-                    bool x12021 = x12020;
-                    bool x12022 = x12021;
-                    if (x12021) {
-                      int x12018 = x12013.L_YEAR;;
-                      bool x12019 = x12018 == x11954;
-                      x12022 = x12019;
+                    bool x12689 = x12688;
+                    bool x12690 = x12689;
+                    if (x12689) {
+                      int x12686 = x12681.L_YEAR;;
+                      bool x12687 = x12686 == x12640;
+                      x12690 = x12687;
                     }
-                    bool x12023 = x12022;
-                    bool x12043;
-                    if (x12023) {
-                      struct Anon2052879266 x12024 = x12011.aggs;;
-                      long x12028 = x11981;
-                      struct Anon1587544425* x12030 = x11382;
-                      double x12025 = x12024._0;;
-                      double x12026 = x12025 + x12004;
-                      struct Anon2052879266 x12027;
-                      x12027._0 = x12026;
-                      struct Anon1587544425 x12029;
-                      x12029.exists = true;
-                      x12029.key = x12013;
-                      x12029.aggs = x12027;
-                      x12030[x12028] = x12029;
-                      x12043 = false;
+                    bool x12691 = x12690;
+                    bool x12711;
+                    if (x12691) {
+                      struct Anon2052879266 x12692 = x12679.aggs;;
+                      long x12696 = x12649;
+                      struct Anon197435497* x12698 = x12063;
+                      double x12693 = x12692._0;;
+                      double x12694 = x12693 + x12672;
+                      struct Anon2052879266 x12695;
+                      x12695._0 = x12694;
+                      struct Anon197435497 x12697;
+                      x12697.exists = true;
+                      x12697.key = x12681;
+                      x12697.aggs = x12695;
+                      x12698[x12696] = x12697;
+                      x12711 = false;
                     } else {
-                      long x12033 = x11981;
-                      long x12034 = x12033 + 1L;
-                      long x12035 = x12034 % x802;
-                      x11981 = x12035;
-                      struct Anon1587544425* x12037 = x11382;
-                      struct Anon1587544425 x12038 = x12037[x12035];
-                      x11984 = x12038;
-                      x12043 = true;
+                      long x12701 = x12649;
+                      long x12702 = x12701 + 1L;
+                      long x12703 = x12702 & x823;
+                      x12649 = x12703;
+                      struct Anon197435497* x12705 = x12063;
+                      struct Anon197435497 x12706 = x12705[x12703];
+                      x12652 = x12706;
+                      x12711 = true;
                     }
-                    x12056 = x12043;
+                    x12724 = x12711;
                   } else {
-                    long x12045 = x11981;
-                    struct Anon1587544425* x12048 = x11382;
-                    x12048[x12045] = x12047;
-                    long x12050 = x11383;
-                    x11384[x12050] = x12045;
-                    x11383 = x11383 + 1L;
-                    x12056 = false;
+                    long x12713 = x12649;
+                    struct Anon197435497* x12716 = x12063;
+                    x12716[x12713] = x12715;
+                    long x12718 = x12064;
+                    x12065[x12718] = x12713;
+                    x12064 = x12064 + 1L;
+                    x12724 = false;
                   }
-                  if (!x12056) break;
+                  if (!x12724) break;
                 }
               }
             } else {
@@ -2547,31 +2729,53 @@ int main(int x9410, char** x9411) {
         }
       }
     }
-    long x12073 = x11383;
-    long x12075;
-    for(x12075=0L; x12075 < x12073; x12075++) {
-      long x12076 = x11384[x12075];
-      struct Anon1587544425* x12077 = x11382;
-      struct Anon1587544425 x12078 = x12077[x12076];
-      if (x975) {
+    long x12741 = x12064;
+    long x12743;
+    for(x12743=0L; x12743 < x12741; x12743++) {
+      long x12744 = x12065[x12743];
+      struct Anon197435497* x12745 = x12063;
+      struct Anon197435497 x12746 = x12745[x12744];
+      long x12747 = x12077;
+      long x12748 = x12076;
+      bool x12749 = x12747 == x12748;
+      if (x12749) {
+        long x12750 = x12748 * 4L;
+        x12076 = x12750;
+        struct Anon197435497* x12752 = x12079;
+        struct Anon197435497* x12753 = (struct Anon197435497 *)realloc(x12752,x12750* sizeof(struct Anon197435497));
+        x12079 = x12753;
       } else {
-        struct Anon726278688 x12081 = x12078.key;;
-        struct Anon2052879266 x12087 = x12078.aggs;;
-        char* x12082 = x12081.SUPP_NATION;;
-        int x12083 = strlen(x12082);
-        char* x12084 = x12081.CUST_NATION;;
-        int x12085 = strlen(x12084);
-        int x12086 = x12081.L_YEAR;;
-        double x12088 = x12087._0;;
-        printf("%.*s|%.*s|%d|%.4f\n",x12083,x12082,x12085,x12084,x12086,x12088);
-        x11395 = x11395 + 1L;
+      }
+      struct Anon197435497* x12757 = x12079;
+      x12757[x12747] = x12746;
+      x12077 = x12077 + 1;
+    }
+    long x12762 = x12077;
+    struct Anon197435497* x12763 = x12079;
+    qsort((void *)x12763,x12762,sizeof(struct Anon197435497), (__compar_fn_t)x12789); // x12790
+    long x12792;
+    for(x12792=0L; x12792 < x12762; x12792++) {
+      struct Anon197435497* x12793 = x12079;
+      struct Anon197435497 x12794 = x12793[x12792];
+      if (x1043) {
+      } else {
+        struct Anon726278688 x12797 = x12794.key;;
+        struct Anon2052879266 x12803 = x12794.aggs;;
+        char* x12798 = x12797.SUPP_NATION;;
+        int x12799 = tpch_strlen(x12798);
+        char* x12800 = x12797.CUST_NATION;;
+        int x12801 = tpch_strlen(x12800);
+        int x12802 = x12797.L_YEAR;;
+        double x12804 = x12803._0;;
+        printf("%.*s|%.*s|%d|%.4f\n",x12799,x12798,x12801,x12800,x12802,x12804);
+        x12081 = x12081 + 1L;
       }
     }
-    long x12095 = x11395;
-    printf("(%d rows)\n",x12095);
-    gettimeofday(&x12099, NULL);
-    timeval_subtract(&x12100, &x12099, &x12098);
-    fprintf(stderr,"Generated Code Profiling Info: Operation completed in %ld milliseconds\n",((x12100.tv_sec * 1000) + (x12100.tv_usec/1000)));
+    long x12811 = x12081;
+    printf("(%ld rows)\n",x12811);
+    gettimeofday(&x12815, NULL);
+    timeval_subtract(&x12816, &x12815, &x12814);
+    fprintf(stderr,"Generated Code Profiling Info: Operation completed in %ld milliseconds\n",((x12816.tv_sec * 1000) + (x12816.tv_usec/1000)));
   }
   return 0;
 }
