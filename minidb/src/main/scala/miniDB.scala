@@ -227,12 +227,34 @@ trait CImpl extends COpsPkgExp with UncheckedHelperExp with FunctionsExp with Sc
         }
         return ((char *)s);
       }
-      char* tpch_strstr(char *s1, char *s2) {
+      char* tpch_strstr_bak(char *s1, char *s2) {
         char* tmp;
         if ((tmp = tpch_strnstr(s1,s2,tpch_strlen(s1))) == NULL) {
           return s1 - (1 << 10); // Hack
         }
         return tmp;
+      }
+      char* tpch_strstr(char* s, char* find) {
+        char c, sc;
+        char* wts, *wtf;
+
+        c = *find++;
+        do {
+          do {
+            if ((sc = *s++) == '|') {
+              return s - (1 << 10);
+            }
+          } while (sc != c);
+
+          wtf = find;
+          wts = s;
+          while (*wtf == *wts) {
+            wtf++;
+            wts++;
+          }
+          if (*wtf == '\0')
+              return s - 1;
+        } while (1);
       }
       """)
       super.emitDataStructures(out)
