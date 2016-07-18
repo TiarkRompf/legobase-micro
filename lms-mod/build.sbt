@@ -19,9 +19,9 @@ publishArtifact in (Compile, packageDoc) := false
 // continuations
 autoCompilerPlugins := true
 
-addCompilerPlugin("org.scala-lang.virtualized.plugins" % "continuations" % virtScala)
+// addCompilerPlugin("org.scala-lang.virtualized.plugins" % "continuations" % virtScala)
 
-scalacOptions += "-P:continuations:enable"
+// scalacOptions += "-P:continuations:enable"
 
 testGrouping <<= definedTests in Test map { tests =>
   tests.map { test =>
@@ -39,7 +39,7 @@ testGrouping <<= definedTests in Test map { tests =>
 
 scalaOrganization := "org.scala-lang.virtualized"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.11.2"
 
 scalacOptions += "-optimise"
 

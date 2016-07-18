@@ -55,7 +55,7 @@ trait StructTags {
   case class ClassTag[T](name: String) extends StructTag[T]
   case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
   case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
-  case class MapTag[T] extends StructTag[T]
+  case class MapTag[T]() extends StructTag[T]
 }
 
 trait StructExp extends Structs with StructTags with EffectExp with WhileExp with VariablesExp with ObjectOpsExp with StringOpsExp with FunctionsExp with MiscOpsExp with RangeOpsExp with ArrayOps with BooleanOps with Equal with PrimitiveOps with NumericOps with OrderingOps {
