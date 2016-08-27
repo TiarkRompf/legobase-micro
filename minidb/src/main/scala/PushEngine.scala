@@ -225,6 +225,22 @@ trait PushEngine extends DSL with DataStruct {
         }
     }
 
+    case class AggOp1NoGrp[A:Manifest, C:Manifest](parent: Operator[A])(val init: Rep[C])(val aggFun: ((Rep[A], Rep[C]) => Rep[C])) extends Operator[AGGRecord1[Int,C]] {
+        override def desc = s"AGG(${parent.desc})"
+
+        val acc = var_new[C](init)
+
+        def open() { parent.child = this; parent.open }
+        def next() {
+            parent.next
+            child.consume(newAGGRecord1(0,acc))
+        }
+        def reset() { parent.reset; printf("RESET / TODO"); open } // TODO / FIXME
+        def consume(tuple0: Rep[Record]) {
+          val tuple = tuple0.asInstanceOf[Rep[A]]
+          acc = aggFun(tuple,acc)
+        }
+    }
 
     case class MapOp1[A:Manifest,B:Manifest](parent: Operator[A])(aggFuncs: Rep[A] => Rep[B]) extends Operator[B] {
         override def desc = parent.desc

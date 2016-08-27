@@ -470,7 +470,7 @@ new plan:
                 val constantDate1: Long = parseDate("1994-01-01")
                 val constantDate2: Long = parseDate("1995-01-01")
                 val lineitemScan = SelectOp(ScanOp2(lineitemTable))(x => x.L_SHIPDATE >= constantDate1 && x.L_SHIPDATE < constantDate2 && x.L_DISCOUNT >= 0.05 && x.L_DISCOUNT <= 0.07 && x.L_QUANTITY < 24)
-                val aggOp = AggOp1(lineitemScan)(x => "Total")(zero1)((t,currAgg) => new Record{val _0 = (t.L_EXTENDEDPRICE * t.L_DISCOUNT) + currAgg._0})
+                val aggOp = AggOp1NoGrp(lineitemScan)(zero1)((t,currAgg) => new Record{val _0 = (t.L_EXTENDEDPRICE * t.L_DISCOUNT) + currAgg._0})
                 val po = PrintOp(aggOp)(kv => printf("%.4f\n",kv.aggs._0))
                 po
         }
@@ -764,6 +764,51 @@ new plan:
         }
     }
 
+    type RecordQ13 = Record { val count: Int }
+    def Q13Hack = {
+        val customerTable = loadCustomer1()
+        val ordersTable = loadOrders1()
+        runQuery {
+                val unusual = parseString("special")
+                val packages = parseString("requests")
+
+                val aggArray = NewArray[RecordQ13](customerTable.data.length)
+                for (i <- 0L until customerTable.data.length) {
+                  aggArray(i) = new Record { val count = 0 }
+                }
+
+                val scanCustomer = ScanOp2(customerTable)
+                val scanOrders = SelectOp(ScanOp2(ordersTable))(x => {
+                    val idxu = x.O_COMMENT.indexOfSlice(unusual, 0)
+                    if (idxu >= 0) {
+                      val idxp = x.O_COMMENT.indexOfSlice(packages, idxu + 7)
+                      idxp == -1
+                    } else {
+                      true
+                    }
+                })
+                val aggOp1 = MapOp1(scanOrders)(t => aggArray(t.O_CUSTKEY.toLong).count = aggArray(t.O_CUSTKEY.toLong).count + 1)
+                val aggScan= ScanOp2(LegoTable("tmp", new LegoArray[Int] {
+                  val data = aggArray
+                  def length = aggArray.length
+                  def apply(i: Rep[Long]) = data(i)
+                }))
+                val aggOp2 = AggOp1(aggScan)(x => x.count)(zero1)(
+                    (t, currAgg) => new Record { val _0 = currAgg._0 + 1 }
+                )
+                val sortOp = SortOp(aggOp2)( (x,y) => {
+                    if (x.aggs._0 < y.aggs._0) 1
+                    else if (x.aggs._0 > y.aggs._0) -1
+                    else {
+                        if (x.key < y.key) 1
+                        else if (x.key > y.key) -1
+                        else 0
+                    }
+                })
+                val po = PrintOp(sortOp)(kv => printf("%.0f|%.0f\n",kv.key,kv.aggs._0))
+                po
+        }
+    }
     def Q14 = {
         val lineitemTable = loadLineitem1()
         val partTable = loadPart1()
@@ -1054,7 +1099,7 @@ new plan:
                 val jo3 = MapCatOp(HashJoinOp2(jo2, ordersScan)((x,y) => y.O_ORDERKEY==x.f.L_ORDERKEY)(x => x.f.L_ORDERKEY)(x => x.O_ORDERKEY))
                 val jo4 = HashJoinAnti1(jo3, lineitemScan3)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
                 val jo5 = LeftHashSemiJoinOp1(jo4, lineitemScan2)((x,y) => x.f.L_ORDERKEY == y.L_ORDERKEY && x.f.L_SUPPKEY != y.L_SUPPKEY)(x => x.f.L_ORDERKEY)(x => x.L_ORDERKEY)
-                val aggOp = AggOp1(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0.0)((t,currAgg) => {currAgg + 1})
+                val aggOp = AggOp1(jo5)(x => x.f.S_NAME.asInstanceOf[Rep[LegoString]])(0L)((t,currAgg) => {currAgg + 1L})
                 val sortOp = SortOp(aggOp)((x,y) => {
                     val a1 = x.aggs; val a2 = y.aggs
                     if (a1 < a2) 1
@@ -1064,7 +1109,7 @@ new plan:
                 // LIMIT 100 -- SORT BOTTLENECK?
                 var i = 0
                 val po = PrintOp(sortOp)(kv => {
-                    printf("%.*s|%.0f\n",kv.key.length,(kv.key),kv.aggs)
+                    printf("%.*s|%ld\n",kv.key.length,(kv.key),kv.aggs)
                     i+=1
                 }, () => i < 100)
                 po
